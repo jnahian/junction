@@ -41,7 +41,9 @@ final class StatusItemController: NSObject, NSMenuDelegate {
         } else {
             symbol = "arrow.triangle.branch"
         }
-        let image = NSImage(systemSymbolName: symbol, accessibilityDescription: "Junction")
+        let base = NSImage(systemSymbolName: symbol, accessibilityDescription: "Junction")
+        let configuration = NSImage.SymbolConfiguration(pointSize: 15, weight: .medium)
+        let image = base?.withSymbolConfiguration(configuration) ?? base
         image?.isTemplate = true
         button.image = image
         button.appearsDisabled = !state.isDefaultBrowser && state.configError == nil
@@ -53,7 +55,8 @@ final class StatusItemController: NSObject, NSMenuDelegate {
         menu.removeAllItems()
 
         if let error = state.configError {
-            let item = NSMenuItem(title: "⚠️ Config file is invalid", action: #selector(showConfigError), keyEquivalent: "")
+            let item = NSMenuItem(title: "Config File Is Invalid", action: #selector(showConfigError), keyEquivalent: "")
+                .withSymbol("exclamationmark.triangle.fill")
             item.target = self
             item.toolTip = error.description
             menu.addItem(item)
@@ -61,21 +64,23 @@ final class StatusItemController: NSObject, NSMenuDelegate {
         }
 
         if !state.isDefaultBrowser {
-            let item = NSMenuItem(title: "Junction is not the default browser", action: nil, keyEquivalent: "")
+            let item = NSMenuItem(title: "Junction Is Not the Default Browser", action: nil, keyEquivalent: "")
             item.isEnabled = false
             menu.addItem(item)
             let enable = NSMenuItem(title: "Set as Default Browser…", action: #selector(setDefault), keyEquivalent: "")
+                .withSymbol("checkmark.seal")
             enable.target = self
             menu.addItem(enable)
             menu.addItem(.separator())
         }
 
         let pause = NSMenuItem(
-            title: state.routingPaused ? "Resume Routing" : "Pause Routing (use fallback)",
+            title: state.routingPaused ? "Resume Routing" : "Pause Routing",
             action: #selector(togglePause),
             keyEquivalent: ""
-        )
+        ).withSymbol(state.routingPaused ? "play.circle" : "pause.circle")
         pause.target = self
+        if !state.routingPaused { pause.toolTip = "Send every link to the fallback browser" }
         menu.addItem(pause)
         menu.addItem(.separator())
 
@@ -97,10 +102,12 @@ final class StatusItemController: NSObject, NSMenuDelegate {
 
                 let submenu = NSMenu()
                 let addRule = NSMenuItem(title: "Create Rule from This Link…", action: #selector(createRule(_:)), keyEquivalent: "")
+                    .withSymbol("plus.circle")
                 addRule.target = self
                 addRule.representedObject = link
                 submenu.addItem(addRule)
                 let copy = NSMenuItem(title: "Copy URL", action: #selector(copyURL(_:)), keyEquivalent: "")
+                    .withSymbol("doc.on.doc")
                 copy.target = self
                 copy.representedObject = link
                 submenu.addItem(copy)
@@ -111,6 +118,7 @@ final class StatusItemController: NSObject, NSMenuDelegate {
         menu.addItem(.separator())
 
         let settings = NSMenuItem(title: "Settings…", action: #selector(openSettings), keyEquivalent: ",")
+            .withSymbol("gearshape")
         settings.target = self
         menu.addItem(settings)
         let quit = NSMenuItem(title: "Quit Junction", action: #selector(NSApplication.terminate(_:)), keyEquivalent: "q")

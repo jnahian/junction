@@ -190,10 +190,12 @@ struct RuleEditor: View {
                 Button("Cancel", action: onCancel).keyboardShortcut(.cancelAction)
                 Spacer()
                 Button("Save") { onSave(builtRule) }
+                    .buttonStyle(.borderedProminent)
                     .keyboardShortcut(.defaultAction)
                     .disabled(!canSave)
             }
-            .padding(12)
+            .padding(Metrics.sectionSpacing)
+            .background(.bar)
         }
         .frame(width: 520, height: 620)
         .onAppear { state.refreshBrowsers() }

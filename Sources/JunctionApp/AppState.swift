@@ -27,6 +27,7 @@ final class AppState: ObservableObject {
     /// Injected by AppDelegate so state doesn't own window controllers.
     var pickerPresenter: ((URL) -> Void)?
     var settingsPresenter: (() -> Void)?
+    var onboardingPresenter: (() -> Void)?
 
     let rewriters = RewriterStore.builtin()
     private let maxRecent = 10

@@ -4,6 +4,9 @@
   "version": 1,
   "fallback": { "app": "com.apple.Safari" },
   "stripTrackingParams": true,
+  // Automatic deep-link rewriters are OFF by default — opt in by ID.
+  // (Rules with a "deepLink" action always work, no opt-in needed.)
+  "enabledRewriters": ["zoom", "spotify"],
   "rules": [
     {
       "name": "Work links → Chrome work profile",

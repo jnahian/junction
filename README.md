@@ -62,11 +62,20 @@ junction config validate
 
 ## Install
 
-**Homebrew** (once the cask is published):
+**GitHub Releases:** grab `Junction.zip` from the [latest release](https://github.com/jnahian/junction/releases), unzip, drag to /Applications. Current builds are not yet notarized — right-click → Open on first launch, or:
 
 ```sh
-brew install --cask junction
+xattr -dr com.apple.quarantine /Applications/Junction.app
 ```
+
+**Homebrew** (via the `jnahian/tap` tap):
+
+```sh
+brew tap jnahian/tap
+brew install --cask --no-quarantine junction
+```
+
+Every release includes GitHub build provenance — verify with `gh attestation verify Junction.zip --repo jnahian/junction`.
 
 **From source** (macOS 13+, Xcode 15+):
 

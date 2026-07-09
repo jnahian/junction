@@ -16,6 +16,12 @@ final class OnboardingWindowController {
     }
 
     func show() {
+        // Reuse an open window; a finished (closed) one is recreated so the flow restarts.
+        if let window {
+            NSApp.activate(ignoringOtherApps: true)
+            window.makeKeyAndOrderFront(nil)
+            return
+        }
         let view = OnboardingView(state: state) { [weak self] in
             UserDefaults.standard.set(true, forKey: "onboardingComplete")
             self?.window?.close()
@@ -24,7 +30,10 @@ final class OnboardingWindowController {
         let hosting = NSHostingController(rootView: view)
         let window = NSWindow(contentViewController: hosting)
         window.title = "Welcome to Junction"
-        window.styleMask = [.titled, .closable]
+        window.styleMask = [.titled, .closable, .fullSizeContentView]
+        window.titlebarAppearsTransparent = true
+        window.titleVisibility = .hidden
+        window.isMovableByWindowBackground = true
         window.isReleasedWhenClosed = false
         window.center()
         self.window = window
@@ -60,7 +69,7 @@ private struct OnboardingView: View {
     private let templates = StarterTemplates.load()
 
     var body: some View {
-        VStack(alignment: .leading, spacing: 16) {
+        VStack(alignment: .leading, spacing: Metrics.sectionSpacing) {
             switch step {
             case 0: welcome
             case 1: fallbackPicker
@@ -71,19 +80,46 @@ private struct OnboardingView: View {
             HStack {
                 if step > 0 {
                     Button("Back") { step -= 1 }
+                        .buttonStyle(.bordered)
+                        .controlSize(.large)
                 }
                 Spacer()
                 Button(step == 3 ? "Finish" : "Continue") { advance() }
+                    .buttonStyle(.borderedProminent)
+                    .controlSize(.large)
                     .keyboardShortcut(.defaultAction)
             }
         }
-        .padding(24)
-        .frame(width: 480, height: 380)
+        .padding(Metrics.windowPadding)
+        .padding(.top, Metrics.controlSpacing) // clear the (transparent) titlebar
+        .frame(width: 480, height: 420)
+        .background(VisualEffectView(material: .underWindowBackground).ignoresSafeArea())
     }
 
     private var welcome: some View {
-        VStack(alignment: .leading, spacing: 12) {
-            Text("Junction routes your links").font(.title.bold())
+        VStack(alignment: .leading, spacing: Metrics.sectionSpacing) {
+            HStack(spacing: Metrics.sectionSpacing) {
+                Image(systemName: "arrow.triangle.branch")
+                    .font(.system(size: 30, weight: .semibold))
+                    .foregroundStyle(.white)
+                    .frame(width: 64, height: 64)
+                    .background(
+                        RoundedRectangle(cornerRadius: 14, style: .continuous)
+                            .fill(LinearGradient(
+                                colors: [.blue, .indigo],
+                                startPoint: .topLeading,
+                                endPoint: .bottomTrailing
+                            ))
+                    )
+                    .shadow(color: .black.opacity(0.15), radius: 6, y: 2)
+                VStack(alignment: .leading, spacing: 2) {
+                    Text("Welcome to Junction").font(.largeTitle.bold())
+                    Text("Every link, in the right place")
+                        .font(.title3)
+                        .foregroundStyle(.secondary)
+                }
+            }
+            .padding(.bottom, Metrics.controlSpacing)
             Text("""
             Junction becomes your default browser — but it never shows a window. \
             When you click a link anywhere, Junction checks your rules and instantly \
@@ -160,7 +196,8 @@ private struct OnboardingView: View {
         state.updateConfig { config in
             config.fallback.app = fallbackBundleID
             let chosen = templates.filter { selectedTemplates.contains($0.id) }.map(\.rule)
-            config.rules.append(contentsOf: chosen)
+            // Skip templates already present (re-running the tour must not duplicate rules).
+            config.rules.append(contentsOf: chosen.filter { rule in !config.rules.contains(rule) })
         }
         onDone()
     }

@@ -82,6 +82,35 @@ final class RewriterTests: XCTestCase {
         XCTAssertEqual(out?.absoluteString, "slack://channel?id=C024BE91L")
     }
 
+    func testClickUpTask() {
+        let r = store.rewriter(id: "clickup")!
+        let out = r.rewrite(URL(string: "https://app.clickup.com/t/86cxk2m1q")!)
+        XCTAssertEqual(out?.absoluteString, "clickup://t/86cxk2m1q")
+    }
+
+    func testGitHubDesktopRepoRootOnly() {
+        let r = store.rewriter(id: "github-desktop")!
+        let out = r.rewrite(URL(string: "https://github.com/jnahian/junction")!)
+        XCTAssertEqual(out?.absoluteString, "x-github-client://openRepo/https://github.com/jnahian/junction")
+        // Sub-pages (issues, PRs, files) must NOT be hijacked into the desktop app.
+        XCTAssertNil(r.rewrite(URL(string: "https://github.com/jnahian/junction/pull/42")!))
+        XCTAssertNil(r.rewrite(URL(string: "https://github.com/jnahian/junction/issues")!))
+    }
+
+    func testTelegram() {
+        let r = store.rewriter(id: "telegram")!
+        let out = r.rewrite(URL(string: "https://t.me/durov")!)
+        XCTAssertEqual(out?.absoluteString, "tg://resolve?domain=durov")
+        // Invite links (t.me/+hash) use a different scheme path — leave them alone.
+        XCTAssertNil(r.rewrite(URL(string: "https://t.me/+AbCdEf123")!))
+    }
+
+    func testAppleMusic() {
+        let r = store.rewriter(id: "apple-music")!
+        let out = r.rewrite(URL(string: "https://music.apple.com/us/album/blue/1440835967")!)
+        XCTAssertEqual(out?.absoluteString, "music://music.apple.com/us/album/blue/1440835967")
+    }
+
     func testCleanEmptyParams() {
         XCTAssertEqual(Rewriter.cleanEmptyParams("a://b?x=&y=1"), "a://b?y=1")
         XCTAssertEqual(Rewriter.cleanEmptyParams("a://b?x="), "a://b")

@@ -100,6 +100,78 @@
       "template": "vscode://$1",
       "scheme": "vscode",
       "bundleID": "com.microsoft.VSCode"
+    },
+    {
+      "id": "clickup",
+      "name": "ClickUp",
+      "patterns": [
+        "^https?://app\\.clickup\\.com/t/([^/?#]+)"
+      ],
+      "template": "clickup://t/$1",
+      "scheme": "clickup",
+      "bundleID": "com.clickup.desktop-app"
+    },
+    {
+      "id": "github-desktop",
+      "name": "GitHub Desktop (open repository)",
+      "patterns": [
+        "^(https://github\\.com/[^/?#]+/[^/?#]+?)(?:\\.git)?/?(?:[?#].*)?$"
+      ],
+      "template": "x-github-client://openRepo/$1",
+      "scheme": "x-github-client",
+      "bundleID": "com.github.GitHubClient"
+    },
+    {
+      "id": "telegram",
+      "name": "Telegram",
+      "patterns": [
+        "^https?://t\\.me/([^/?#+][^/?#]*)$"
+      ],
+      "template": "tg://resolve?domain=$1",
+      "scheme": "tg",
+      "bundleID": "ru.keepcoder.Telegram"
+    },
+    {
+      "id": "whatsapp",
+      "name": "WhatsApp",
+      "patterns": [
+        "^https?://wa\\.me/(\\d+)",
+        "^https?://api\\.whatsapp\\.com/send/?\\?(?:[^#]*&)?phone=(\\d+)"
+      ],
+      "template": "whatsapp://send?phone=$1",
+      "scheme": "whatsapp",
+      "bundleID": "net.whatsapp.WhatsApp"
+    },
+    {
+      "id": "apple-music",
+      "name": "Apple Music",
+      "patterns": [
+        "^https?://music\\.apple\\.com/([^?#]*)"
+      ],
+      "template": "music://music.apple.com/$1",
+      "scheme": "music",
+      "bundleID": "com.apple.Music"
+    },
+    {
+      "id": "asana",
+      "name": "Asana",
+      "patterns": [
+        "^https?://app\\.asana\\.com/([^?#]*)"
+      ],
+      "template": "asana://app.asana.com/$1",
+      "scheme": "asana",
+      "bundleID": "com.asana.app"
+    },
+    {
+      "id": "todoist",
+      "name": "Todoist",
+      "patterns": [
+        "^https?://(?:app\\.)?todoist\\.com/showTask\\?(?:[^#]*&)?id=(\\d+)",
+        "^https?://app\\.todoist\\.com/app/task/(?:.*-)?([A-Za-z0-9]+)$"
+      ],
+      "template": "todoist://task?id=$1",
+      "scheme": "todoist",
+      "bundleID": "com.todoist.mac.Todoist"
     }
   ]
 }

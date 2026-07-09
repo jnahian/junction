@@ -48,28 +48,43 @@ struct RulesPane: View {
             .listStyle(.inset(alternatesRowBackgrounds: true))
             .overlay {
                 if state.config.rules.isEmpty {
-                    VStack(spacing: 8) {
-                        Text("No rules yet").font(.title3)
+                    VStack(spacing: Metrics.controlSpacing) {
+                        Image(systemName: "arrow.triangle.branch")
+                            .font(.system(size: 36, weight: .light))
+                            .foregroundStyle(.tertiary)
+                        Text("No Rules").font(.title3.weight(.medium))
                         Text("Every link opens in your fallback browser until you add one.")
+                            .font(.callout)
                             .foregroundStyle(.secondary)
                     }
                 }
             }
 
             Divider()
-            HStack {
+            // Standard source-list add/remove bar.
+            HStack(spacing: 0) {
                 Button {
                     isNewRule = true
                     editingRule = Rule(name: "New rule", match: Match(), action: .open(app: state.config.fallback.app, profile: nil))
                 } label: {
                     Image(systemName: "plus")
+                        .frame(width: 24, height: 20)
+                        .contentShape(Rectangle())
                 }
+                .buttonStyle(.borderless)
+                .help("Add a rule")
+
+                Divider().frame(height: 16)
+
+                Spacer()
                 Text("First matching rule wins — drag to reorder.")
                     .font(.caption)
                     .foregroundStyle(.secondary)
-                Spacer()
+                    .padding(.trailing, Metrics.controlSpacing)
             }
-            .padding(8)
+            .padding(.horizontal, Metrics.controlSpacing)
+            .padding(.vertical, 4)
+            .background(.bar)
         }
         .sheet(item: $editingRule) { rule in
             RuleEditor(
@@ -145,7 +160,7 @@ private struct RuleRow: View {
                 .foregroundStyle(.secondary)
         }
         .padding(.vertical, 2)
-        .background(highlighted ? Color.accentColor.opacity(0.15) : .clear)
+        .background(highlighted ? Color(nsColor: .selectedContentBackgroundColor).opacity(0.2) : .clear)
         .opacity(rule.enabled ? 1 : 0.5)
     }
 

@@ -3,63 +3,78 @@ import AppKit
 import Foundation
 import SwiftUI
 
+/// Standard macOS Settings window: toolbar-style tabs (like Safari/Mail preferences),
+/// SF Symbol per pane, window title follows the selected pane.
 @MainActor
-final class SettingsWindowController {
+final class SettingsWindowController: NSObject {
     private let state: AppState
     private var window: NSWindow?
+    private var tabController: NSTabViewController?
 
     init(state: AppState) {
         self.state = state
+        super.init()
+        NotificationCenter.default.addObserver(
+            self,
+            selector: #selector(jumpToRules),
+            name: .junctionPrefillRule,
+            object: nil
+        )
     }
 
     func show() {
-        if let window {
-            NSApp.activate(ignoringOtherApps: true)
-            window.makeKeyAndOrderFront(nil)
-            return
+        if window == nil {
+            window = makeWindow()
         }
-        let hosting = NSHostingController(rootView: SettingsRootView(state: state))
-        let window = NSWindow(contentViewController: hosting)
-        window.title = "Junction Settings"
-        window.styleMask = [.titled, .closable, .miniaturizable, .resizable]
-        window.setContentSize(NSSize(width: 720, height: 480))
+        NSApp.activate(ignoringOtherApps: true)
+        window?.makeKeyAndOrderFront(nil)
+    }
+
+    @objc private func jumpToRules() {
+        show()
+        tabController?.selectedTabViewItemIndex = 0
+    }
+
+    private func makeWindow() -> NSWindow {
+        let tabs = NSTabViewController()
+        tabs.tabStyle = .toolbar
+        // Window title follows the selected pane's title.
+        tabs.canPropagateSelectedChildViewControllerTitle = true
+
+        let paneSize = NSSize(width: 700, height: 460)
+        func pane(_ title: String, _ symbol: String, _ view: some View) {
+            let hosting = NSHostingController(
+                rootView: view.frame(
+                    minWidth: paneSize.width, maxWidth: paneSize.width,
+                    minHeight: paneSize.height, maxHeight: paneSize.height
+                )
+            )
+            hosting.title = title
+            // NSTabViewController sizes the window from this — a SwiftUI hosting
+            // controller won't derive it from .frame on its own.
+            hosting.preferredContentSize = paneSize
+            let item = NSTabViewItem(viewController: hosting)
+            item.label = title
+            item.image = NSImage(systemSymbolName: symbol, accessibilityDescription: title)
+            tabs.addTabViewItem(item)
+        }
+
+        pane("Rules", "list.bullet.rectangle", RulesPane(state: state))
+        pane("Browsers", "globe", BrowsersPane(state: state))
+        pane("Deep Links", "link", DeepLinksPane(state: state))
+        pane("Transforms", "wand.and.stars", TransformsPane(state: state))
+        pane("Tester", "checkmark.seal", TesterPane(state: state))
+        pane("General", "gearshape", GeneralPane(state: state))
+
+        let window = NSWindow(contentViewController: tabs)
+        window.styleMask = [.titled, .closable, .miniaturizable]
+        window.toolbarStyle = .preference
+        window.setContentSize(paneSize) // correct size on first display, before any tab switch
+        window.title = "Rules"
         window.isReleasedWhenClosed = false
         window.center()
-        self.window = window
-        NSApp.activate(ignoringOtherApps: true)
-        window.makeKeyAndOrderFront(nil)
-    }
-}
-
-struct SettingsRootView: View {
-    @ObservedObject var state: AppState
-    @State private var selectedTab = "rules"
-
-    var body: some View {
-        TabView(selection: $selectedTab) {
-            RulesPane(state: state)
-                .tabItem { Label("Rules", systemImage: "list.bullet") }
-                .tag("rules")
-            BrowsersPane(state: state)
-                .tabItem { Label("Browsers", systemImage: "safari") }
-                .tag("browsers")
-            DeepLinksPane(state: state)
-                .tabItem { Label("Deep Links", systemImage: "app.connected.to.app.below.fill") }
-                .tag("deeplinks")
-            TransformsPane(state: state)
-                .tabItem { Label("Transforms", systemImage: "wand.and.rays") }
-                .tag("transforms")
-            TesterPane(state: state)
-                .tabItem { Label("Tester", systemImage: "checkmark.seal") }
-                .tag("tester")
-            GeneralPane(state: state)
-                .tabItem { Label("General", systemImage: "gearshape") }
-                .tag("general")
-        }
-        .frame(minWidth: 700, minHeight: 440)
-        .onReceive(NotificationCenter.default.publisher(for: .junctionPrefillRule)) { _ in
-            selectedTab = "rules"
-        }
+        tabController = tabs
+        return window
     }
 }
 #endif

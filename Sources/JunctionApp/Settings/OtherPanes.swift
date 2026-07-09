@@ -62,16 +62,18 @@ struct DeepLinksPane: View {
 
     var body: some View {
         Form {
-            Section("Rewrite web links to native apps when no rule matches first") {
+            Section {
                 ForEach(state.rewriters.rewriters) { rewriter in
                     Toggle(isOn: Binding(
-                        get: { !state.config.disabledRewriters.contains(rewriter.id) },
+                        get: { state.config.enabledRewriters.contains(rewriter.id) },
                         set: { on in
                             state.updateConfig { config in
                                 if on {
-                                    config.disabledRewriters.removeAll { $0 == rewriter.id }
-                                } else if !config.disabledRewriters.contains(rewriter.id) {
-                                    config.disabledRewriters.append(rewriter.id)
+                                    if !config.enabledRewriters.contains(rewriter.id) {
+                                        config.enabledRewriters.append(rewriter.id)
+                                    }
+                                } else {
+                                    config.enabledRewriters.removeAll { $0 == rewriter.id }
                                 }
                             }
                         }
@@ -86,9 +88,14 @@ struct DeepLinksPane: View {
                         }
                     }
                 }
+            } header: {
+                Text("Open links in native apps instead of the browser")
+            } footer: {
+                Text("All off by default. A rewriter only fires when its app is installed and no rule matched first — rules with a deep-link action always work regardless of these switches.")
+                    .font(.caption).foregroundStyle(.secondary)
             }
             Section {
-                Text("Rewriters only fire when the target app is installed. Definitions live in rewriters.json — contributions welcome, no Swift required.")
+                Text("Definitions live in rewriters.json — contributions welcome, no Swift required.")
                     .font(.caption).foregroundStyle(.secondary)
             }
         }
@@ -234,6 +241,14 @@ struct GeneralPane: View {
                 if let error = state.configError {
                     Text(error.description).font(.caption).foregroundStyle(.red)
                 }
+            }
+            Section("Onboarding") {
+                Button("Show Welcome Tour…") {
+                    UserDefaults.standard.set(false, forKey: "onboardingComplete")
+                    state.onboardingPresenter?()
+                }
+                Text("Re-runs the first-launch flow. Picking a fallback or starter rules again updates your existing config.")
+                    .font(.caption).foregroundStyle(.secondary)
             }
             Section("Updates") {
                 // Sparkle 2 integration is planned before 1.0; until then, manual check.

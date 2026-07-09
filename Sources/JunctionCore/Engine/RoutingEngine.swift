@@ -122,8 +122,8 @@ public struct RoutingEngine: Sendable {
             )
         }
 
-        // Built-in rewriters (enabled + target installed) before fallback.
-        for rewriter in rewriters.rewriters where !config.disabledRewriters.contains(rewriter.id) {
+        // Built-in rewriters (opt-in + target installed) before fallback.
+        for rewriter in rewriters.rewriters where config.enabledRewriters.contains(rewriter.id) {
             guard isSchemeHandled(rewriter.scheme), let rewritten = rewriter.rewrite(url) else { continue }
             return RoutingTrace(
                 input: event, transformedURL: transformedURL,

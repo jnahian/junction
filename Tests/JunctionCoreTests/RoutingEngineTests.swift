@@ -109,18 +109,18 @@ final class RoutingEngineTests: XCTestCase {
         guard case .fallback = d else { return XCTFail("\(d)") }
     }
 
-    func testBuiltinRewriterFiresWhenNoRuleMatches() {
-        // Spotify has no user rule, but the built-in rewriter is enabled by default.
-        let d = engine().route(event("https://open.spotify.com/track/4uLU6hMCjMI75M1A2tKUQC"))
+    func testEnabledRewriterFiresWhenNoRuleMatches() {
+        // Spotify has no user rule; the built-in rewriter fires once opted in.
+        var config = makeConfig()
+        config.enabledRewriters = ["spotify"]
+        let d = engine(config).route(event("https://open.spotify.com/track/4uLU6hMCjMI75M1A2tKUQC"))
         guard case .deepLink(let url, let id, _) = d else { return XCTFail("\(d)") }
         XCTAssertEqual(id, "spotify")
         XCTAssertEqual(url.absoluteString, "spotify:track:4uLU6hMCjMI75M1A2tKUQC")
     }
 
-    func testDisabledRewriterSkipped() {
-        var config = makeConfig()
-        config.disabledRewriters = ["spotify"]
-        let d = engine(config).route(event("https://open.spotify.com/track/4uLU6hMCjMI75M1A2tKUQC"))
+    func testRewritersOffByDefault() {
+        let d = engine().route(event("https://open.spotify.com/track/4uLU6hMCjMI75M1A2tKUQC"))
         guard case .fallback = d else { return XCTFail("\(d)") }
     }
 

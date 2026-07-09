@@ -7,8 +7,9 @@ public struct Config: Codable, Equatable, Sendable {
     public var stripTrackingParams: Bool
     /// Extra tracking params to strip, on top of the built-in list.
     public var extraTrackingParams: [String]
-    /// Rewriter IDs the user has disabled (all built-ins are on by default).
-    public var disabledRewriters: [String]
+    /// Rewriter IDs the user has switched on. All built-ins are OFF by default —
+    /// automatic deep-linking is opt-in. (Explicit `deepLink` rule actions always work.)
+    public var enabledRewriters: [String]
     public var rules: [Rule]
 
     public init(
@@ -16,19 +17,19 @@ public struct Config: Codable, Equatable, Sendable {
         fallback: Fallback = Fallback(app: "com.apple.Safari"),
         stripTrackingParams: Bool = true,
         extraTrackingParams: [String] = [],
-        disabledRewriters: [String] = [],
+        enabledRewriters: [String] = [],
         rules: [Rule] = []
     ) {
         self.version = version
         self.fallback = fallback
         self.stripTrackingParams = stripTrackingParams
         self.extraTrackingParams = extraTrackingParams
-        self.disabledRewriters = disabledRewriters
+        self.enabledRewriters = enabledRewriters
         self.rules = rules
     }
 
     enum CodingKeys: String, CodingKey {
-        case version, fallback, stripTrackingParams, extraTrackingParams, disabledRewriters, rules
+        case version, fallback, stripTrackingParams, extraTrackingParams, enabledRewriters, rules
     }
 
     public init(from decoder: Decoder) throws {
@@ -37,7 +38,7 @@ public struct Config: Codable, Equatable, Sendable {
         fallback = try c.decodeIfPresent(Fallback.self, forKey: .fallback) ?? Fallback(app: "com.apple.Safari")
         stripTrackingParams = try c.decodeIfPresent(Bool.self, forKey: .stripTrackingParams) ?? true
         extraTrackingParams = try c.decodeIfPresent([String].self, forKey: .extraTrackingParams) ?? []
-        disabledRewriters = try c.decodeIfPresent([String].self, forKey: .disabledRewriters) ?? []
+        enabledRewriters = try c.decodeIfPresent([String].self, forKey: .enabledRewriters) ?? []
         rules = try c.decodeIfPresent([Rule].self, forKey: .rules) ?? []
     }
 }

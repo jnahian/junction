@@ -32,10 +32,15 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     func applicationDidFinishLaunching(_ notification: Notification) {
         statusItem = StatusItemController(state: state)
 
+        state.onboardingPresenter = { [weak self] in
+            guard let self else { return }
+            if self.onboardingWindow == nil {
+                self.onboardingWindow = OnboardingWindowController(state: self.state)
+            }
+            self.onboardingWindow?.show()
+        }
         if !UserDefaults.standard.bool(forKey: "onboardingComplete") {
-            let onboarding = OnboardingWindowController(state: state)
-            onboardingWindow = onboarding
-            onboarding.show()
+            state.onboardingPresenter?()
         }
         state.configStore.bootstrapIfMissing()
         state.configStore.startWatching()
