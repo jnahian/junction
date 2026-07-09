@@ -114,10 +114,12 @@ public struct RoutingEngine: Sendable {
             }
 
             let decision = decide(action: c.rule.action, url: url)
+            var firedRewriter: String?
+            if case .deepLink(_, let id, _) = decision { firedRewriter = id }
             return RoutingTrace(
                 input: event, transformedURL: transformedURL,
                 matchedRule: c.rule.name, matchedRuleIndex: c.index,
-                rewriterID: { if case .deepLink(_, let id, _) = decision { return id } else { return nil } }(),
+                rewriterID: firedRewriter,
                 decision: decision
             )
         }

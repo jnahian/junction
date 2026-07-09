@@ -18,11 +18,16 @@ enum CoreResources {
     static let bundle: Bundle? = {
         let bundleNames = ["Junction_JunctionCore.bundle", "Junction_JunctionCore.resources"]
 
+        let anchor = Bundle(for: BundleFinder.self)
         var candidates: [URL] = []
         if let url = Bundle.main.resourceURL { candidates.append(url) }
-        if let url = Bundle(for: BundleFinder.self).resourceURL { candidates.append(url) }
+        if let url = anchor.resourceURL { candidates.append(url) }
         candidates.append(Bundle.main.bundleURL)
-        candidates.append(Bundle(for: BundleFinder.self).bundleURL)
+        candidates.append(anchor.bundleURL)
+        // Under `swift test` on macOS the module lives inside JunctionPackageTests.xctest,
+        // but SPM puts resource bundles NEXT TO the .xctest, in .build/debug — check parents.
+        candidates.append(anchor.bundleURL.deletingLastPathComponent())
+        candidates.append(Bundle.main.bundleURL.deletingLastPathComponent())
         if let executable = Bundle.main.executableURL?.resolvingSymlinksInPath() {
             let dir = executable.deletingLastPathComponent()
             candidates.append(dir)
