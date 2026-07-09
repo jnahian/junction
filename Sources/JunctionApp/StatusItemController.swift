@@ -31,21 +31,28 @@ final class StatusItemController: NSObject, NSMenuDelegate {
             .store(in: &cancellables)
     }
 
+    /// Template rendition of the app icon (three-way branch), shipped as an SVG resource.
+    private static let branchIcon: NSImage? = {
+        guard let url = Bundle.module.url(forResource: "MenuBarIcon", withExtension: "svg"),
+              let image = NSImage(contentsOf: url) else { return nil }
+        image.size = NSSize(width: 18, height: 18)
+        image.isTemplate = true
+        return image
+    }()
+
     private func updateIcon() {
         guard let button = statusItem.button else { return }
-        let symbol: String
+        let image: NSImage?
         if state.configError != nil {
-            symbol = "exclamationmark.triangle" // invalid config → warning badge (PRD §6.1)
-        } else if !state.isDefaultBrowser {
-            symbol = "arrow.triangle.branch" // gentle "not active" state (PRD §11)
+            // invalid config → warning badge (PRD §6.1)
+            let base = NSImage(systemSymbolName: "exclamationmark.triangle", accessibilityDescription: "Junction")
+            image = base?.withSymbolConfiguration(.init(pointSize: 15, weight: .medium)) ?? base
+            image?.isTemplate = true
         } else {
-            symbol = "arrow.triangle.branch"
+            image = Self.branchIcon
         }
-        let base = NSImage(systemSymbolName: symbol, accessibilityDescription: "Junction")
-        let configuration = NSImage.SymbolConfiguration(pointSize: 15, weight: .medium)
-        let image = base?.withSymbolConfiguration(configuration) ?? base
-        image?.isTemplate = true
         button.image = image
+        // dimmed = gentle "not active" state (PRD §11)
         button.appearsDisabled = !state.isDefaultBrowser && state.configError == nil
     }
 

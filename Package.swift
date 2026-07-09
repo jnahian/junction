@@ -33,7 +33,8 @@ let package = Package(
             name: "JunctionApp",
             dependencies: ["JunctionCore", "JunctionMacKit"],
             resources: [
-                .copy("Resources/starter-rules.json")
+                .copy("Resources/starter-rules.json"),
+                .copy("Resources/MenuBarIcon.svg"),
             ]
         ),
         .executableTarget(
