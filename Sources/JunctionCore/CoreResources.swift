@@ -1,26 +1,41 @@
 import Foundation
 
-/// Locates the SPM resource bundle (`Junction_JunctionCore.bundle`) without using the
-/// generated `Bundle.module` accessor, which `fatalError`s when the bundle isn't found.
+/// Anchor class so `Bundle(for:)` resolves to wherever this module's binary lives
+/// (the .xctest bundle under `swift test`, the app binary in Junction.app, etc.).
+private final class BundleFinder {}
+
+/// Locates the SPM resource bundle without the generated `Bundle.module` accessor,
+/// which `fatalError`s when the bundle isn't found (fatal for the CLI installed
+/// outside the app bundle). Mirrors SPM's own candidate list, plus the CLI layout.
 ///
-/// Search order covers every deployment shape:
-/// - `Junction.app/Contents/Resources/` (JunctionCore linked into the app)
-/// - next to the executable (`swift run`, `swift test`, `.build/release/`)
-/// - `../Resources/` relative to the executable (the CLI at `Junction.app/Contents/Helpers/junction`)
+/// Covered deployment shapes:
+/// - `swift test` / `swift run` on macOS and Linux (Bundle(for:) / executable dir)
+/// - JunctionCore linked into Junction.app (Bundle.main.resourceURL)
+/// - the CLI at `Junction.app/Contents/Helpers/junction` (../Resources)
+///
+/// Note: Darwin names the artifact `.bundle`; other platforms use `.resources`.
 enum CoreResources {
     static let bundle: Bundle? = {
-        let name = "Junction_JunctionCore.bundle"
+        let bundleNames = ["Junction_JunctionCore.bundle", "Junction_JunctionCore.resources"]
+
         var candidates: [URL] = []
-        if let resources = Bundle.main.resourceURL { candidates.append(resources) }
+        if let url = Bundle.main.resourceURL { candidates.append(url) }
+        if let url = Bundle(for: BundleFinder.self).resourceURL { candidates.append(url) }
         candidates.append(Bundle.main.bundleURL)
+        candidates.append(Bundle(for: BundleFinder.self).bundleURL)
         if let executable = Bundle.main.executableURL?.resolvingSymlinksInPath() {
             let dir = executable.deletingLastPathComponent()
             candidates.append(dir)
             candidates.append(dir.deletingLastPathComponent().appendingPathComponent("Resources"))
         }
+
         for candidate in candidates {
-            if let bundle = Bundle(url: candidate.appendingPathComponent(name)) {
-                return bundle
+            for name in bundleNames {
+                let path = candidate.appendingPathComponent(name)
+                if FileManager.default.fileExists(atPath: path.path),
+                   let bundle = Bundle(url: path) {
+                    return bundle
+                }
             }
         }
         return nil

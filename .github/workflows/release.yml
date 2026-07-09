@@ -20,6 +20,13 @@ permissions:
 jobs:
   release:
     runs-on: macos-latest
+    # The `secrets` context is not allowed in `if:` conditions — map to env and test that.
+    env:
+      P12: ${{ secrets.MACOS_CERT_P12_BASE64 }}
+      P12_PASSWORD: ${{ secrets.MACOS_CERT_PASSWORD }}
+      NOTARY_APPLE_ID: ${{ secrets.NOTARY_APPLE_ID }}
+      NOTARY_TEAM_ID: ${{ secrets.NOTARY_TEAM_ID }}
+      NOTARY_PASSWORD: ${{ secrets.NOTARY_PASSWORD }}
     steps:
       - uses: actions/checkout@v4
 
@@ -27,10 +34,7 @@ jobs:
         run: swift test
 
       - name: Import signing certificate
-        if: ${{ secrets.MACOS_CERT_P12_BASE64 != '' }}
-        env:
-          P12: ${{ secrets.MACOS_CERT_P12_BASE64 }}
-          P12_PASSWORD: ${{ secrets.MACOS_CERT_PASSWORD }}
+        if: env.P12 != ''
         run: |
           echo "$P12" | base64 --decode > cert.p12
           security create-keychain -p tmp build.keychain
@@ -45,18 +49,14 @@ jobs:
         run: Scripts/bundle-app.sh   # ad-hoc signs when CODESIGN_IDENTITY is unset
 
       - name: Notarize and staple
-        if: ${{ secrets.NOTARY_APPLE_ID != '' }}
-        env:
-          NOTARY_APPLE_ID: ${{ secrets.NOTARY_APPLE_ID }}
-          NOTARY_TEAM_ID: ${{ secrets.NOTARY_TEAM_ID }}
-          NOTARY_PASSWORD: ${{ secrets.NOTARY_PASSWORD }}
+        if: env.NOTARY_APPLE_ID != ''
         run: |
           xcrun notarytool store-credentials junction \
             --apple-id "$NOTARY_APPLE_ID" --team-id "$NOTARY_TEAM_ID" --password "$NOTARY_PASSWORD"
           Scripts/notarize.sh
 
       - name: Zip (unsigned build)
-        if: ${{ secrets.NOTARY_APPLE_ID == '' }}
+        if: env.NOTARY_APPLE_ID == ''
         run: ditto -c -k --keepParent dist/Junction.app dist/Junction.zip
 
       - name: Compute checksum
