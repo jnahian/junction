@@ -68,12 +68,14 @@ junction config validate
 xattr -dr com.apple.quarantine /Applications/Junction.app
 ```
 
-**Homebrew** (via the `jnahian/tap` tap):
+**Homebrew** (this repo is its own tap):
 
 ```sh
-brew tap jnahian/tap
+brew tap jnahian/junction https://github.com/jnahian/junction
 brew install --cask --no-quarantine junction
 ```
+
+Upgrades arrive automatically — each release bumps the cask, so `brew upgrade` picks it up.
 
 Every release includes GitHub build provenance — verify with `gh attestation verify Junction.zip --repo jnahian/junction`.
 

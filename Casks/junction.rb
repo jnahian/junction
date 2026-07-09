@@ -1,20 +1,24 @@
 # Homebrew cask for Junction.
 #
-# Lives in your tap repo: github.com/jnahian/homebrew-tap → Casks/junction.rb
-# After each release: update `version` and `sha256` (printed in the release
-# workflow log and on the release page), then push the tap.
+# This repo doubles as its own tap (Casks/ at the repo root). The release
+# workflow bumps `version` and `sha256` here automatically on each tagged release.
 #
 # Until builds are notarized, users install with:
-#   brew tap jnahian/tap
+#   brew tap jnahian/junction https://github.com/jnahian/junction
 #   brew install --cask --no-quarantine junction
 cask "junction" do
   version "0.1.0"
-  sha256 "REPLACE_WITH_SHA256_FROM_RELEASE"
+  sha256 "2f666984c1db48796606354fef5356a264e9dc0a3b521a604cea0138ba8a218e"
 
   url "https://github.com/jnahian/junction/releases/download/v#{version}/Junction.zip"
   name "Junction"
   desc "Rule-based link router — routes links to the right browser, profile, or app"
   homepage "https://github.com/jnahian/junction"
+
+  livecheck do
+    url :url
+    strategy :github_latest
+  end
 
   depends_on macos: ">= :ventura"
 

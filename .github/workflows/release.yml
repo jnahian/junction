@@ -100,3 +100,20 @@ jobs:
           files: dist/Junction.zip
           body_path: release-notes.md
           generate_release_notes: true
+
+      # This repo is its own Homebrew tap (Casks/junction.rb at the root).
+      # Bump the cask's version + sha256 on main so `brew upgrade` sees the release.
+      - name: Bump Homebrew cask
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git fetch origin main
+          git checkout main
+          VERSION="${GITHUB_REF_NAME#v}"
+          SHA="${{ steps.checksum.outputs.sha256 }}"
+          sed -i '' \
+            -e "s/^  version \".*\"/  version \"$VERSION\"/" \
+            -e "s/^  sha256 \".*\"/  sha256 \"$SHA\"/" \
+            Casks/junction.rb
+          git commit -am "Bump junction cask to $VERSION"
+          git push origin main
