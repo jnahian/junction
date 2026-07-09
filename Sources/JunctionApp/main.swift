@@ -10,4 +10,8 @@ MainActor.assumeIsolated {
     app.setActivationPolicy(.accessory) // menu bar only; Info.plist also sets LSUIElement
     app.run()
 }
+#else
+// Non-macOS stub so the executable target links on Linux CI (`swift test`
+// builds every target in the package, including this one).
+print("Junction is a macOS app — this platform build exists only for CI.")
 #endif
