@@ -1,0 +1,64 @@
+name: Release
+
+# Builds, signs, notarizes, and attaches Junction to a GitHub Release.
+# Required repo secrets:
+#   MACOS_CERT_P12_BASE64, MACOS_CERT_PASSWORD  — Developer ID Application cert
+#   NOTARY_APPLE_ID, NOTARY_TEAM_ID, NOTARY_PASSWORD — notarytool credentials
+on:
+  push:
+    tags: ["v*"]
+
+permissions:
+  contents: write
+  id-token: write
+  attestations: write
+
+jobs:
+  release:
+    runs-on: macos-14
+    steps:
+      - uses: actions/checkout@v4
+      - name: Select Xcode
+        run: sudo xcode-select -s /Applications/Xcode_15.4.app
+
+      - name: Run tests
+        run: swift test
+
+      - name: Import signing certificate
+        env:
+          P12: ${{ secrets.MACOS_CERT_P12_BASE64 }}
+          P12_PASSWORD: ${{ secrets.MACOS_CERT_PASSWORD }}
+        run: |
+          echo "$P12" | base64 --decode > cert.p12
+          security create-keychain -p tmp build.keychain
+          security default-keychain -s build.keychain
+          security unlock-keychain -p tmp build.keychain
+          security import cert.p12 -k build.keychain -P "$P12_PASSWORD" -T /usr/bin/codesign
+          security set-key-partition-list -S apple-tool:,apple: -s -k tmp build.keychain
+          rm cert.p12
+
+      - name: Build, bundle, sign
+        env:
+          CODESIGN_IDENTITY: Developer ID Application
+        run: Scripts/bundle-app.sh
+
+      - name: Notarize and staple
+        env:
+          NOTARY_APPLE_ID: ${{ secrets.NOTARY_APPLE_ID }}
+          NOTARY_TEAM_ID: ${{ secrets.NOTARY_TEAM_ID }}
+          NOTARY_PASSWORD: ${{ secrets.NOTARY_PASSWORD }}
+        run: |
+          xcrun notarytool store-credentials junction \
+            --apple-id "$NOTARY_APPLE_ID" --team-id "$NOTARY_TEAM_ID" --password "$NOTARY_PASSWORD"
+          Scripts/notarize.sh
+
+      - name: Attest build provenance
+        uses: actions/attest-build-provenance@v1
+        with:
+          subject-path: dist/Junction.zip
+
+      - name: Attach to release
+        uses: softprops/action-gh-release@v2
+        with:
+          files: dist/Junction.zip
+          generate_release_notes: true

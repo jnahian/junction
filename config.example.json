@@ -1,0 +1,31 @@
+{
+  // Junction accepts comments and trailing commas when reading.
+  // The GUI writes back strict, pretty-printed JSON with sorted keys.
+  "version": 1,
+  "fallback": { "app": "com.apple.Safari" },
+  "stripTrackingParams": true,
+  "rules": [
+    {
+      "name": "Work links → Chrome work profile",
+      "match": {
+        "patterns": ["*.atlassian.net/*", "app.clickup.com/*", "*.slack.com/*"]
+      },
+      "action": { "app": "com.google.Chrome", "profile": "Profile 1" }
+    },
+    {
+      "name": "Zoom → native app",
+      "match": { "patterns": ["*.zoom.us/j/*", "*.zoom.us/w/*"] },
+      "action": { "deepLink": "zoom" }
+    },
+    {
+      "name": "Links from Terminal → Chrome",
+      "match": { "sourceApps": ["com.googlecode.iterm2", "com.apple.Terminal"] },
+      "action": { "app": "com.google.Chrome" }
+    },
+    {
+      "name": "Meeting links from calendar → picker",
+      "match": { "patterns": ["meet.google.com/*"], "sourceApps": ["com.apple.iCal"] },
+      "action": { "prompt": true }
+    },
+  ]
+}

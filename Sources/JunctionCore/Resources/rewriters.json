@@ -1,0 +1,105 @@
+{
+  "version": 1,
+  "rewriters": [
+    {
+      "id": "zoom",
+      "name": "Zoom",
+      "patterns": [
+        "^https?://(?:[^./]+\\.)?zoom\\.us/[jw]/(\\d+)(?:\\?(?:[^#]*&)?pwd=([^&#]+))?"
+      ],
+      "template": "zoommtg://zoom.us/join?confno=$1&pwd=$2",
+      "scheme": "zoommtg",
+      "bundleID": "us.zoom.xos"
+    },
+    {
+      "id": "spotify",
+      "name": "Spotify",
+      "patterns": [
+        "^https?://open\\.spotify\\.com/(track|album|artist|playlist|show|episode)/([A-Za-z0-9]+)"
+      ],
+      "template": "spotify:$1:$2",
+      "scheme": "spotify",
+      "bundleID": "com.spotify.client"
+    },
+    {
+      "id": "slack",
+      "name": "Slack (message links)",
+      "patterns": [
+        "^https?://([^./]+)\\.slack\\.com/archives/([A-Z0-9]+)/p(\\d{10})(\\d{6})"
+      ],
+      "template": "slack://channel?team=&id=$2&message=$3.$4",
+      "scheme": "slack",
+      "bundleID": "com.tinyspeck.slackmacgap"
+    },
+    {
+      "id": "slack-channel",
+      "name": "Slack (channel links)",
+      "patterns": [
+        "^https?://([^./]+)\\.slack\\.com/archives/([A-Z0-9]+)/?$"
+      ],
+      "template": "slack://channel?team=&id=$2",
+      "scheme": "slack",
+      "bundleID": "com.tinyspeck.slackmacgap"
+    },
+    {
+      "id": "figma",
+      "name": "Figma",
+      "patterns": [
+        "^https?://(?:www\\.)?figma\\.com/(?:file|design)/([A-Za-z0-9]+)(/[^?#]*)?"
+      ],
+      "template": "figma://file/$1$2",
+      "scheme": "figma",
+      "bundleID": "com.figma.Desktop"
+    },
+    {
+      "id": "notion",
+      "name": "Notion",
+      "patterns": [
+        "^https?://(?:www\\.)?notion\\.so/(.*)$"
+      ],
+      "template": "notion://www.notion.so/$1",
+      "scheme": "notion",
+      "bundleID": "notion.id"
+    },
+    {
+      "id": "teams",
+      "name": "Microsoft Teams",
+      "patterns": [
+        "^https?://teams\\.microsoft\\.com/(l/.*)$"
+      ],
+      "template": "msteams:/$1",
+      "scheme": "msteams",
+      "bundleID": "com.microsoft.teams2"
+    },
+    {
+      "id": "discord",
+      "name": "Discord",
+      "patterns": [
+        "^https?://(?:www\\.|ptb\\.|canary\\.)?discord\\.com/(channels/.*)$"
+      ],
+      "template": "discord://-/$1",
+      "scheme": "discord",
+      "bundleID": "com.hnc.Discord"
+    },
+    {
+      "id": "linear",
+      "name": "Linear",
+      "patterns": [
+        "^https?://linear\\.app/(.*)$"
+      ],
+      "template": "linear://linear.app/$1",
+      "scheme": "linear",
+      "bundleID": "com.linear"
+    },
+    {
+      "id": "vscode",
+      "name": "VS Code (vscode.dev / github.dev, experimental)",
+      "patterns": [
+        "^https?://(?:vscode|github)\\.dev/([^?#]*)"
+      ],
+      "template": "vscode://$1",
+      "scheme": "vscode",
+      "bundleID": "com.microsoft.VSCode"
+    }
+  ]
+}

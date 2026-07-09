@@ -1,0 +1,57 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+jobs:
+  test-macos:
+    name: Engine tests + app build (macOS)
+    runs-on: macos-14
+    steps:
+      - uses: actions/checkout@v4
+      - name: Select Xcode
+        run: sudo xcode-select -s /Applications/Xcode_15.4.app
+      - name: Run unit tests
+        run: swift test
+      - name: Build release + bundle app
+        run: Scripts/bundle-app.sh
+      - name: Smoke-test CLI
+        run: |
+          dist/Junction.app/Contents/Helpers/junction config path
+          dist/Junction.app/Contents/Helpers/junction test "https://us02web.zoom.us/j/123456789?pwd=x"
+      - uses: actions/upload-artifact@v4
+        with:
+          name: Junction.app
+          path: dist/Junction.app
+
+  test-linux:
+    name: Engine tests (Linux)
+    runs-on: ubuntu-latest
+    container: swift:6.0
+    steps:
+      - uses: actions/checkout@v4
+      - run: swift test
+
+  validate-rewriters:
+    name: Validate rewriters.json
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: JSON syntax + schema sanity
+        run: |
+          python3 - <<'EOF'
+          import json, re, sys
+          with open("Sources/JunctionCore/Resources/rewriters.json") as f:
+              data = json.load(f)
+          ids = set()
+          for r in data["rewriters"]:
+              for key in ("id", "name", "patterns", "template", "scheme"):
+                  assert key in r, f"rewriter missing {key}: {r}"
+              assert r["id"] not in ids, f"duplicate id {r['id']}"
+              ids.add(r["id"])
+              for p in r["patterns"]:
+                  re.compile(p)
+          print(f"✓ {len(ids)} rewriters valid")
+          EOF
