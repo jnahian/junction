@@ -68,15 +68,40 @@ private struct OnboardingView: View {
     @State private var selectedTemplates: Set<String> = []
     private let templates = StarterTemplates.load()
 
+    private static let rewriters = RewriterStore.builtin()
+
+    /// Templates naming an app the user doesn't have would create rules that can never dispatch,
+    /// so don't offer them. Browsers are matched by bundle ID; deep links by whether anything
+    /// installed claims the rewriter's URL scheme.
+    private var availableTemplates: [StarterTemplate] {
+        templates.filter { template in
+            switch template.rule.action {
+            case .open(let app, _):
+                return state.browsers.contains { $0.bundleID == app }
+            case .deepLink(let id):
+                guard let scheme = Self.rewriters.rewriter(id: id)?.scheme else { return false }
+                return BrowserDiscovery.isSchemeHandled(scheme)
+            case .prompt, .clipboard:
+                return true
+            }
+        }
+    }
+
     var body: some View {
         VStack(alignment: .leading, spacing: Metrics.sectionSpacing) {
-            switch step {
-            case 0: welcome
-            case 1: fallbackPicker
-            case 2: defaultBrowser
-            default: starterRules
+            // Scrolls so the step content can't clip the buttons at large accessibility text
+            // sizes, or when more starter rules are added.
+            ScrollView {
+                VStack(alignment: .leading, spacing: Metrics.sectionSpacing) {
+                    switch step {
+                    case 0: welcome
+                    case 1: fallbackPicker
+                    case 2: defaultBrowser
+                    default: starterRules
+                    }
+                }
+                .frame(maxWidth: .infinity, alignment: .leading)
             }
-            Spacer()
             HStack {
                 if step > 0 {
                     Button("Back") { step -= 1 }
@@ -146,6 +171,9 @@ private struct OnboardingView: View {
         }
         .onAppear {
             state.refreshBrowsers()
+            // Seed a default only when the current pick isn't installed. onAppear fires again
+            // when the user steps Back to here, and re-seeding would clobber their choice.
+            guard !state.browsers.contains(where: { $0.bundleID == fallbackBundleID }) else { return }
             if let first = state.browsers.first(where: { $0.bundleID == "com.apple.Safari" }) ?? state.browsers.first {
                 fallbackBundleID = first.bundleID
             }
@@ -172,7 +200,11 @@ private struct OnboardingView: View {
             Text("Starter rules").font(.title2.bold())
             Text("Pick any that fit — edit them later in Settings.")
                 .foregroundStyle(.secondary)
-            ForEach(templates) { template in
+            if availableTemplates.isEmpty {
+                Text("No starter rules match the apps you have installed. You can add your own anytime in Settings.")
+                    .foregroundStyle(.secondary)
+            }
+            ForEach(availableTemplates) { template in
                 Toggle(isOn: Binding(
                     get: { selectedTemplates.contains(template.id) },
                     set: { on in
@@ -195,7 +227,7 @@ private struct OnboardingView: View {
         }
         state.updateConfig { config in
             config.fallback.app = fallbackBundleID
-            let chosen = templates.filter { selectedTemplates.contains($0.id) }.map(\.rule)
+            let chosen = availableTemplates.filter { selectedTemplates.contains($0.id) }.map(\.rule)
             // Skip templates already present (re-running the tour must not duplicate rules).
             config.rules.append(contentsOf: chosen.filter { rule in !config.rules.contains(rule) })
         }

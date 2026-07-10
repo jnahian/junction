@@ -2,8 +2,8 @@
   "templates": [
     {
       "id": "work-profile",
-      "title": "Work links → work browser profile",
-      "description": "Jira, ClickUp, and Google Workspace open in a browser profile you pick.",
+      "title": "Work links → Chrome",
+      "description": "Jira, ClickUp, and Google Workspace open in Chrome's Default profile. Point it at another profile in Settings.",
       "rule": {
         "name": "Work links → work profile",
         "match": {
