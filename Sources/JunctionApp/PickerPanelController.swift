@@ -21,7 +21,7 @@ final class PickerPanelController {
         let browser: Browser
         let profile: BrowserProfile?
         var title: String {
-            profile.map { "\(browser.name) — \($0.displayName)" } ?? browser.name
+            profile.map { "\(browser.name) (\($0.displayName))" } ?? browser.name
         }
         var icon: NSImage { NSWorkspace.shared.icon(forFile: browser.appURL.path) }
     }

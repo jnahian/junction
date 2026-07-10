@@ -11,7 +11,7 @@ import JunctionMacKit
 struct JunctionCommand: ParsableCommand {
     static let configuration = CommandConfiguration(
         commandName: "junction",
-        abstract: "Rule-based link router — CLI companion to Junction.app.",
+        abstract: "Rule-based link router. CLI companion to Junction.app.",
         subcommands: [Open.self, Test.self, ConfigCommand.self]
     )
 }
@@ -165,12 +165,12 @@ struct ConfigCommand: ParsableCommand {
             let url = config.map { URL(fileURLWithPath: ($0 as NSString).expandingTildeInPath) }
                 ?? ConfigStore.defaultURL()
             guard FileManager.default.fileExists(atPath: url.path) else {
-                print("no config file at \(url.path) — Junction will use defaults")
+                print("no config file at \(url.path); Junction will use defaults")
                 return
             }
             do {
                 let loaded = try ConfigStore.load(from: url)
-                print("✓ valid — \(loaded.rules.count) rule(s), fallback \(loaded.fallback.app)")
+                print("✓ valid: \(loaded.rules.count) rule(s), fallback \(loaded.fallback.app)")
             } catch let error as ConfigError {
                 print("✗ \(error.description)")
                 throw ExitCode(1)

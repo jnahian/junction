@@ -122,7 +122,7 @@ struct RuleEditor: View {
                     TextField("Name", text: $name)
                     TextField("Notes (optional)", text: $notes)
                 }
-                Section("Match — all groups must match; entries within a group are OR-ed") {
+                Section("Match (all groups must match; entries within a group are OR-ed)") {
                     VStack(alignment: .leading, spacing: 4) {
                         Text("URL patterns (one per line, e.g. *.atlassian.net/*)")
                             .font(.caption).foregroundStyle(.secondary)
@@ -221,7 +221,7 @@ struct SourceAppsField: View {
 
     var body: some View {
         VStack(alignment: .leading, spacing: 6) {
-            Text("Source apps (bundle IDs — rule fires only for links clicked in these apps)")
+            Text("Source apps (bundle IDs; rule fires only for links clicked in these apps)")
                 .font(.caption).foregroundStyle(.secondary)
             ForEach(sourceApps, id: \.self) { app in
                 HStack {

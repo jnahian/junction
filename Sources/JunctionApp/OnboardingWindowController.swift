@@ -174,7 +174,7 @@ private struct OnboardingView: View {
             }
             .padding(.bottom, Metrics.controlSpacing)
             Text("""
-            Junction becomes your default browser — but it never shows a window. \
+            Junction becomes your default browser, but it never shows a window. \
             When you click a link anywhere, Junction checks your rules and instantly \
             hands the link to the right browser, browser profile, or native app.
 
@@ -232,7 +232,7 @@ private struct OnboardingView: View {
     private var starterRules: some View {
         VStack(alignment: .leading, spacing: 12) {
             Text("Starter rules").font(.title2.bold())
-            Text("Pick any that fit — edit them later in Settings.")
+            Text("Pick any that fit. You can edit them later in Settings.")
                 .foregroundStyle(.secondary)
             if availableTemplates.isEmpty {
                 Text("No starter rules match the apps you have installed. You can add your own anytime in Settings.")

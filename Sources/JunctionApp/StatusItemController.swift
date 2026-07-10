@@ -7,7 +7,9 @@ import Sparkle
 
 // Auto-update via Sparkle. Only starts in the packaged .app (SUFeedURL lives in
 // Info.plist); nil under `swift run` so dev launches don't error on a missing feed.
-private let updaterController: SPUStandardUpdaterController? = {
+// Module-scoped: the menu bar and the General settings pane must share one updater,
+// or each would schedule its own background checks.
+let updaterController: SPUStandardUpdaterController? = {
     guard Bundle.main.object(forInfoDictionaryKey: "SUFeedURL") != nil else { return nil }
     return SPUStandardUpdaterController(startingUpdater: true, updaterDelegate: nil, userDriverDelegate: nil)
 }()

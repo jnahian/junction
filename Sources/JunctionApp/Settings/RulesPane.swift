@@ -77,7 +77,7 @@ struct RulesPane: View {
                 Divider().frame(height: 16)
 
                 Spacer()
-                Text("First matching rule wins — drag to reorder.")
+                Text("First matching rule wins. Drag to reorder.")
                     .font(.caption)
                     .foregroundStyle(.secondary)
                     .padding(.trailing, Metrics.controlSpacing)

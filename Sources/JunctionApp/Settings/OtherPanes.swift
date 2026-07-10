@@ -4,6 +4,7 @@ import Foundation
 import JunctionCore
 import JunctionMacKit
 import ServiceManagement
+import Sparkle
 import SwiftUI
 
 // MARK: - Browsers (F9)
@@ -13,7 +14,7 @@ struct BrowsersPane: View {
 
     var body: some View {
         Form {
-            Section("Fallback browser — used when no rule matches") {
+            Section("Fallback browser (used when no rule matches)") {
                 Picker("Fallback", selection: Binding(
                     get: { state.config.fallback.app },
                     set: { id in state.updateConfig { $0.fallback.app = id } }
@@ -91,11 +92,11 @@ struct DeepLinksPane: View {
             } header: {
                 Text("Open links in native apps instead of the browser")
             } footer: {
-                Text("All off by default. A rewriter only fires when its app is installed and no rule matched first — rules with a deep-link action always work regardless of these switches.")
+                Text("All off by default. A rewriter only fires when its app is installed and no rule matched first. Rules with a deep-link action always work regardless of these switches.")
                     .font(.caption).foregroundStyle(.secondary)
             }
             Section {
-                Text("Definitions live in rewriters.json — contributions welcome, no Swift required.")
+                Text("Definitions live in rewriters.json. Contributions welcome, no Swift required.")
                     .font(.caption).foregroundStyle(.secondary)
             }
         }
@@ -174,7 +175,7 @@ struct TesterPane: View {
                 ))
                 Section("Result") {
                     LabeledContent("After transforms", value: trace.transformedURL.absoluteString)
-                    LabeledContent("Matched rule", value: trace.matchedRule ?? (trace.rewriterID.map { "built-in rewriter: \($0)" } ?? "none — fallback"))
+                    LabeledContent("Matched rule", value: trace.matchedRule ?? (trace.rewriterID.map { "built-in rewriter: \($0)" } ?? "none (fallback)"))
                     LabeledContent("Decision", value: describe(trace.decision))
                     LabeledContent("Final URL", value: trace.decision.url.absoluteString)
                 }
@@ -211,7 +212,7 @@ struct GeneralPane: View {
                     Label("Junction is your default browser", systemImage: "checkmark.circle.fill")
                         .foregroundStyle(.green)
                 } else {
-                    Label("Junction is not your default browser — links won't be routed", systemImage: "exclamationmark.triangle")
+                    Label("Junction is not your default browser, so links won't be routed", systemImage: "exclamationmark.triangle")
                         .foregroundStyle(.orange)
                     Button("Set as Default Browser…") { state.requestDefaultBrowser() }
                 }
@@ -251,11 +252,18 @@ struct GeneralPane: View {
                     .font(.caption).foregroundStyle(.secondary)
             }
             Section("Updates") {
-                // Sparkle 2 integration is planned before 1.0; until then, manual check.
-                Button("Check for Updates on GitHub…") {
-                    NSWorkspace.shared.open(URL(string: "https://github.com/jnahian/junction/releases")!)
+                if updaterController != nil {
+                    Button("Check for Updates…") {
+                        NSApp.activate(ignoringOtherApps: true)
+                        updaterController?.checkForUpdates(nil)
+                    }
+                } else {
+                    // No SUFeedURL under `swift run`; the packaged app always has one.
+                    Button("View Releases on GitHub…") {
+                        NSWorkspace.shared.open(URL(string: "https://github.com/jnahian/junction/releases")!)
+                    }
                 }
-                Text("Junction makes no network calls. Zero telemetry — URLs never leave your Mac or touch disk.")
+                Text("Junction checks GitHub for new versions and makes no other network calls. Zero telemetry: the links you open never leave your Mac or touch disk.")
                     .font(.caption).foregroundStyle(.secondary)
             }
         }
