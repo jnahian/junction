@@ -103,10 +103,37 @@ and `appcast.xml`. Updates reach Apple-silicon Macs only (arm64 binary).
 ## Keys and secrets
 
 - Public key (`SUPublicEDKey`) is in `App/Info.plist`. Changing it orphans every
-  installed copy — they will reject all future updates. Don't.
-- Private key: login keychain, account `junction`. Back it up with
-  `generate_keys --account junction -x junction-key.txt` and store it somewhere
-  safe. **Lose it and you can never ship an update to existing installs again.**
+  installed copy — they reject all future updates. Don't.
+- Private key: login keychain, account `junction`, service
+  `https://sparkle-project.org`. It exists in exactly one place.
+
+### Never commit the private key
+
+This repo is **public**, and the key is not a read credential — it authorizes
+code to execute on every user's Mac. Junction checks the feed at launch, so
+anyone holding the key can sign a malicious build that users install and run.
+The signature is the only thing protecting them.
+
+Git makes it permanent: committing it puts it in the history, in every clone,
+and in GitHub's API even after a force-push. Rotating away from a leaked key
+means changing `SUPublicEDKey`, which orphans every existing install — so you
+would strand exactly the users you were protecting. There is no undo. `.gitignore`
+covers `*-key.txt`, but the rule is the point, not the pattern.
+
+### Back it up anyway
+
+Lose the key and you can never ship an update to an existing install again —
+users would have to reinstall by hand. Export it and store it somewhere private:
+
+```sh
+.build/artifacts/sparkle/Sparkle/bin/generate_keys --account junction -x ~/Desktop/junction-key.txt
+```
+
+Paste the contents into a password manager as a secure note, then `rm` the file.
+If you want a file backup instead, encrypt it (`gpg -c junction-key.txt`) and put
+the `.gpg` in private cloud storage — still never in this repo.
+
+Restore onto a new machine with `generate_keys --account junction -f <file>`.
 
 ## Not yet notarized
 
