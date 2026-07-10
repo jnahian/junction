@@ -75,7 +75,8 @@ struct Test: ParsableCommand {
         }
         switch trace.decision {
         case .open(let app, let profile, let url):
-            print("action:      open in \(app)\(profile.map { " --profile-directory=\"\($0)\"" } ?? "")")
+            // Don't name a launch flag here: it differs per browser family (Chromium vs Firefox).
+            print("action:      open in \(app)\(profile.map { " profile \"\($0)\"" } ?? "")")
             print("url:         \(url.absoluteString)")
         case .deepLink(let url, let id, _):
             print("action:      deep link (\(id))")

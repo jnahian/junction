@@ -64,7 +64,7 @@ public struct Dispatcher {
             // Target browser missing (e.g. dotfiles synced to a Mac without it) → fallback.
             if bundleID != fallbackApp,
                let fallbackURL = NSWorkspace.shared.urlForApplication(withBundleIdentifier: fallbackApp) {
-                open(url: url, appURL: fallbackURL, profile: nil, completion: completion)
+                open(url: url, appURL: fallbackURL, bundleID: fallbackApp, profile: nil, completion: completion)
                 return .degradedToFallback(reason: "\(bundleID) is not installed")
             }
             // Last resort: system default handler.
@@ -72,23 +72,53 @@ public struct Dispatcher {
             completion?(.degradedToFallback(reason: "\(bundleID) is not installed"))
             return .degradedToFallback(reason: "\(bundleID) is not installed")
         }
-        open(url: url, appURL: appURL, profile: profile, completion: completion)
+
+        // A renamed or deleted Firefox profile can't be caught by Firefox: `-P unknown` doesn't
+        // error, it hands the URL to whatever instance happens to be running. Catch it here so
+        // the link lands somewhere predictable instead of a silently wrong profile.
+        if let profile,
+           BrowserDiscovery.family(forBundleID: bundleID) == .firefox,
+           !FirefoxProfiles.profiles(for: bundleID).contains(where: { $0.directory == profile }) {
+            let reason = "Firefox profile \"\(profile)\" no longer exists"
+            if bundleID != fallbackApp,
+               let fallbackURL = NSWorkspace.shared.urlForApplication(withBundleIdentifier: fallbackApp) {
+                open(url: url, appURL: fallbackURL, bundleID: fallbackApp, profile: nil, completion: completion)
+            } else {
+                open(url: url, appURL: appURL, bundleID: bundleID, profile: nil, completion: completion)
+            }
+            return .degradedToFallback(reason: reason)
+        }
+
+        open(url: url, appURL: appURL, bundleID: bundleID, profile: profile, completion: completion)
         return .opened
+    }
+
+    /// The launch flag that selects a profile, per browser family.
+    /// Chromium: `--profile-directory=<dir>`. Firefox: `-P <name>` (verified on Firefox 152 —
+    /// it starts a second instance when another profile is live, and forwards when that same
+    /// profile is already running, so no `-no-remote` is needed).
+    private func profileArguments(bundleID: String, profile: String, url: URL) -> [String]? {
+        switch BrowserDiscovery.family(forBundleID: bundleID) {
+        case .chromium: return ["--profile-directory=\(profile)", url.absoluteString]
+        case .firefox: return ["-P", profile, url.absoluteString]
+        case .other: return nil
+        }
     }
 
     private func open(
         url: URL,
         appURL: URL,
+        bundleID: String,
         profile: String?,
         completion: (@Sendable (DispatchOutcome) -> Void)?
     ) {
         let configuration = NSWorkspace.OpenConfiguration()
         configuration.activates = true
-        if let profile {
-            // arguments are only honored for a *new* process, so force one; Chromium's
-            // singleton IPC hands the URL+profile to the running instance and the
-            // spawned process exits immediately. Works whether or not the browser is open.
-            configuration.arguments = ["--profile-directory=\(profile)", url.absoluteString]
+        if let profile, let arguments = profileArguments(bundleID: bundleID, profile: profile, url: url) {
+            // arguments are only honored for a *new* process, so force one. Both families'
+            // singleton IPC hands the URL to the right running instance and the spawned
+            // process exits. Works whether or not the browser is open.
+            configuration.arguments = arguments
             configuration.createsNewApplicationInstance = true
             NSWorkspace.shared.openApplication(at: appURL, configuration: configuration) { _, error in
                 if let error {

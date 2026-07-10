@@ -36,7 +36,11 @@ struct BrowsersPane: View {
                         }
                         if !browser.profiles.isEmpty {
                             Text("Profiles: " + browser.profiles.map {
-                                "\($0.displayName) (\($0.directory))"
+                                // Firefox has no label distinct from its profile name, so
+                                // don't render "default (default)".
+                                $0.displayName == $0.directory
+                                    ? $0.displayName
+                                    : "\($0.displayName) (\($0.directory))"
                             }.joined(separator: ", "))
                             .font(.caption)
                             .foregroundStyle(.secondary)
@@ -47,7 +51,7 @@ struct BrowsersPane: View {
                 Button("Refresh") { state.refreshBrowsers() }
             }
             Section {
-                Text("Arc spaces have no public API and are unsupported. Firefox profiles are planned for v1.1.")
+                Text("Chromium and Firefox profiles are detected automatically. Firefox containers are an extension feature with no launch-flag equivalent, so they are unsupported, as are Arc spaces (no public API).")
                     .font(.caption).foregroundStyle(.secondary)
             }
         }

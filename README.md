@@ -13,7 +13,7 @@ macOS allows exactly one default browser. If you juggle work and personal Chrome
 1. Junction registers as your default browser (it's a menu bar app: no windows, no Dock icon).
 2. Every clicked `http(s)` link goes through your ordered rule list; **first match wins**.
 3. Rules match on URL wildcards (`*.atlassian.net/*`), regex, and/or the **source app** the click came from.
-4. Actions: open in a browser, open in a specific **Chromium profile**, rewrite to a **native app deep link** (17 built in, including Zoom, Spotify, Slack, Figma, Notion, Teams, Discord, Linear, Telegram, WhatsApp, Apple Music), show a **picker**, or copy to clipboard.
+4. Actions: open in a browser, open in a specific **browser profile** (Chromium or Firefox), rewrite to a **native app deep link** (17 built in, including Zoom, Spotify, Slack, Figma, Notion, Teams, Discord, Linear, Telegram, WhatsApp, Apple Music), show a **picker**, or copy to clipboard.
 5. Anything unmatched opens in your fallback browser. A link is never lost.
 
 Hold **⌥ Option** while clicking any link to force the picker.
@@ -39,6 +39,11 @@ Rules live in `~/.config/junction/config.json` (respects `$XDG_CONFIG_HOME`). Ed
       "action": { "deepLink": "zoom" }
     },
     {
+      "name": "Personal → Firefox profile",
+      "match": { "patterns": ["reddit.com/*", "news.ycombinator.com/*"] },
+      "action": { "app": "org.mozilla.firefox", "profile": "personal" }
+    },
+    {
       "name": "Links from Terminal → Chrome",
       "match": { "sourceApps": ["com.googlecode.iterm2", "com.apple.Terminal"] },
       "action": { "app": "com.google.Chrome" }
@@ -46,6 +51,8 @@ Rules live in `~/.config/junction/config.json` (respects `$XDG_CONFIG_HOME`). Ed
   ]
 }
 ```
+
+`profile` is a Chromium profile *directory* (`Default`, `Profile 1`) or a Firefox profile *name* (the one `firefox -P` takes, listed in **Settings → Browsers**). If a rule names a profile that no longer exists, the link degrades to your fallback browser rather than opening in the wrong one.
 
 Pattern semantics: matched against `host/path`, scheme ignored unless written. `*` stays within a segment, `**` (or a trailing `*`) crosses segments, `*.example.com` includes the apex domain, bare `example.com` matches all subpaths. Host is case-insensitive, path case-sensitive, query ignored (use `regex` when the query matters).
 
@@ -114,7 +121,9 @@ Being the default browser is a high-trust position. That's the argument for open
 
 ## Status & roadmap
 
-MVP under active development. Explicitly planned for v1.1+: redirect/shortener unwrapping (opt-in), `mailto:` routing, Firefox profiles/containers, time- and network-based conditions, Shortcuts actions. Arc spaces have no public API and are documented as unsupported.
+MVP under active development. Explicitly planned for v1.1+: redirect/shortener unwrapping (opt-in), `mailto:` routing, time- and network-based conditions, Shortcuts actions.
+
+Firefox containers are an extension feature with no launch-flag equivalent, so they are unsupported; Firefox *profiles* are supported. Arc spaces have no public API and are documented as unsupported.
 
 ## License
 

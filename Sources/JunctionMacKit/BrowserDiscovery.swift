@@ -1,6 +1,16 @@
 #if canImport(AppKit)
 import AppKit
 import Foundation
+import JunctionCore
+
+/// How a browser wants to be told which profile to use. Derived from the bundle ID, never
+/// inferred from whether profiles were found: a Firefox with profiles is still not Chromium.
+public enum BrowserFamily: Sendable {
+    case chromium
+    case firefox
+    /// Safari, Orion, anything else: no supported profile switching.
+    case other
+}
 
 public struct Browser: Identifiable, Hashable, Sendable {
     public var id: String { bundleID }
@@ -9,13 +19,14 @@ public struct Browser: Identifiable, Hashable, Sendable {
     public let appURL: URL
     public let profiles: [BrowserProfile]
 
-    public var isChromium: Bool { !profiles.isEmpty || ChromiumProfiles.dataDirectories[bundleID] != nil }
+    public var family: BrowserFamily { BrowserDiscovery.family(forBundleID: bundleID) }
 }
 
 public struct BrowserProfile: Identifiable, Hashable, Sendable {
-    /// Chromium profile directory name, e.g. "Default" or "Profile 1".
+    /// The token the browser's launch flag takes: a Chromium profile directory ("Profile 1")
+    /// or a Firefox profile name ("default-release"). This is what a rule's `profile` field holds.
     public let directory: String
-    /// Human-readable name from Local State, e.g. "Work".
+    /// Human-readable name, e.g. "Work". Equals `directory` for Firefox, which has no separate label.
     public let displayName: String
     public var id: String { directory }
 }
@@ -41,10 +52,24 @@ public enum BrowserDiscovery {
                 bundleID: bundleID,
                 name: name,
                 appURL: appURL,
-                profiles: ChromiumProfiles.profiles(for: bundleID)
+                profiles: profiles(forBundleID: bundleID)
             ))
         }
         return browsers.sorted { $0.name.localizedCaseInsensitiveCompare($1.name) == .orderedAscending }
+    }
+
+    public static func family(forBundleID bundleID: String) -> BrowserFamily {
+        if ChromiumProfiles.dataDirectories[bundleID] != nil { return .chromium }
+        if FirefoxProfiles.dataDirectories[bundleID] != nil { return .firefox }
+        return .other
+    }
+
+    public static func profiles(forBundleID bundleID: String) -> [BrowserProfile] {
+        switch family(forBundleID: bundleID) {
+        case .chromium: return ChromiumProfiles.profiles(for: bundleID)
+        case .firefox: return FirefoxProfiles.profiles(for: bundleID)
+        case .other: return []
+        }
     }
 
     public static func appURL(forBundleID bundleID: String) -> URL? {
@@ -55,6 +80,28 @@ public enum BrowserDiscovery {
     public static func isSchemeHandled(_ scheme: String) -> Bool {
         guard let probe = URL(string: "\(scheme)://probe") else { return false }
         return NSWorkspace.shared.urlForApplication(toOpen: probe) != nil
+    }
+}
+
+/// Reads Firefox's `profiles.ini` to discover profiles.
+public enum FirefoxProfiles {
+    /// bundle ID → data directory under ~/Library/Application Support. Forks (LibreWolf,
+    /// Waterfox, Dev Edition) drop in here once someone can test them.
+    public static let dataDirectories: [String: String] = [
+        "org.mozilla.firefox": "Firefox",
+    ]
+
+    public static func profiles(for bundleID: String) -> [BrowserProfile] {
+        guard let dir = dataDirectories[bundleID] else { return [] }
+        let ini = FileManager.default.homeDirectoryForCurrentUser
+            .appendingPathComponent("Library/Application Support")
+            .appendingPathComponent(dir)
+            .appendingPathComponent("profiles.ini")
+        guard let text = try? String(contentsOf: ini, encoding: .utf8) else { return [] }
+        // `-P` takes the profile *name*, so that's the token a rule stores.
+        return FirefoxProfilesINI.parse(text).map {
+            BrowserProfile(directory: $0.name, displayName: $0.name)
+        }
     }
 }
 
