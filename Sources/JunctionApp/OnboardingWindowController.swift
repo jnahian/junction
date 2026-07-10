@@ -69,6 +69,11 @@ private struct OnboardingView: View {
     private let templates = StarterTemplates.load()
 
     private static let rewriters = RewriterStore.builtin()
+    private static let stepCount = 4
+    private var isLastStep: Bool { step == Self.stepCount - 1 }
+    /// Step 2 is the only one Junction can't work without, so name the opt-out instead of
+    /// letting "Continue" quietly mean "no".
+    private var isSkippingDefaultBrowser: Bool { step == 2 && !state.isDefaultBrowser }
 
     /// Templates naming an app the user doesn't have would create rules that can never dispatch,
     /// so don't offer them. Browsers are matched by bundle ID; deep links by whether anything
@@ -109,16 +114,39 @@ private struct OnboardingView: View {
                         .controlSize(.large)
                 }
                 Spacer()
-                Button(step == 3 ? "Finish" : "Continue") { advance() }
-                    .buttonStyle(.borderedProminent)
-                    .controlSize(.large)
-                    .keyboardShortcut(.defaultAction)
+                stepIndicator
+                Spacer()
+                if isSkippingDefaultBrowser {
+                    // Not the prominent action here — "Set as Default Browser…" is.
+                    Button("Skip for now") { advance() }
+                        .buttonStyle(.bordered)
+                        .controlSize(.large)
+                        .keyboardShortcut(.defaultAction)
+                } else {
+                    Button(isLastStep ? "Finish" : "Continue") { advance() }
+                        .buttonStyle(.borderedProminent)
+                        .controlSize(.large)
+                        .keyboardShortcut(.defaultAction)
+                }
             }
         }
         .padding(Metrics.windowPadding)
         .padding(.top, Metrics.controlSpacing) // clear the (transparent) titlebar
         .frame(width: 480, height: 420)
         .background(VisualEffectView(material: .underWindowBackground).ignoresSafeArea())
+    }
+
+    /// Dots carry no meaning to VoiceOver, so collapse them into one "Step 2 of 4" element.
+    private var stepIndicator: some View {
+        HStack(spacing: 6) {
+            ForEach(0..<Self.stepCount, id: \.self) { index in
+                Circle()
+                    .fill(index == step ? Color.accentColor : Color.secondary.opacity(0.3))
+                    .frame(width: 7, height: 7)
+            }
+        }
+        .accessibilityElement(children: .ignore)
+        .accessibilityLabel("Step \(step + 1) of \(Self.stepCount)")
     }
 
     private var welcome: some View {
@@ -150,8 +178,7 @@ private struct OnboardingView: View {
             When you click a link anywhere, Junction checks your rules and instantly \
             hands the link to the right browser, browser profile, or native app.
 
-            Rules live in a plain JSON file you can edit, version, and sync — \
-            or manage entirely from this app. No telemetry, ever.
+            No telemetry, ever.
             """)
         }
     }
@@ -188,9 +215,16 @@ private struct OnboardingView: View {
             Button("Set Junction as Default Browser…") {
                 state.requestDefaultBrowser()
             }
+            .buttonStyle(.borderedProminent)
+            .controlSize(.large)
+            .disabled(state.isDefaultBrowser)
             if state.isDefaultBrowser {
                 Label("Junction is your default browser", systemImage: "checkmark.circle.fill")
                     .foregroundStyle(.green)
+            } else {
+                Text("Until you do, Junction never sees your links and rules won't run. You can set this later from the menu bar.")
+                    .font(.caption)
+                    .foregroundStyle(.secondary)
             }
         }
     }
@@ -221,7 +255,7 @@ private struct OnboardingView: View {
     }
 
     private func advance() {
-        if step < 3 {
+        if !isLastStep {
             step += 1
             return
         }
