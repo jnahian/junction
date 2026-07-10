@@ -14,6 +14,7 @@ let package = Package(
     ],
     dependencies: [
         .package(url: "https://github.com/apple/swift-argument-parser.git", from: "1.3.0"),
+        .package(url: "https://github.com/sparkle-project/Sparkle", from: "2.6.0"),
     ],
     targets: [
         // Pure-Foundation routing engine. No AppKit — unit-testable anywhere (incl. Linux CI).
@@ -31,7 +32,11 @@ let package = Package(
         ),
         .executableTarget(
             name: "JunctionApp",
-            dependencies: ["JunctionCore", "JunctionMacKit"],
+            dependencies: [
+                "JunctionCore",
+                "JunctionMacKit",
+                .product(name: "Sparkle", package: "Sparkle"),
+            ],
             resources: [
                 .copy("Resources/starter-rules.json"),
                 .copy("Resources/MenuBarIcon.svg"),

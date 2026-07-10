@@ -34,8 +34,10 @@
 			</array>
 		</dict>
 	</array>
+	<!-- Stamped at build time by Scripts/bundle-app.sh. Sparkle compares this to
+	     decide "is there an update"; a static value means clients never see one. -->
 	<key>CFBundleVersion</key>
-	<string>2</string>
+	<string>0</string>
 	<key>LSApplicationCategoryType</key>
 	<string>public.app-category.utilities</string>
 	<key>LSMinimumSystemVersion</key>
@@ -46,5 +48,11 @@
 	<string>© 2026 Nahian. MIT License.</string>
 	<key>NSPrincipalClass</key>
 	<string>NSApplication</string>
+	<key>SUEnableAutomaticChecks</key>
+	<true/>
+	<key>SUFeedURL</key>
+	<string>https://github.com/jnahian/junction/releases/latest/download/appcast.xml</string>
+	<key>SUPublicEDKey</key>
+	<string>T4c8x4ZVhToQezKHBA8UQoy+KdYA4c+qmFdCAmqh7eM=</string>
 </dict>
 </plist>

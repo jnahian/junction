@@ -77,7 +77,7 @@ brew install --cask --no-quarantine junction
 
 Upgrades arrive automatically — each release bumps the cask, so `brew upgrade` picks it up.
 
-Every release includes GitHub build provenance — verify with `gh attestation verify Junction.zip --repo jnahian/junction`.
+**Auto-update:** Junction checks for updates on its own via [Sparkle](https://sparkle-project.org), and you can trigger a check any time from the menu bar → **Check for Updates…**. Updates are EdDSA-signed, so the app only installs builds signed with the maintainer's private key.
 
 **From source** (macOS 13+, Xcode 15+):
 

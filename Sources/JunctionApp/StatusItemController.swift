@@ -3,6 +3,14 @@ import AppKit
 import Combine
 import Foundation
 import JunctionCore
+import Sparkle
+
+// Auto-update via Sparkle. Only starts in the packaged .app (SUFeedURL lives in
+// Info.plist); nil under `swift run` so dev launches don't error on a missing feed.
+private let updaterController: SPUStandardUpdaterController? = {
+    guard Bundle.main.object(forInfoDictionaryKey: "SUFeedURL") != nil else { return nil }
+    return SPUStandardUpdaterController(startingUpdater: true, updaterDelegate: nil, userDriverDelegate: nil)
+}()
 
 /// Menu bar presence: status, recent links, quick actions (F3 affordance lives here).
 @MainActor
@@ -20,6 +28,10 @@ final class StatusItemController: NSObject, NSMenuDelegate {
         menu.delegate = self
         statusItem.menu = menu
         updateIcon()
+
+        // Touch the lazy global here: the menu is only built on open, so without this
+        // background update checks wouldn't start until the user first opened the menu.
+        _ = updaterController
 
         state.$configError
             .receive(on: DispatchQueue.main)
@@ -128,11 +140,23 @@ final class StatusItemController: NSObject, NSMenuDelegate {
             .withSymbol("gearshape")
         settings.target = self
         menu.addItem(settings)
+        if updaterController != nil {
+            let update = NSMenuItem(title: "Check for Updates…", action: #selector(checkForUpdates), keyEquivalent: "")
+                .withSymbol("arrow.down.circle")
+            update.target = self
+            menu.addItem(update)
+        }
         let quit = NSMenuItem(title: "Quit Junction", action: #selector(NSApplication.terminate(_:)), keyEquivalent: "q")
         menu.addItem(quit)
     }
 
     @objc private func togglePause() { state.routingPaused.toggle() }
+
+    /// LSUIElement apps aren't frontmost, so Sparkle's window opens behind everything.
+    @objc private func checkForUpdates() {
+        NSApp.activate(ignoringOtherApps: true)
+        updaterController?.checkForUpdates(nil)
+    }
     @objc private func setDefault() { state.requestDefaultBrowser() }
     @objc private func openSettings() { state.settingsPresenter?() }
 
