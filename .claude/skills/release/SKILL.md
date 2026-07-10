@@ -6,13 +6,13 @@ description: Cut a Junction release — bump the version, build the .app, and pu
 # Release Junction
 
 A release touches the version in `App/Info.plist`, a tag that must point at the
-committed bump, and a signed appcast. Miss any one and the zip, the appcast, and
+committed bump, and a signed appcast. Miss any one and the DMG, the appcast, and
 the cask drift apart. Work the checklist top to bottom — **create one todo per
 numbered step.**
 
 Releases are cut **locally**, not by CI. The Sparkle EdDSA private key lives in
 the maintainer's login keychain under the `junction` account; nothing signs
-updates without it. There is deliberately no release workflow — a CI-built zip
+updates without it. There is deliberately no release workflow — a CI-built artifact
 would not match the bytes `release.sh` signed, and every update would fail its
 signature check.
 
@@ -38,7 +38,7 @@ Leave `CFBundleVersion` alone — it's stamped at build time.
 ## 3. Commit and push the bump — before releasing
 
 `gh release create` tags the latest **pushed** commit. If the bump isn't
-committed and pushed, the tag and the zip's source won't match.
+committed and pushed, the tag and the DMG's source won't match.
 
 ```sh
 git add App/Info.plist
@@ -74,9 +74,10 @@ Scripts/release.sh
 
 `release.sh` re-checks that the time-based `CFBundleVersion` exceeds the
 published build (it always will, short of clock skew) and refuses otherwise. It
-signs `dist/Junction.zip` with the keychain key, generates `appcast.xml`, and
-uploads both to the `vNEW_DISPLAY` GitHub release. It then rewrites
-`Casks/junction.rb` with the new version and the uploaded zip's sha256 and
+builds the installer (`Scripts/make-dmg.sh`), signs `dist/Junction.dmg` with the
+keychain key, generates `appcast.xml`, and uploads both to the `vNEW_DISPLAY`
+GitHub release. It then rewrites
+`Casks/junction.rb` with the new version and the uploaded DMG's sha256 and
 commits that (`chore: update Homebrew cask …`), so the `brew install --cask` tap
 tracks the release automatically — nothing to bump by hand.
 
@@ -87,7 +88,7 @@ gh release view "vNEW_DISPLAY" --repo jnahian/junction
 ```
 
 The release must be the newest non-prerelease (so
-`releases/latest/download/appcast.xml` resolves) and carry both `Junction.zip`
+`releases/latest/download/appcast.xml` resolves) and carry both `Junction.dmg`
 and `appcast.xml`. Updates reach Apple-silicon Macs only (arm64 binary).
 
 ## What goes missing if you skip a step
@@ -95,10 +96,11 @@ and `appcast.xml`. Updates reach Apple-silicon Macs only (arm64 binary).
 | Skipped | Symptom |
 | --- | --- |
 | Version not bumped in `App/Info.plist` | Release is tagged `vNEW` but the app reports the old version |
-| Bump not committed/pushed before release | Tag points at old source; zip ≠ tag |
+| Bump not committed/pushed before release | Tag points at old source; DMG ≠ tag |
 | `appcast.xml` not uploaded | Every client silently sees "no update" |
 | `release.sh` cask commit not pushed | `brew install --cask` serves the previous version |
-| Zip rebuilt after `release.sh` | Bytes no longer match the signature; updates fail to install |
+| DMG rebuilt after `release.sh` | Bytes no longer match the signature; updates fail to install |
+| DMG built before `notarize.sh` staples the app | Installed app has no ticket; Gatekeeper checks online every launch |
 
 ## Keys and secrets
 

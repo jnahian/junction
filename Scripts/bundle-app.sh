@@ -62,14 +62,9 @@ else
   codesign --force --deep --sign - "$APP"
 fi
 
-# Zip for GitHub Releases. Sparkle reads the .zip enclosure directly, and the cask
-# downloads this same artifact — release.sh signs these exact bytes.
-ZIP="$DIST/Junction.zip"
-rm -f "$ZIP"
-ditto -c -k --sequesterRsrc --keepParent "$APP" "$ZIP"
-
 echo "✓ $APP"
 echo
 echo "Run it:            open '$APP'"
 echo "Install CLI:       ln -sf '$APP/Contents/Helpers/junction' /usr/local/bin/junction"
+echo "Installer DMG:     Scripts/make-dmg.sh"
 echo "Publish update:    Scripts/release.sh"

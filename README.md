@@ -62,7 +62,7 @@ junction config validate
 
 ## Install
 
-**GitHub Releases:** grab `Junction.zip` from the [latest release](https://github.com/jnahian/junction/releases), unzip, drag to /Applications. Current builds are not yet notarized — right-click → Open on first launch, or:
+**GitHub Releases:** grab `Junction.dmg` from the [latest release](https://github.com/jnahian/junction/releases), open it, drag **Junction** into Applications. Current builds are not yet notarized — right-click → Open on first launch, or:
 
 ```sh
 xattr -dr com.apple.quarantine /Applications/Junction.app

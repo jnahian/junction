@@ -10,7 +10,7 @@ cask "junction" do
   version "0.1.1"
   sha256 "d51a167e246a19880d823892b0ee5739ed2211842a83bb550b33291e1cbd44d7"
 
-  url "https://github.com/jnahian/junction/releases/download/v#{version}/Junction.zip"
+  url "https://github.com/jnahian/junction/releases/download/v#{version}/Junction.dmg"
   name "Junction"
   desc "Rule-based link router — routes links to the right browser, profile, or app"
   homepage "https://github.com/jnahian/junction"

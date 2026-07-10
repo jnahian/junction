@@ -1,6 +1,7 @@
 #!/usr/bin/env bash
-# Publish a Sparkle auto-update release: sign the zip, generate appcast.xml, and
-# upload both to GitHub Releases under a v<version> tag, then bump the Homebrew cask.
+# Publish a Sparkle auto-update release: build the DMG, sign it, generate
+# appcast.xml, and upload both to GitHub Releases under a v<version> tag, then
+# bump the Homebrew cask.
 #
 # Run Scripts/bundle-app.sh first (bump CFBundleShortVersionString in App/Info.plist),
 # then Scripts/release.sh.
@@ -15,8 +16,8 @@ KEY_ACCOUNT="junction"
 GEN="$PWD/.build/artifacts/sparkle/Sparkle/bin/generate_appcast"
 
 APP="dist/Junction.app"
-ZIP="dist/Junction.zip"
-[ -f "$ZIP" ] || { echo "No $ZIP — run Scripts/bundle-app.sh first."; exit 1; }
+DMG="dist/Junction.dmg"
+[ -d "$APP" ] || { echo "No $APP — run Scripts/bundle-app.sh first."; exit 1; }
 
 VERSION="$(/usr/libexec/PlistBuddy -c 'Print :CFBundleShortVersionString' "$APP/Contents/Info.plist")"
 TAG="v${VERSION}"
@@ -33,36 +34,39 @@ if [ -n "${PUB_BUILD}" ] && [ "${NEW_BUILD}" -le "${PUB_BUILD}" ]; then
   exit 1
 fi
 
-# generate_appcast signs the zip (private key pulled from the keychain) and writes
-# appcast.xml. Isolate the zip so only this build becomes an update entry; the
+# Build the installer only once the version guard has passed.
+Scripts/make-dmg.sh
+
+# generate_appcast signs the DMG (private key pulled from the keychain) and writes
+# appcast.xml. Isolate the DMG so only this build becomes an update entry; the
 # download URL points at where gh will host it under this tag.
 STAGE="$(mktemp -d)"
-cp "$ZIP" "$STAGE/"
+cp "$DMG" "$STAGE/"
 "$GEN" --account "$KEY_ACCOUNT" \
   --download-url-prefix "https://github.com/${REPO}/releases/download/${TAG}/" "$STAGE"
 cp "$STAGE/appcast.xml" dist/appcast.xml
 
 # Create the release (or replace assets if the tag already exists). Must be the
 # newest, non-prerelease release so releases/latest/download/appcast.xml resolves.
-gh release create "$TAG" "$ZIP" dist/appcast.xml \
+gh release create "$TAG" "$DMG" dist/appcast.xml \
     --repo "$REPO" --title "$TAG" --generate-notes \
-  || gh release upload "$TAG" "$ZIP" dist/appcast.xml --repo "$REPO" --clobber
+  || gh release upload "$TAG" "$DMG" dist/appcast.xml --repo "$REPO" --clobber
 
-echo "Released ${TAG}: appcast.xml + Junction.zip uploaded to ${REPO}."
+echo "Released ${TAG}: appcast.xml + Junction.dmg uploaded to ${REPO}."
 
-# Point the Homebrew cask at this release. The zip url is version-templated, so
+# Point the Homebrew cask at this release. The dmg url is version-templated, so
 # only the version and sha256 change per release; rewrite those two lines and
 # commit so `brew install --cask` never serves a stale build. The sha256 is of
-# the exact zip we just uploaded, so `brew` verifies the same bytes.
+# the exact DMG we just uploaded, so `brew` verifies the same bytes.
 CASK="Casks/junction.rb"
-ZIP_SHA="$(shasum -a 256 "$ZIP" | cut -d' ' -f1)"
+DMG_SHA="$(shasum -a 256 "$DMG" | cut -d' ' -f1)"
 sed -i '' \
   -e "s/^  version \".*\"/  version \"${VERSION}\"/" \
-  -e "s/^  sha256 \".*\"/  sha256 \"${ZIP_SHA}\"/" \
+  -e "s/^  sha256 \".*\"/  sha256 \"${DMG_SHA}\"/" \
   "$CASK"
 if ! git diff --quiet -- "$CASK"; then
   git add "$CASK"
   git commit -m "chore: update Homebrew cask to ${TAG}"
   git push
-  echo "Updated ${CASK} -> ${VERSION} (${ZIP_SHA})."
+  echo "Updated ${CASK} -> ${VERSION} (${DMG_SHA})."
 fi
