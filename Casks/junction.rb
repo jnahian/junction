@@ -7,8 +7,8 @@
 #   brew tap jnahian/junction https://github.com/jnahian/junction
 #   brew install --cask --no-quarantine junction
 cask "junction" do
-  version "0.1.1"
-  sha256 "d51a167e246a19880d823892b0ee5739ed2211842a83bb550b33291e1cbd44d7"
+  version "0.2.0"
+  sha256 "3700a3f7f1b6ea677643af44ebcc21f3d90ade4ef679530c7fa1396e6b9ed63c"
 
   url "https://github.com/jnahian/junction/releases/download/v#{version}/Junction.dmg"
   name "Junction"
