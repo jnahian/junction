@@ -69,32 +69,63 @@ junction config validate
 
 ## Install
 
-**GitHub Releases:** grab `Junction.dmg` from the [latest release](https://github.com/jnahian/junction/releases), open it, drag **Junction** into Applications. Current builds are not yet notarized, so right-click → Open on first launch, or:
+**Requirements:** an Apple-silicon Mac (arm64), macOS 13 Ventura or later. Intel builds are not published.
 
-```sh
-xattr -dr com.apple.quarantine /Applications/Junction.app
-```
+Junction is not yet notarized by Apple (no Developer ID account yet), so a fresh install trips Gatekeeper on first launch. Both paths below handle that — Homebrew is the simpler one.
 
-**Homebrew** (this repo is its own tap):
+### Homebrew (recommended)
+
+This repo is its own tap, so point Homebrew straight at it:
 
 ```sh
 brew tap jnahian/junction https://github.com/jnahian/junction
 brew install --cask --no-quarantine junction
 ```
 
-Upgrades arrive automatically: each release bumps the cask, so `brew upgrade` picks it up.
+`--no-quarantine` is what sidesteps the unsigned-app warning; without it macOS blocks the first launch. Homebrew also symlinks the bundled `junction` CLI onto your PATH.
 
-**Auto-update:** Junction checks for updates on its own via [Sparkle](https://sparkle-project.org). You can trigger a check any time from the menu bar, or from **Settings → General → Updates**. Updates are EdDSA-signed, so the app only installs builds signed with the maintainer's private key.
+### Manual DMG
 
-**From source** (macOS 13+, Xcode 15+):
+1. Download `Junction.dmg` from the [latest release](https://github.com/jnahian/junction/releases/latest).
+2. Open it and drag **Junction** into Applications.
+3. On first launch macOS will refuse to open it. Either **right-click Junction.app → Open → Open**, or clear the quarantine flag:
+
+```sh
+xattr -dr com.apple.quarantine /Applications/Junction.app
+```
+
+With the manual install, link the CLI yourself if you want it:
+
+```sh
+ln -sf "/Applications/Junction.app/Contents/Helpers/junction" /usr/local/bin/junction
+```
+
+### First launch
+
+Junction is a menu-bar app — no Dock icon, no window. It opens a short setup: pick a fallback browser, set Junction as your **default browser** (the one step it can't work without, since that's how it sees every clicked link), and optionally enable a few starter rules. After that it lives in the menu bar; click the icon for recent links, settings, and updates.
+
+### Updates
+
+Junction checks for updates on its own via [Sparkle](https://sparkle-project.org), and you can trigger a check from the menu bar or **Settings → General → Updates**. Updates are EdDSA-signed, so the app only installs builds signed with the maintainer's key. Homebrew users can also `brew upgrade`; each release bumps the cask.
+
+### Uninstall
+
+```sh
+brew uninstall --zap --cask junction     # Homebrew: also removes config + prefs
+rm -rf /Applications/Junction.app        # manual install
+```
+
+Your rules live at `~/.config/junction/config.json` (honors `$XDG_CONFIG_HOME`); delete that too on a manual uninstall if you want a clean slate.
+
+### From source
+
+Requires macOS 13+ and Xcode 15+:
 
 ```sh
 git clone https://github.com/jnahian/junction && cd junction
 Scripts/bundle-app.sh
 open dist/Junction.app
 ```
-
-On first launch, Junction walks you through picking a fallback browser and setting itself as default.
 
 ## Building & testing
 
