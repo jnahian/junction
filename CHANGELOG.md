@@ -3,6 +3,11 @@
 Notes for each release. The section matching the app's version is shown in the
 Sparkle update dialog, so write it for users, not for contributors.
 
+## 0.4.1
+
+- Slack deep links now open the right channel and message. They need a team ID, which Slack permalinks don't carry, so map your workspaces in Settings → Deep Links; unmapped ones open in the browser as before.
+- Recent links moved into their own submenu, so the menu bar stays short.
+
 ## 0.4.0
 
 - Keyboard shortcuts now work: Cut/Copy/Paste/Select All in every Settings field, and ⌘W to close a window.
