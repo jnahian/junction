@@ -79,10 +79,10 @@ This repo is its own tap, so point Homebrew straight at it:
 
 ```sh
 brew tap jnahian/junction https://github.com/jnahian/junction
-brew install --cask --no-quarantine junction
+HOMEBREW_CASK_OPTS="--no-quarantine" brew install --cask junction
 ```
 
-`--no-quarantine` is what sidesteps the unsigned-app warning; without it macOS blocks the first launch. Homebrew also symlinks the bundled `junction` CLI onto your PATH.
+`--no-quarantine` is what sidesteps the unsigned-app warning; without it macOS blocks the first launch. (Homebrew 6 removed the bare `--no-quarantine` install flag, hence the env-var form.) If you install without it, clear the flag afterward with the `xattr` command below. Homebrew also symlinks the bundled `junction` CLI onto your PATH.
 
 ### Manual DMG
 

@@ -5,7 +5,7 @@
 #
 # Until builds are notarized, users install with:
 #   brew tap jnahian/junction https://github.com/jnahian/junction
-#   brew install --cask --no-quarantine junction
+#   HOMEBREW_CASK_OPTS="--no-quarantine" brew install --cask junction
 cask "junction" do
   version "0.3.0"
   sha256 "b2b05cbe8adf4901302023801e88bfb1b971e22edf371058165020200eab7524"
@@ -26,8 +26,8 @@ cask "junction" do
   binary "#{appdir}/Junction.app/Contents/Helpers/junction"
 
   caveats <<~EOS
-    Junction is not yet notarized. If macOS blocks the first launch, install with
-    `brew install --cask --no-quarantine junction`, or run:
+    Junction is not yet notarized. If macOS blocks the first launch, reinstall with
+    `HOMEBREW_CASK_OPTS="--no-quarantine" brew install --cask junction`, or run:
       xattr -dr com.apple.quarantine "#{appdir}/Junction.app"
   EOS
 
