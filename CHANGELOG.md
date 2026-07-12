@@ -3,6 +3,10 @@
 Notes for each release. The section matching the app's version is shown in the
 Sparkle update dialog, so write it for users, not for contributors.
 
+## 0.5.0
+
+- New updates announce themselves quietly: the menu bar icon gets a dot and the menu offers "Update to …" instead of an update window appearing behind your other apps.
+
 ## 0.4.1
 
 - Slack deep links now open the right channel and message. They need a team ID, which Slack permalinks don't carry, so map your workspaces in Settings → Deep Links; unmapped ones open in the browser as before.
