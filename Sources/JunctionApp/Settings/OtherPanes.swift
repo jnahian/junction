@@ -205,6 +205,20 @@ struct TesterPane: View {
 
 // MARK: - General (F9)
 
+enum AppInfo {
+    static let repoURL = URL(string: "https://github.com/jnahian/junction")!
+    static let issuesURL = URL(string: "https://github.com/jnahian/junction/issues/new")!
+    static let authorURL = URL(string: "https://github.com/jnahian")!
+
+    /// Only the packaged app has a version; `swift run` has no Info.plist.
+    static var versionString: String {
+        let info = Bundle.main.infoDictionary
+        guard let short = info?["CFBundleShortVersionString"] as? String else { return "development build" }
+        let build = info?["CFBundleVersion"] as? String
+        return build.map { "\(short) (\($0))" } ?? short
+    }
+}
+
 struct GeneralPane: View {
     @ObservedObject var state: AppState
     @State private var launchAtLogin = SMAppService.mainApp.status == .enabled
@@ -256,6 +270,7 @@ struct GeneralPane: View {
                     .font(.caption).foregroundStyle(.secondary)
             }
             Section("Updates") {
+                LabeledContent("Version", value: AppInfo.versionString)
                 if updaterController != nil {
                     Button("Check for Updates…") {
                         NSApp.activate(ignoringOtherApps: true)
@@ -273,6 +288,43 @@ struct GeneralPane: View {
         }
         .formStyle(.grouped)
         .onAppear { state.refreshDefaultBrowserStatus() }
+    }
+}
+
+// MARK: - About
+
+struct AboutPane: View {
+    var body: some View {
+        VStack(spacing: Metrics.sectionSpacing) {
+            Spacer()
+            Image(nsImage: NSApp.applicationIconImage)
+                .resizable()
+                .frame(width: 96, height: 96)
+                .accessibilityHidden(true)
+            VStack(spacing: 4) {
+                Text("Junction").font(.largeTitle.bold())
+                Text("Version \(AppInfo.versionString)")
+                    .font(.callout)
+                    .foregroundStyle(.secondary)
+                    .textSelection(.enabled)
+            }
+            Text("Every link, in the right place. Junction is your default browser, routing each link to the right browser, profile, or native app — with no telemetry.")
+                .multilineTextAlignment(.center)
+                .foregroundStyle(.secondary)
+                .frame(maxWidth: 420)
+            Text("Made by Julkar Naen Nahian")
+                .font(.callout)
+            HStack(spacing: Metrics.controlSpacing) {
+                Link("Report an Issue", destination: AppInfo.issuesURL)
+                Link("Source Code", destination: AppInfo.repoURL)
+                Link("Author", destination: AppInfo.authorURL)
+            }
+            .buttonStyle(.link)
+            Spacer()
+            Text("MIT licensed").font(.caption).foregroundStyle(.tertiary)
+        }
+        .padding(Metrics.windowPadding)
+        .frame(maxWidth: .infinity, maxHeight: .infinity)
     }
 }
 #endif

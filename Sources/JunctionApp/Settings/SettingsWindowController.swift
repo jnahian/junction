@@ -32,7 +32,9 @@ final class SettingsWindowController: NSObject {
 
     @objc private func jumpToRules() {
         show()
-        tabController?.selectedTabViewItemIndex = 0
+        guard let tabs = tabController,
+              let index = tabs.tabViewItems.firstIndex(where: { $0.label == "Rules" }) else { return }
+        tabs.selectedTabViewItemIndex = index
     }
 
     private func makeWindow() -> NSWindow {
@@ -59,18 +61,19 @@ final class SettingsWindowController: NSObject {
             tabs.addTabViewItem(item)
         }
 
+        pane("General", "gearshape", GeneralPane(state: state))
         pane("Rules", "list.bullet.rectangle", RulesPane(state: state))
         pane("Browsers", "globe", BrowsersPane(state: state))
         pane("Deep Links", "link", DeepLinksPane(state: state))
         pane("Transforms", "wand.and.stars", TransformsPane(state: state))
         pane("Tester", "checkmark.seal", TesterPane(state: state))
-        pane("General", "gearshape", GeneralPane(state: state))
+        pane("About", "info.circle", AboutPane())
 
         let window = NSWindow(contentViewController: tabs)
         window.styleMask = [.titled, .closable, .miniaturizable]
         window.toolbarStyle = .preference
         window.setContentSize(paneSize) // correct size on first display, before any tab switch
-        window.title = "Rules"
+        window.title = "General"
         window.isReleasedWhenClosed = false
         window.center()
         tabController = tabs

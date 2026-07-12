@@ -152,19 +152,10 @@ private struct OnboardingView: View {
     private var welcome: some View {
         VStack(alignment: .leading, spacing: Metrics.sectionSpacing) {
             HStack(spacing: Metrics.sectionSpacing) {
-                Image(systemName: "arrow.triangle.branch")
-                    .font(.system(size: 30, weight: .semibold))
-                    .foregroundStyle(.white)
+                Image(nsImage: NSApp.applicationIconImage)
+                    .resizable()
                     .frame(width: 64, height: 64)
-                    .background(
-                        RoundedRectangle(cornerRadius: 14, style: .continuous)
-                            .fill(LinearGradient(
-                                colors: [.blue, .indigo],
-                                startPoint: .topLeading,
-                                endPoint: .bottomTrailing
-                            ))
-                    )
-                    .shadow(color: .black.opacity(0.15), radius: 6, y: 2)
+                    .accessibilityHidden(true)
                 VStack(alignment: .leading, spacing: 2) {
                     Text("Welcome to Junction").font(.largeTitle.bold())
                     Text("Every link, in the right place")
