@@ -126,7 +126,8 @@ public struct RoutingEngine: Sendable {
 
         // Built-in rewriters (opt-in + target installed) before fallback.
         for rewriter in rewriters.rewriters where config.enabledRewriters.contains(rewriter.id) {
-            guard isSchemeHandled(rewriter.scheme), let rewritten = rewriter.rewrite(url) else { continue }
+            guard isSchemeHandled(rewriter.scheme),
+                  let rewritten = rewriter.rewrite(url, lookup: config.slackTeams) else { continue }
             return RoutingTrace(
                 input: event, transformedURL: transformedURL,
                 matchedRule: nil, matchedRuleIndex: nil, rewriterID: rewriter.id,
@@ -148,8 +149,9 @@ public struct RoutingEngine: Sendable {
         case .deepLink(let id):
             guard let rewriter = rewriters.rewriter(id: id),
                   isSchemeHandled(rewriter.scheme),
-                  let rewritten = rewriter.rewrite(url) else {
-                // Rewriter unknown, app missing, or URL didn't match its patterns → never lose a link.
+                  let rewritten = rewriter.rewrite(url, lookup: config.slackTeams) else {
+                // Rewriter unknown, app missing, URL didn't match, or (Slack) the workspace has
+                // no team ID mapped → never lose a link.
                 return .fallback(app: config.fallback.app, url: url)
             }
             return .deepLink(url: rewritten, rewriterID: id, originalURL: url)

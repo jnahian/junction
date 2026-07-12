@@ -8,6 +8,9 @@ public struct Rewriter: Decodable, Sendable, Identifiable {
     /// Regex over the full URL string. First matching pattern wins.
     public let patterns: [String]
     /// Template with `$1`…`$9` capture references. Empty groups substitute as "".
+    /// `@1`…`@9` instead look the capture up in the `lookup` table passed to `rewrite`
+    /// (Slack: subdomain → team ID). An unmapped `@N` fails the rewrite, so the link
+    /// falls back to a browser rather than opening the app on the wrong screen.
     public let template: String
     /// URL scheme of the target app, used to check installation (e.g. "zoommtg").
     public let scheme: String
@@ -23,22 +26,35 @@ public struct Rewriter: Decodable, Sendable, Identifiable {
         self.bundleID = bundleID
     }
 
-    /// Applies the rewriter. Returns nil when no pattern matches or the result isn't a valid URL.
-    public func rewrite(_ url: URL) -> URL? {
+    /// Applies the rewriter. Returns nil when no pattern matches, a `@N` capture has no
+    /// entry in `lookup`, or the result isn't a valid URL.
+    public func rewrite(_ url: URL, lookup: [String: String] = [:]) -> URL? {
         let s = url.absoluteString
         let range = NSRange(s.startIndex..<s.endIndex, in: s)
         for pattern in patterns {
             guard let regex = try? NSRegularExpression(pattern: pattern, options: [.caseInsensitive]),
                   let match = regex.firstMatch(in: s, options: [], range: range) else { continue }
+
+            func capture(_ digit: Int) -> String? {
+                guard digit < match.numberOfRanges, match.range(at: digit).location != NSNotFound,
+                      let r = Range(match.range(at: digit), in: s) else { return nil }
+                return String(s[r])
+            }
+
             var out = ""
             var i = template.startIndex
+            var unmappedLookup = false
             while i < template.endIndex {
                 let ch = template[i]
-                if ch == "$", template.index(after: i) < template.endIndex,
+                if ch == "$" || ch == "@", template.index(after: i) < template.endIndex,
                    let digit = template[template.index(after: i)].wholeNumberValue, digit >= 1, digit <= 9 {
-                    if digit < match.numberOfRanges, match.range(at: digit).location != NSNotFound,
-                       let r = Range(match.range(at: digit), in: s) {
-                        out += s[r]
+                    if let value = capture(digit) {
+                        if ch == "@" {
+                            guard let mapped = lookup[value.lowercased()] else { unmappedLookup = true; break }
+                            out += mapped
+                        } else {
+                            out += value
+                        }
                     }
                     i = template.index(i, offsetBy: 2)
                 } else {
@@ -46,6 +62,7 @@ public struct Rewriter: Decodable, Sendable, Identifiable {
                     i = template.index(after: i)
                 }
             }
+            if unmappedLookup { continue }
             out = Self.cleanEmptyParams(out)
             if let result = URL(string: out) { return result }
         }

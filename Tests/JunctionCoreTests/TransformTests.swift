@@ -72,14 +72,29 @@ final class RewriterTests: XCTestCase {
 
     func testSlackMessageLink() {
         let r = store.rewriter(id: "slack")!
-        let out = r.rewrite(URL(string: "https://myco.slack.com/archives/C024BE91L/p1234567890123456")!)
-        XCTAssertEqual(out?.absoluteString, "slack://channel?id=C024BE91L&message=1234567890.123456")
+        let out = r.rewrite(
+            URL(string: "https://myco.slack.com/archives/C024BE91L/p1234567890123456")!,
+            lookup: ["myco": "T01ABCDEF"]
+        )
+        // Slack ignores the deep link without a team ID, so it must always be present.
+        XCTAssertEqual(out?.absoluteString, "slack://channel?team=T01ABCDEF&id=C024BE91L&message=1234567890.123456")
     }
 
     func testSlackChannelLink() {
         let r = store.rewriter(id: "slack-channel")!
-        let out = r.rewrite(URL(string: "https://myco.slack.com/archives/C024BE91L")!)
-        XCTAssertEqual(out?.absoluteString, "slack://channel?id=C024BE91L")
+        let out = r.rewrite(URL(string: "https://myco.slack.com/archives/C024BE91L")!, lookup: ["myco": "T01ABCDEF"])
+        XCTAssertEqual(out?.absoluteString, "slack://channel?team=T01ABCDEF&id=C024BE91L")
+    }
+
+    /// No team ID mapped → no rewrite, so the link falls back to the browser rather than
+    /// opening Slack on whatever screen it happened to be showing.
+    func testSlackWithoutMappedTeamDoesNotRewrite() {
+        let r = store.rewriter(id: "slack")!
+        XCTAssertNil(r.rewrite(URL(string: "https://myco.slack.com/archives/C024BE91L/p1234567890123456")!))
+        XCTAssertNil(r.rewrite(
+            URL(string: "https://myco.slack.com/archives/C024BE91L/p1234567890123456")!,
+            lookup: ["other": "T01ABCDEF"]
+        ))
     }
 
     func testClickUpTask() {

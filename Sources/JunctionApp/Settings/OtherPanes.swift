@@ -64,6 +64,8 @@ struct BrowsersPane: View {
 
 struct DeepLinksPane: View {
     @ObservedObject var state: AppState
+    @State private var newSubdomain = ""
+    @State private var newTeamID = ""
 
     var body: some View {
         Form {
@@ -99,12 +101,51 @@ struct DeepLinksPane: View {
                 Text("All off by default. A rewriter only fires when its app is installed and no rule matched first. Rules with a deep-link action always work regardless of these switches.")
                     .font(.caption).foregroundStyle(.secondary)
             }
+            slackTeamsSection
             Section {
                 Text("Definitions live in rewriters.json. Contributions welcome, no Swift required.")
                     .font(.caption).foregroundStyle(.secondary)
             }
         }
         .formStyle(.grouped)
+    }
+
+    /// Slack's scheme takes team IDs, never subdomains, and a permalink carries only the
+    /// subdomain — so Slack links can't deep-link until the user maps their workspaces.
+    private var slackTeamsSection: some View {
+        Section {
+            ForEach(state.config.slackTeams.keys.sorted(), id: \.self) { subdomain in
+                HStack {
+                    Text("\(subdomain).slack.com")
+                    Spacer()
+                    Text(state.config.slackTeams[subdomain] ?? "").font(.callout.monospaced())
+                    Button {
+                        state.updateConfig { $0.slackTeams[subdomain] = nil }
+                    } label: {
+                        Image(systemName: "minus.circle")
+                    }
+                    .buttonStyle(.borderless)
+                    .accessibilityLabel("Remove \(subdomain)")
+                }
+            }
+            HStack {
+                TextField("workspace", text: $newSubdomain)
+                TextField("T01ABCDEF", text: $newTeamID)
+                Button("Add") {
+                    let subdomain = newSubdomain.trimmingCharacters(in: .whitespaces).lowercased()
+                    let team = newTeamID.trimmingCharacters(in: .whitespaces).uppercased()
+                    guard !subdomain.isEmpty, !team.isEmpty else { return }
+                    state.updateConfig { $0.slackTeams[subdomain] = team }
+                    newSubdomain = ""
+                    newTeamID = ""
+                }
+            }
+        } header: {
+            Text("Slack workspaces")
+        } footer: {
+            Text("Slack's deep links need the team ID, which its permalinks don't carry. Open Slack in a browser: the URL reads app.slack.com/client/TEAM_ID/… — that's the ID. Unmapped workspaces open in the browser instead.")
+                .font(.caption).foregroundStyle(.secondary)
+        }
     }
 }
 

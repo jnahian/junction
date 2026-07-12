@@ -7,6 +7,10 @@
   // Automatic deep-link rewriters are OFF by default — opt in by ID.
   // (Rules with a "deepLink" action always work, no opt-in needed.)
   "enabledRewriters": ["zoom", "spotify"],
+  // Slack deep links need a team ID, which Slack permalinks don't carry. Map each
+  // workspace subdomain to its team ID (find it in app.slack.com/client/TEAM_ID/…).
+  // Unmapped workspaces open in the browser.
+  "slackTeams": { "acme": "T01ABCDEF" },
   "rules": [
     {
       "name": "Work links → Chrome work profile",

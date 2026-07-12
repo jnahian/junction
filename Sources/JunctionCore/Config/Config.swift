@@ -10,6 +10,10 @@ public struct Config: Codable, Equatable, Sendable {
     /// Rewriter IDs the user has switched on. All built-ins are OFF by default —
     /// automatic deep-linking is opt-in. (Explicit `deepLink` rule actions always work.)
     public var enabledRewriters: [String]
+    /// Slack workspace subdomain → team ID (`{"acme": "T01ABCDEF"}`). Slack's deep-link
+    /// scheme takes team IDs only, and a permalink carries just the subdomain, so without
+    /// this map a Slack link can't be deep-linked and falls back to the browser.
+    public var slackTeams: [String: String]
     public var rules: [Rule]
 
     public init(
@@ -18,6 +22,7 @@ public struct Config: Codable, Equatable, Sendable {
         stripTrackingParams: Bool = true,
         extraTrackingParams: [String] = [],
         enabledRewriters: [String] = [],
+        slackTeams: [String: String] = [:],
         rules: [Rule] = []
     ) {
         self.version = version
@@ -25,11 +30,12 @@ public struct Config: Codable, Equatable, Sendable {
         self.stripTrackingParams = stripTrackingParams
         self.extraTrackingParams = extraTrackingParams
         self.enabledRewriters = enabledRewriters
+        self.slackTeams = slackTeams
         self.rules = rules
     }
 
     enum CodingKeys: String, CodingKey {
-        case version, fallback, stripTrackingParams, extraTrackingParams, enabledRewriters, rules
+        case version, fallback, stripTrackingParams, extraTrackingParams, enabledRewriters, slackTeams, rules
     }
 
     public init(from decoder: Decoder) throws {
@@ -39,6 +45,7 @@ public struct Config: Codable, Equatable, Sendable {
         stripTrackingParams = try c.decodeIfPresent(Bool.self, forKey: .stripTrackingParams) ?? true
         extraTrackingParams = try c.decodeIfPresent([String].self, forKey: .extraTrackingParams) ?? []
         enabledRewriters = try c.decodeIfPresent([String].self, forKey: .enabledRewriters) ?? []
+        slackTeams = try c.decodeIfPresent([String: String].self, forKey: .slackTeams) ?? [:]
         rules = try c.decodeIfPresent([Rule].self, forKey: .rules) ?? []
     }
 }

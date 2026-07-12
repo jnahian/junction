@@ -27,7 +27,7 @@
       "patterns": [
         "^https?://([^./]+)\\.slack\\.com/archives/([A-Z0-9]+)/p(\\d{10})(\\d{6})"
       ],
-      "template": "slack://channel?team=&id=$2&message=$3.$4",
+      "template": "slack://channel?team=@1&id=$2&message=$3.$4",
       "scheme": "slack",
       "bundleID": "com.tinyspeck.slackmacgap"
     },
@@ -37,7 +37,7 @@
       "patterns": [
         "^https?://([^./]+)\\.slack\\.com/archives/([A-Z0-9]+)/?$"
       ],
-      "template": "slack://channel?team=&id=$2",
+      "template": "slack://channel?team=@1&id=$2",
       "scheme": "slack",
       "bundleID": "com.tinyspeck.slackmacgap"
     },
