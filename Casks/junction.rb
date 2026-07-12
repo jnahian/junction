@@ -6,8 +6,8 @@
 # Until builds are notarized, macOS quarantines the app whatever Homebrew does,
 # so installing takes a follow-up xattr (see caveats).
 cask "junction" do
-  version "0.5.0"
-  sha256 "3f102dc8dde922281a992ad35aad04a58a30a994245d074549f33a1407a662e9"
+  version "0.4.2"
+  sha256 "35b35949f26d53692288b42d9b6e1fecd3e3100e7bfb45245868368d796531e9"
 
   url "https://github.com/jnahian/junction/releases/download/v#{version}/Junction.dmg"
   name "Junction"
