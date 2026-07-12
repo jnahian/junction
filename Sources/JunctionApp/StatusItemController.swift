@@ -105,14 +105,15 @@ final class StatusItemController: NSObject, NSMenuDelegate {
         menu.addItem(pause)
         menu.addItem(.separator())
 
-        // Recent links (in-memory only), each with "create rule from this" (F3).
-        let header = NSMenuItem(title: "Recent Links", action: nil, keyEquivalent: "")
-        header.isEnabled = false
-        menu.addItem(header)
+        // Recent links (in-memory only) nest under one item, each with "create rule from
+        // this" (F3) a level deeper.
+        let recent = NSMenuItem(title: "Recent Links", action: nil, keyEquivalent: "")
+            .withSymbol("clock.arrow.circlepath")
+        let recentMenu = NSMenu()
         if state.recentLinks.isEmpty {
             let empty = NSMenuItem(title: "No links routed yet", action: nil, keyEquivalent: "")
             empty.isEnabled = false
-            menu.addItem(empty)
+            recentMenu.addItem(empty)
         } else {
             for link in state.recentLinks {
                 let title = link.url.absoluteString.count > 60
@@ -121,21 +122,23 @@ final class StatusItemController: NSObject, NSMenuDelegate {
                 let item = NSMenuItem(title: title, action: nil, keyEquivalent: "")
                 item.toolTip = "\(link.url.absoluteString)\nSource: \(link.sourceApp ?? "unknown")\n→ \(link.outcome)"
 
-                let submenu = NSMenu()
+                let actions = NSMenu()
                 let addRule = NSMenuItem(title: "Create Rule from This Link…", action: #selector(createRule(_:)), keyEquivalent: "")
                     .withSymbol("plus.circle")
                 addRule.target = self
                 addRule.representedObject = link
-                submenu.addItem(addRule)
+                actions.addItem(addRule)
                 let copy = NSMenuItem(title: "Copy URL", action: #selector(copyURL(_:)), keyEquivalent: "")
                     .withSymbol("doc.on.doc")
                 copy.target = self
                 copy.representedObject = link
-                submenu.addItem(copy)
-                item.submenu = submenu
-                menu.addItem(item)
+                actions.addItem(copy)
+                item.submenu = actions
+                recentMenu.addItem(item)
             }
         }
+        recent.submenu = recentMenu
+        menu.addItem(recent)
         menu.addItem(.separator())
 
         let settings = NSMenuItem(title: "Settings…", action: #selector(openSettings), keyEquivalent: ",")
