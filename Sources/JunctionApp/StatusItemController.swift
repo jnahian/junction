@@ -11,8 +11,34 @@ import Sparkle
 // or each would schedule its own background checks.
 let updaterController: SPUStandardUpdaterController? = {
     guard Bundle.main.object(forInfoDictionaryKey: "SUFeedURL") != nil else { return nil }
-    return SPUStandardUpdaterController(startingUpdater: true, updaterDelegate: nil, userDriverDelegate: nil)
+    return SPUStandardUpdaterController(
+        startingUpdater: true,
+        updaterDelegate: updateMonitor,
+        userDriverDelegate: updateMonitor
+    )
 }()
+
+let updateMonitor = UpdateMonitor()
+
+/// Turns a background check into a badge instead of a window: a menu bar app is never
+/// frontmost, so Sparkle's scheduled update alert would otherwise open behind everything.
+/// The user clicks "Update to X…" when they're ready, which shows the update Sparkle held.
+final class UpdateMonitor: NSObject, ObservableObject, SPUUpdaterDelegate, SPUStandardUserDriverDelegate {
+    @Published var newVersion: String?
+
+    var supportsGentleScheduledUpdateReminders: Bool { true }
+
+    func standardUserDriverShouldHandleShowingScheduledUpdate(
+        _ update: SUAppcastItem,
+        andInImmediateFocus immediateFocus: Bool
+    ) -> Bool { false }
+
+    func updater(_ updater: SPUUpdater, didFindValidUpdate item: SUAppcastItem) {
+        newVersion = item.displayVersionString
+    }
+
+    func updaterDidNotFindUpdate(_ updater: SPUUpdater) { newVersion = nil }
+}
 
 /// Menu bar presence: status, recent links, quick actions (F3 affordance lives here).
 @MainActor
@@ -43,6 +69,10 @@ final class StatusItemController: NSObject, NSMenuDelegate {
             .receive(on: DispatchQueue.main)
             .sink { [weak self] _ in self?.updateIcon() }
             .store(in: &cancellables)
+        updateMonitor.$newVersion
+            .receive(on: DispatchQueue.main)
+            .sink { [weak self] _ in self?.updateIcon() }
+            .store(in: &cancellables)
     }
 
     /// Template rendition of the app icon (three-way branch), shipped as an SVG resource.
@@ -54,6 +84,25 @@ final class StatusItemController: NSObject, NSMenuDelegate {
         return image
     }()
 
+    /// Same icon with a dot in the corner. Menu bar images must stay template (the system
+    /// tints them for light/dark), so the badge is a shape punched out of the icon, not a color.
+    private static let branchIconWithUpdateDot: NSImage? = {
+        guard let base = branchIcon else { return nil }
+        let badged = NSImage(size: base.size, flipped: false) { rect in
+            base.draw(in: rect)
+            let dot = NSRect(x: rect.maxX - 6, y: rect.maxY - 6, width: 6, height: 6)
+            NSGraphicsContext.current?.compositingOperation = .copy
+            NSColor.clear.setFill()
+            NSBezierPath(ovalIn: dot.insetBy(dx: -1.5, dy: -1.5)).fill()
+            NSGraphicsContext.current?.compositingOperation = .sourceOver
+            NSColor.black.setFill()
+            NSBezierPath(ovalIn: dot).fill()
+            return true
+        }
+        badged.isTemplate = true
+        return badged
+    }()
+
     private func updateIcon() {
         guard let button = statusItem.button else { return }
         let image: NSImage?
@@ -63,7 +112,7 @@ final class StatusItemController: NSObject, NSMenuDelegate {
             image = base?.withSymbolConfiguration(.init(pointSize: 15, weight: .medium)) ?? base
             image?.isTemplate = true
         } else {
-            image = Self.branchIcon
+            image = updateMonitor.newVersion == nil ? Self.branchIcon : Self.branchIconWithUpdateDot
         }
         button.image = image
         // dimmed = gentle "not active" state (PRD §11)
@@ -146,8 +195,12 @@ final class StatusItemController: NSObject, NSMenuDelegate {
         settings.target = self
         menu.addItem(settings)
         if updaterController != nil {
-            let update = NSMenuItem(title: "Check for Updates…", action: #selector(checkForUpdates), keyEquivalent: "")
-                .withSymbol("arrow.down.circle")
+            let pending = updateMonitor.newVersion
+            let update = NSMenuItem(
+                title: pending.map { "Update to \($0)…" } ?? "Check for Updates…",
+                action: #selector(checkForUpdates),
+                keyEquivalent: ""
+            ).withSymbol(pending == nil ? "arrow.down.circle" : "arrow.down.circle.fill")
             update.target = self
             menu.addItem(update)
         }
