@@ -13,6 +13,8 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     private var onboardingWindow: OnboardingWindowController?
 
     func applicationWillFinishLaunching(_ notification: Notification) {
+        NSApp.mainMenu = Self.makeMainMenu()
+
         // State must exist before the URL handler is registered: when the app is
         // *launched by* opening a link, kAEGetURL arrives before didFinishLaunching.
         state = AppState()
@@ -49,6 +51,35 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     func applicationShouldTerminate(_ sender: NSApplication) -> NSApplication.TerminateReply {
         state?.configStore.stopWatching()
         return .terminateNow
+    }
+
+    // MARK: Main menu
+
+    /// An accessory app shows no menu bar, but AppKit still routes key equivalents
+    /// through the main menu — without one, ⌘X/⌘C/⌘V and ⌘W do nothing anywhere.
+    private static func makeMainMenu() -> NSMenu {
+        let main = NSMenu()
+
+        // First submenu is the app menu; ⌘Q lives here.
+        let app = NSMenu()
+        app.addItem(withTitle: "Quit Junction", action: #selector(NSApplication.terminate(_:)), keyEquivalent: "q")
+        main.setSubmenu(app, for: main.addItem(withTitle: "Junction", action: nil, keyEquivalent: ""))
+
+        let edit = NSMenu(title: "Edit")
+        edit.addItem(withTitle: "Undo", action: Selector(("undo:")), keyEquivalent: "z")
+        edit.addItem(withTitle: "Redo", action: Selector(("redo:")), keyEquivalent: "Z")
+        edit.addItem(.separator())
+        edit.addItem(withTitle: "Cut", action: #selector(NSText.cut(_:)), keyEquivalent: "x")
+        edit.addItem(withTitle: "Copy", action: #selector(NSText.copy(_:)), keyEquivalent: "c")
+        edit.addItem(withTitle: "Paste", action: #selector(NSText.paste(_:)), keyEquivalent: "v")
+        edit.addItem(withTitle: "Select All", action: #selector(NSText.selectAll(_:)), keyEquivalent: "a")
+        main.setSubmenu(edit, for: main.addItem(withTitle: "Edit", action: nil, keyEquivalent: ""))
+
+        let window = NSMenu(title: "Window")
+        window.addItem(withTitle: "Close", action: #selector(NSWindow.performClose(_:)), keyEquivalent: "w")
+        main.setSubmenu(window, for: main.addItem(withTitle: "Window", action: nil, keyEquivalent: ""))
+
+        return main
     }
 
     // MARK: URL interception (F1)
