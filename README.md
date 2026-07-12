@@ -71,7 +71,11 @@ junction config validate
 
 **Requirements:** an Apple-silicon Mac (arm64), macOS 13 Ventura or later. Intel builds are not published.
 
-Junction is not yet notarized by Apple (no Developer ID account yet), so a fresh install trips Gatekeeper on first launch. Both paths below handle that — Homebrew is the simpler one.
+Junction is not yet notarized by Apple (no Developer ID account yet), so macOS quarantines it and refuses the first launch. **Whichever way you install, clear the quarantine flag afterward:**
+
+```sh
+xattr -dr com.apple.quarantine /Applications/Junction.app
+```
 
 ### Homebrew (recommended)
 
@@ -79,20 +83,17 @@ This repo is its own tap, so point Homebrew straight at it:
 
 ```sh
 brew tap jnahian/junction https://github.com/jnahian/junction
-HOMEBREW_CASK_OPTS="--no-quarantine" brew install --cask junction
+brew install --cask junction
+xattr -dr com.apple.quarantine /Applications/Junction.app
 ```
 
-`--no-quarantine` is what sidesteps the unsigned-app warning; without it macOS blocks the first launch. (Homebrew 6 removed the bare `--no-quarantine` install flag, hence the env-var form.) If you install without it, clear the flag afterward with the `xattr` command below. Homebrew also symlinks the bundled `junction` CLI onto your PATH.
+Homebrew also symlinks the bundled `junction` CLI onto your PATH.
 
 ### Manual DMG
 
 1. Download `Junction.dmg` from the [latest release](https://github.com/jnahian/junction/releases/latest).
 2. Open it and drag **Junction** into Applications.
-3. On first launch macOS will refuse to open it. Either **right-click Junction.app → Open → Open**, or clear the quarantine flag:
-
-```sh
-xattr -dr com.apple.quarantine /Applications/Junction.app
-```
+3. Run the `xattr` command above (or **right-click Junction.app → Open → Open**).
 
 With the manual install, link the CLI yourself if you want it:
 
