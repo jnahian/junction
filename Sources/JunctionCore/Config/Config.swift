@@ -10,6 +10,10 @@ public struct Config: Codable, Equatable, Sendable {
     /// Rewriter IDs the user has switched on. All built-ins are OFF by default —
     /// automatic deep-linking is opt-in. (Explicit `deepLink` rule actions always work.)
     public var enabledRewriters: [String]
+    /// User-defined deep-link apps, same shape as the built-in `rewriters.json` entries.
+    /// They shadow a built-in sharing the same id, and — like built-ins — only fire
+    /// automatically once listed in `enabledRewriters`.
+    public var customRewriters: [Rewriter]
     /// Slack workspace subdomain → team ID (`{"acme": "T01ABCDEF"}`). Slack's deep-link
     /// scheme takes team IDs only, and a permalink carries just the subdomain, so without
     /// this map a Slack link can't be deep-linked and falls back to the browser.
@@ -22,6 +26,7 @@ public struct Config: Codable, Equatable, Sendable {
         stripTrackingParams: Bool = true,
         extraTrackingParams: [String] = [],
         enabledRewriters: [String] = [],
+        customRewriters: [Rewriter] = [],
         slackTeams: [String: String] = [:],
         rules: [Rule] = []
     ) {
@@ -30,12 +35,14 @@ public struct Config: Codable, Equatable, Sendable {
         self.stripTrackingParams = stripTrackingParams
         self.extraTrackingParams = extraTrackingParams
         self.enabledRewriters = enabledRewriters
+        self.customRewriters = customRewriters
         self.slackTeams = slackTeams
         self.rules = rules
     }
 
     enum CodingKeys: String, CodingKey {
-        case version, fallback, stripTrackingParams, extraTrackingParams, enabledRewriters, slackTeams, rules
+        case version, fallback, stripTrackingParams, extraTrackingParams, enabledRewriters,
+             customRewriters, slackTeams, rules
     }
 
     public init(from decoder: Decoder) throws {
@@ -45,6 +52,7 @@ public struct Config: Codable, Equatable, Sendable {
         stripTrackingParams = try c.decodeIfPresent(Bool.self, forKey: .stripTrackingParams) ?? true
         extraTrackingParams = try c.decodeIfPresent([String].self, forKey: .extraTrackingParams) ?? []
         enabledRewriters = try c.decodeIfPresent([String].self, forKey: .enabledRewriters) ?? []
+        customRewriters = try c.decodeIfPresent([Rewriter].self, forKey: .customRewriters) ?? []
         slackTeams = try c.decodeIfPresent([String: String].self, forKey: .slackTeams) ?? [:]
         rules = try c.decodeIfPresent([Rule].self, forKey: .rules) ?? []
     }

@@ -129,6 +129,34 @@ final class ConfigStoreTests: XCTestCase {
         XCTAssertEqual(first, try Data(contentsOf: configURL))
     }
 
+    /// The GUI's "Add App…" writes custom rewriters; the CLI and the engine read them back.
+    func testCustomRewriterSurvivesSaveAndLoad() throws {
+        let store = ConfigStore(fileURL: configURL)
+        var config = Config()
+        config.customRewriters = [
+            Rewriter(id: "linear", name: "Linear", patterns: ["^https?://linear\\.app/(.*)$"],
+                     template: "linear://$1", scheme: "linear"),
+        ]
+        config.enabledRewriters = ["linear"]
+        try store.save(config)
+
+        let reloaded = try ConfigStore.load(from: configURL)
+        XCTAssertEqual(reloaded, config)
+        XCTAssertEqual(reloaded.customRewriters.first?.template, "linear://$1")
+    }
+
+    func testInvalidCustomRewriterReported() {
+        var config = Config()
+        config.customRewriters = [
+            Rewriter(id: "bad", name: "Bad", patterns: ["("], template: "x://$1", scheme: "x"),
+            Rewriter(id: "bad", name: "Dupe", patterns: ["^https://x"], template: "x://", scheme: ""),
+        ]
+        let problems = ConfigStore.validate(config)
+        XCTAssertTrue(problems.contains { $0.contains("invalid pattern") })
+        XCTAssertTrue(problems.contains { $0.contains("duplicate id") })
+        XCTAssertTrue(problems.contains { $0.contains("URL scheme") })
+    }
+
     func testLoopGuardRejectsJunctionAsTarget() {
         let config = Config(rules: [
             Rule(

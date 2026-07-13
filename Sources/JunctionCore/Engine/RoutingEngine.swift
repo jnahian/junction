@@ -69,7 +69,7 @@ public struct RoutingEngine: Sendable {
         isSchemeHandled: @escaping @Sendable (String) -> Bool = { _ in true }
     ) {
         self.config = config
-        self.rewriters = rewriters
+        self.rewriters = rewriters.merging(custom: config.customRewriters)
         self.compiled = config.rules.enumerated().compactMap { CompiledRule(index: $0.offset, rule: $0.element) }
         self.stripper = TrackingParamStripper.builtin(extra: config.extraTrackingParams)
         self.isSchemeHandled = isSchemeHandled

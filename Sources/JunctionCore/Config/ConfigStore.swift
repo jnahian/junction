@@ -88,6 +88,20 @@ public final class ConfigStore {
         if config.fallback.app.lowercased() == junctionBundleID {
             problems.append("fallback cannot target Junction itself (loop)")
         }
+        var seenRewriterIDs = Set<String>()
+        for (i, r) in config.customRewriters.enumerated() {
+            let label = "custom rewriter \(i + 1) (\(r.name))"
+            if r.id.isEmpty { problems.append("\(label): needs an id") }
+            if !seenRewriterIDs.insert(r.id).inserted {
+                problems.append("\(label): duplicate id \"\(r.id)\"")
+            }
+            if r.scheme.isEmpty { problems.append("\(label): needs the target app's URL scheme") }
+            if r.template.isEmpty { problems.append("\(label): needs a template") }
+            if r.patterns.isEmpty { problems.append("\(label): needs at least one pattern") }
+            for p in r.patterns where (try? NSRegularExpression(pattern: p)) == nil {
+                problems.append("\(label): invalid pattern \"\(p)\"")
+            }
+        }
         for (i, rule) in config.rules.enumerated() {
             let label = "rule \(i + 1) (\(rule.name))"
             if rule.match.isEmpty {

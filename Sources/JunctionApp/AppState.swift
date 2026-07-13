@@ -29,14 +29,14 @@ final class AppState: ObservableObject {
     var settingsPresenter: (() -> Void)?
     var onboardingPresenter: (() -> Void)?
 
-    let rewriters = RewriterStore.builtin()
+    /// Built-ins merged with the user's `customRewriters` — the engine owns the merge.
+    var rewriters: RewriterStore { engine.rewriters }
     private let maxRecent = 10
 
     init(configStore: ConfigStore = ConfigStore()) {
         self.configStore = configStore
         self.engine = RoutingEngine(
             config: configStore.config,
-            rewriters: rewriters,
             isSchemeHandled: { BrowserDiscovery.isSchemeHandled($0) }
         )
         configStore.onChange = { [weak self] config in
@@ -54,7 +54,6 @@ final class AppState: ObservableObject {
     private func rebuildEngine(with config: Config) {
         engine = RoutingEngine(
             config: config,
-            rewriters: rewriters,
             isSchemeHandled: { BrowserDiscovery.isSchemeHandled($0) }
         )
     }

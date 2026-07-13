@@ -141,9 +141,13 @@ Releases are cut locally, not by CI: `Scripts/release.sh` signs the DMG, generat
 
 The routing engine (`Sources/JunctionCore`) is a pure, UI-free Swift package: matchers, transforms, rewriters, and config I/O are fully unit-tested and have no AppKit dependency.
 
-## Contributing deep-link rewriters
+## Deep-link apps
 
-Rewriters are data, not code: [`Sources/JunctionCore/Resources/rewriters.json`](Sources/JunctionCore/Resources/rewriters.json). Adding support for a new app is a JSON-only PR. See [CONTRIBUTING.md](CONTRIBUTING.md).
+Junction ships rewriters for common apps (Zoom, Spotify, Slack, Figma, Notion…), all off until you enable them in **Settings → Deep Links**.
+
+Your app isn't in the list? Add it yourself — **Deep Links → Add App…** takes a name, the app's URL scheme, a regex for the web URL, and a template for the app URL, with a test field to check it before saving. It lands in `customRewriters` in your config and behaves exactly like a built-in (including as a `deepLink` rule action). Naming yours after a built-in replaces that built-in.
+
+Rewriters are data, not code: [`Sources/JunctionCore/Resources/rewriters.json`](Sources/JunctionCore/Resources/rewriters.json). Contributing one for everyone is a JSON-only PR — see [CONTRIBUTING.md](CONTRIBUTING.md).
 
 ## Privacy
 
