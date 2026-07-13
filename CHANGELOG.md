@@ -3,6 +3,10 @@
 Notes for each release. The section matching the app's version is shown in the
 Sparkle update dialog, so write it for users, not for contributors.
 
+## 0.4.3
+
+- Double-clicking a local .html file works again. Making Junction your default browser also hands it your HTML files, and it was quietly dropping them; they now open in your fallback browser.
+
 ## 0.4.2
 
 - New updates announce themselves quietly: the menu bar icon gets a dot and the menu offers "Update to …" instead of an update window appearing behind your other apps.
