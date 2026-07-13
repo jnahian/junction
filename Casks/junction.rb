@@ -7,7 +7,7 @@
 # so installing takes a follow-up xattr (see caveats).
 cask "junction" do
   version "0.4.3"
-  sha256 "a60bc866e15fd33553b3bf1db0abcd75632f46c4af7e2d3575ab68833c516658"
+  sha256 "ae016e12e231896f0a1d496c70595ebe90fd2729f7cb9247738d6f9f589ba4b3"
 
   url "https://github.com/jnahian/junction/releases/download/v#{version}/Junction.dmg"
   name "Junction"
