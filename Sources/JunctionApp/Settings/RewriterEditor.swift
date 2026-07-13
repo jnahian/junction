@@ -90,8 +90,11 @@ struct RewriterEditor: View {
                 } header: {
                     Text("Web URL patterns (regex, one per line)")
                 } footer: {
-                    Text("Matched against the whole URL. Round brackets capture text for the template.")
-                        .font(.caption).foregroundStyle(.secondary)
+                    VStack(alignment: .leading, spacing: 2) {
+                        Text("Matched against the whole URL. Round brackets capture text for the template.")
+                        Text(verbatim: "e.g. ^https?://linear\\.app/(.*)$ captures everything after the host, so the template linear://$1 turns https://linear.app/acme/issue/ENG-1 into linear://acme/issue/ENG-1")
+                    }
+                    .font(.caption).foregroundStyle(.secondary)
                 }
 
                 Section {
