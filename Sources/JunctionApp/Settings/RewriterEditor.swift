@@ -67,6 +67,10 @@ struct RewriterEditor: View {
                         Text("You already have an app named \(built.name).")
                             .font(.caption).foregroundStyle(.red)
                     }
+                    if !built.name.isEmpty, id.isEmpty {
+                        Text("The name needs at least one letter or number.")
+                            .font(.caption).foregroundStyle(.red)
+                    }
                     TextField("URL scheme", text: $scheme, prompt: Text("e.g. linear"))
                         .font(.body.monospaced())
                     if !built.scheme.isEmpty, !BrowserDiscovery.isSchemeHandled(built.scheme) {
@@ -92,7 +96,8 @@ struct RewriterEditor: View {
                 } footer: {
                     VStack(alignment: .leading, spacing: 2) {
                         Text("Matched against the whole URL. Round brackets capture text for the template.")
-                        Text(verbatim: "e.g. ^https?://linear\\.app/(.*)$ captures everything after the host, so the template linear://$1 turns https://linear.app/acme/issue/ENG-1 into linear://acme/issue/ENG-1")
+                        Text(verbatim: "e.g. ^https?://linear\\.app/([^?#]*) captures the path, so the template linear://$1 turns https://linear.app/acme/issue/ENG-1 into linear://acme/issue/ENG-1")
+                        Text("Capture only the part of the link the app needs. A catch-all like (.*) also hands the app whatever ?query or #fragment a link carries, and anyone can send you a link.")
                     }
                     .font(.caption).foregroundStyle(.secondary)
                 }

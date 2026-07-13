@@ -102,8 +102,18 @@ public final class ConfigStore {
                 problems.append("\(label): invalid pattern \"\(p)\"")
             }
         }
+        // Built-ins plus the user's own: a `deepLink` action naming anything else can never
+        // fire. Skipped when the built-in pack didn't load (see CoreResources) — flagging every
+        // deep-link rule as unknown would reject the whole config and take routing down with it.
+        let builtins = RewriterStore.builtin().rewriters
+        let builtinsLoaded = !builtins.isEmpty
+        let knownRewriterIDs = Set(builtins.map(\.id) + config.customRewriters.map(\.id))
+
         for (i, rule) in config.rules.enumerated() {
             let label = "rule \(i + 1) (\(rule.name))"
+            if case .deepLink(let id) = rule.action, builtinsLoaded, !knownRewriterIDs.contains(id) {
+                problems.append("\(label): unknown deep-link app \"\(id)\"")
+            }
             if rule.match.isEmpty {
                 problems.append("\(label): needs at least one matcher (patterns, regex, or sourceApps)")
             }

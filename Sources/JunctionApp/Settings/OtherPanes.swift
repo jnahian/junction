@@ -96,7 +96,7 @@ struct DeepLinksPane: View {
             } header: {
                 Text("Open links in native apps instead of the browser")
             } footer: {
-                Text("All off by default. A rewriter only fires when its app is installed and no rule matched first. Rules with a deep-link action always work regardless of these switches.")
+                Text("Built-ins are all off until you switch them on. A rewriter only fires when its app is installed and no rule matched first. Rules with a deep-link action always work regardless of these switches.")
                     .font(.caption).foregroundStyle(.secondary)
             }
             customRewritersSection
@@ -153,20 +153,32 @@ struct DeepLinksPane: View {
                     .contextMenu {
                         Button("Edit…") { editing = .edit(rewriter) }
                         Divider()
-                        Button("Delete", role: .destructive) {
+                        // Deleting an app a rule deep-links to would leave that rule pointing at
+                        // nothing (config.validate rejects it), so send the user to fix the rule.
+                        let users = rulesDeepLinking(to: rewriter.id)
+                        Button(users.isEmpty ? "Delete" : "Used by \(users.joined(separator: ", "))",
+                               role: .destructive) {
                             state.updateConfig { config in
                                 config.customRewriters.removeAll { $0.id == rewriter.id }
                                 config.enabledRewriters.removeAll { $0 == rewriter.id }
                             }
                         }
+                        .disabled(!users.isEmpty)
                     }
             }
             Button("Add App…") { editing = .add }
         } header: {
             Text("Your apps")
         } footer: {
-            Text("Teach Junction any app with a URL scheme. Double-click to edit.")
+            Text("Teach Junction any app with a URL scheme. An app you add is on straight away. Double-click to edit.")
                 .font(.caption).foregroundStyle(.secondary)
+        }
+    }
+
+    private func rulesDeepLinking(to id: String) -> [String] {
+        state.config.rules.compactMap { rule in
+            if case .deepLink(let target) = rule.action, target == id { return rule.name }
+            return nil
         }
     }
 

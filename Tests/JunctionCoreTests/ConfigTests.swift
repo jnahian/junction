@@ -157,6 +157,19 @@ final class ConfigStoreTests: XCTestCase {
         XCTAssertTrue(problems.contains { $0.contains("URL scheme") })
     }
 
+    /// A rule deep-linking to an app that doesn't exist can never fire — say so, don't route it silently.
+    func testUnknownDeepLinkTargetReported() {
+        var config = Config(rules: [
+            Rule(name: "Gone", match: Match(patterns: ["gone.example/*"]), action: .deepLink("gone")),
+        ])
+        XCTAssertTrue(ConfigStore.validate(config).contains { $0.contains("unknown deep-link app") })
+
+        config.customRewriters = [
+            Rewriter(id: "gone", name: "Gone", patterns: ["^https://gone"], template: "gone://", scheme: "gone"),
+        ]
+        XCTAssertTrue(ConfigStore.validate(config).isEmpty)
+    }
+
     func testLoopGuardRejectsJunctionAsTarget() {
         let config = Config(rules: [
             Rule(
