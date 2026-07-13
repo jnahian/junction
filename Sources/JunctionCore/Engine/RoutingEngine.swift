@@ -63,6 +63,8 @@ public struct RoutingEngine: Sendable {
     /// the given URL scheme is installed. Defaults to "assume installed".
     public var isSchemeHandled: @Sendable (String) -> Bool
 
+    /// `rewriters` is the *base* pack, not the final one: `config.customRewriters` is always
+    /// merged in on top, so passing an empty store does not mean "no rewriters".
     public init(
         config: Config,
         rewriters: RewriterStore = .builtin(),

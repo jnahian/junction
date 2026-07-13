@@ -9,14 +9,16 @@
   "enabledRewriters": ["zoom", "spotify", "linear"],
   // Your own deep-link apps (Settings → Deep Links → Add App…, or hand-write them here).
   // Same shape as the built-ins; an id matching a built-in replaces it. Enable above.
+  // Capture only what the app needs: [^?#]* keeps a link's query and fragment out of
+  // the app URL, which a catch-all (.*) would hand straight to the app.
   "customRewriters": [
     {
       "id": "linear",
       "name": "Linear",
-      "patterns": ["^https?://linear\\.app/(.*)$"],
+      "patterns": ["^https?://linear\\.app/([^?#]*)"],
       "template": "linear://$1",
       "scheme": "linear"
-    },
+    }
   ],
   // Slack deep links need a team ID, which Slack permalinks don't carry. Map each
   // workspace subdomain to its team ID (find it in app.slack.com/client/TEAM_ID/…).

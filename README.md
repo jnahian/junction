@@ -147,6 +147,8 @@ Junction ships rewriters for common apps (Zoom, Spotify, Slack, Figma, Notion…
 
 Your app isn't in the list? Add it yourself — **Deep Links → Add App…** takes a name, the app's URL scheme, a regex for the web URL, and a template for the app URL, with a test field to check it before saving. It lands in `customRewriters` in your config and behaves exactly like a built-in (including as a `deepLink` rule action). Naming yours after a built-in replaces that built-in.
 
+Capture only the part of the link the app needs: `^https?://linear\.app/([^?#]*)` → `linear://$1`. A catch-all `(.*)` also hands the app whatever query string or fragment a link carries, and links arrive from anywhere.
+
 Rewriters are data, not code: [`Sources/JunctionCore/Resources/rewriters.json`](Sources/JunctionCore/Resources/rewriters.json). Contributing one for everyone is a JSON-only PR — see [CONTRIBUTING.md](CONTRIBUTING.md).
 
 ## Privacy

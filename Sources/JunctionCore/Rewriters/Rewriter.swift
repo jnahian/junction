@@ -111,7 +111,9 @@ public struct RewriterStore: Sendable {
         rewriters.first { $0.id == id }
     }
 
-    /// User-defined rewriters take precedence: a custom one sharing a built-in's id replaces it.
+    /// User-defined rewriters take precedence: a custom one sharing a built-in's id replaces it,
+    /// and they all sort ahead of the built-ins, so in the auto-fire loop a custom rewriter also
+    /// wins over any built-in whose patterns happen to match the same URL.
     public func merging(custom: [Rewriter]) -> RewriterStore {
         let overridden = Set(custom.map(\.id))
         return RewriterStore(rewriters: custom + rewriters.filter { !overridden.contains($0.id) })
