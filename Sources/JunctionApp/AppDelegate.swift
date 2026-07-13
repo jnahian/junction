@@ -82,6 +82,15 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         return main
     }
 
+    /// Local .html files land here (Finder open / drop on the icon). They have no host, so no
+    /// rule could match them — hand them straight to the fallback browser.
+    func application(_ sender: NSApplication, openFiles filenames: [String]) {
+        for path in filenames {
+            state.openInFallback(URL(fileURLWithPath: path))
+        }
+        sender.reply(toOpenOrPrint: .success)
+    }
+
     // MARK: URL interception (F1)
 
     @objc private func handleGetURL(_ event: NSAppleEventDescriptor, withReplyEvent reply: NSAppleEventDescriptor) {
