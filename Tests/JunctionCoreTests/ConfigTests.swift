@@ -129,6 +129,47 @@ final class ConfigStoreTests: XCTestCase {
         XCTAssertEqual(first, try Data(contentsOf: configURL))
     }
 
+    /// The GUI's "Add App…" writes custom rewriters; the CLI and the engine read them back.
+    func testCustomRewriterSurvivesSaveAndLoad() throws {
+        let store = ConfigStore(fileURL: configURL)
+        var config = Config()
+        config.customRewriters = [
+            Rewriter(id: "linear", name: "Linear", patterns: ["^https?://linear\\.app/(.*)$"],
+                     template: "linear://$1", scheme: "linear"),
+        ]
+        config.enabledRewriters = ["linear"]
+        try store.save(config)
+
+        let reloaded = try ConfigStore.load(from: configURL)
+        XCTAssertEqual(reloaded, config)
+        XCTAssertEqual(reloaded.customRewriters.first?.template, "linear://$1")
+    }
+
+    func testInvalidCustomRewriterReported() {
+        var config = Config()
+        config.customRewriters = [
+            Rewriter(id: "bad", name: "Bad", patterns: ["("], template: "x://$1", scheme: "x"),
+            Rewriter(id: "bad", name: "Dupe", patterns: ["^https://x"], template: "x://", scheme: ""),
+        ]
+        let problems = ConfigStore.validate(config)
+        XCTAssertTrue(problems.contains { $0.contains("invalid pattern") })
+        XCTAssertTrue(problems.contains { $0.contains("duplicate id") })
+        XCTAssertTrue(problems.contains { $0.contains("URL scheme") })
+    }
+
+    /// A rule deep-linking to an app that doesn't exist can never fire — say so, don't route it silently.
+    func testUnknownDeepLinkTargetReported() {
+        var config = Config(rules: [
+            Rule(name: "Gone", match: Match(patterns: ["gone.example/*"]), action: .deepLink("gone")),
+        ])
+        XCTAssertTrue(ConfigStore.validate(config).contains { $0.contains("unknown deep-link app") })
+
+        config.customRewriters = [
+            Rewriter(id: "gone", name: "Gone", patterns: ["^https://gone"], template: "gone://", scheme: "gone"),
+        ]
+        XCTAssertTrue(ConfigStore.validate(config).isEmpty)
+    }
+
     func testLoopGuardRejectsJunctionAsTarget() {
         let config = Config(rules: [
             Rule(

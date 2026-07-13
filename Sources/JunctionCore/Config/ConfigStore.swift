@@ -88,8 +88,32 @@ public final class ConfigStore {
         if config.fallback.app.lowercased() == junctionBundleID {
             problems.append("fallback cannot target Junction itself (loop)")
         }
+        var seenRewriterIDs = Set<String>()
+        for (i, r) in config.customRewriters.enumerated() {
+            let label = "custom rewriter \(i + 1) (\(r.name))"
+            if r.id.isEmpty { problems.append("\(label): needs an id") }
+            if !seenRewriterIDs.insert(r.id).inserted {
+                problems.append("\(label): duplicate id \"\(r.id)\"")
+            }
+            if r.scheme.isEmpty { problems.append("\(label): needs the target app's URL scheme") }
+            if r.template.isEmpty { problems.append("\(label): needs a template") }
+            if r.patterns.isEmpty { problems.append("\(label): needs at least one pattern") }
+            for p in r.patterns where (try? NSRegularExpression(pattern: p)) == nil {
+                problems.append("\(label): invalid pattern \"\(p)\"")
+            }
+        }
+        // Built-ins plus the user's own: a `deepLink` action naming anything else can never
+        // fire. Skipped when the built-in pack didn't load (see CoreResources) — flagging every
+        // deep-link rule as unknown would reject the whole config and take routing down with it.
+        let builtins = RewriterStore.builtin().rewriters
+        let builtinsLoaded = !builtins.isEmpty
+        let knownRewriterIDs = Set(builtins.map(\.id) + config.customRewriters.map(\.id))
+
         for (i, rule) in config.rules.enumerated() {
             let label = "rule \(i + 1) (\(rule.name))"
+            if case .deepLink(let id) = rule.action, builtinsLoaded, !knownRewriterIDs.contains(id) {
+                problems.append("\(label): unknown deep-link app \"\(id)\"")
+            }
             if rule.match.isEmpty {
                 problems.append("\(label): needs at least one matcher (patterns, regex, or sourceApps)")
             }

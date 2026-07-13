@@ -2,7 +2,7 @@ import Foundation
 
 /// A deep-link rewriter: turns an https URL into a native app scheme URL.
 /// Definitions ship as data (`rewriters.json`) so contributions don't require Swift.
-public struct Rewriter: Decodable, Sendable, Identifiable {
+public struct Rewriter: Codable, Equatable, Sendable, Identifiable {
     public let id: String
     public let name: String
     /// Regex over the full URL string. First matching pattern wins.
@@ -109,5 +109,13 @@ public struct RewriterStore: Sendable {
 
     public func rewriter(id: String) -> Rewriter? {
         rewriters.first { $0.id == id }
+    }
+
+    /// User-defined rewriters take precedence: a custom one sharing a built-in's id replaces it,
+    /// and they all sort ahead of the built-ins, so in the auto-fire loop a custom rewriter also
+    /// wins over any built-in whose patterns happen to match the same URL.
+    public func merging(custom: [Rewriter]) -> RewriterStore {
+        let overridden = Set(custom.map(\.id))
+        return RewriterStore(rewriters: custom + rewriters.filter { !overridden.contains($0.id) })
     }
 }

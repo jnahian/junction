@@ -66,48 +66,134 @@ struct DeepLinksPane: View {
     @ObservedObject var state: AppState
     @State private var newSubdomain = ""
     @State private var newTeamID = ""
+    @State private var editing: RewriterEditing?
+
+    /// One sheet, not two: a blank draft's id is "" (slug of an empty name), so
+    /// `.sheet(item:)` on a Rewriter wouldn't re-fire for a second "Add".
+    enum RewriterEditing: Identifiable {
+        case add
+        case edit(Rewriter)
+        var id: String {
+            switch self {
+            case .add: return "add"
+            case .edit(let r): return "edit-\(r.id)"
+            }
+        }
+    }
+
+    /// Custom rewriters shadow built-ins by id, so list them once, in their own section.
+    private var builtins: [Rewriter] {
+        let custom = Set(state.config.customRewriters.map(\.id))
+        return state.rewriters.rewriters.filter { !custom.contains($0.id) }
+    }
 
     var body: some View {
         Form {
             Section {
-                ForEach(state.rewriters.rewriters) { rewriter in
-                    Toggle(isOn: Binding(
-                        get: { state.config.enabledRewriters.contains(rewriter.id) },
-                        set: { on in
-                            state.updateConfig { config in
-                                if on {
-                                    if !config.enabledRewriters.contains(rewriter.id) {
-                                        config.enabledRewriters.append(rewriter.id)
-                                    }
-                                } else {
-                                    config.enabledRewriters.removeAll { $0 == rewriter.id }
-                                }
-                            }
-                        }
-                    )) {
-                        HStack {
-                            Text(rewriter.name)
-                            if !BrowserDiscovery.isSchemeHandled(rewriter.scheme) {
-                                Text("app not installed")
-                                    .font(.caption)
-                                    .foregroundStyle(.orange)
-                            }
-                        }
-                    }
+                ForEach(builtins) { rewriter in
+                    rewriterToggle(rewriter)
                 }
             } header: {
                 Text("Open links in native apps instead of the browser")
             } footer: {
-                Text("All off by default. A rewriter only fires when its app is installed and no rule matched first. Rules with a deep-link action always work regardless of these switches.")
+                Text("Built-ins are all off until you switch them on. A rewriter only fires when its app is installed and no rule matched first. Rules with a deep-link action always work regardless of these switches.")
                     .font(.caption).foregroundStyle(.secondary)
             }
+            customRewritersSection
             slackTeamsSection
             Section {
-                Text("Definitions live in rewriters.json. Contributions welcome, no Swift required.")
+                Text("Built-in definitions live in rewriters.json. Contributions welcome, no Swift required.")
                     .font(.caption).foregroundStyle(.secondary)
             }
         }
         .formStyle(.grouped)
+        .sheet(item: $editing) { item in
+            let original: Rewriter? = { if case .edit(let r) = item { return r } else { return nil } }()
+            RewriterEditor(
+                state: state,
+                original: original,
+                onSave: { saveRewriter($0, original: original) },
+                onCancel: { editing = nil }
+            )
+        }
+    }
+
+    private func rewriterToggle(_ rewriter: Rewriter) -> some View {
+        Toggle(isOn: Binding(
+            get: { state.config.enabledRewriters.contains(rewriter.id) },
+            set: { on in
+                state.updateConfig { config in
+                    if on {
+                        if !config.enabledRewriters.contains(rewriter.id) {
+                            config.enabledRewriters.append(rewriter.id)
+                        }
+                    } else {
+                        config.enabledRewriters.removeAll { $0 == rewriter.id }
+                    }
+                }
+            }
+        )) {
+            HStack {
+                Text(rewriter.name)
+                if !BrowserDiscovery.isSchemeHandled(rewriter.scheme) {
+                    Text("app not installed")
+                        .font(.caption)
+                        .foregroundStyle(.orange)
+                }
+            }
+        }
+    }
+
+    private var customRewritersSection: some View {
+        Section {
+            ForEach(state.config.customRewriters) { rewriter in
+                rewriterToggle(rewriter)
+                    .contentShape(Rectangle())
+                    .onTapGesture(count: 2) { editing = .edit(rewriter) }
+                    .contextMenu {
+                        Button("Edit…") { editing = .edit(rewriter) }
+                        Divider()
+                        // Deleting an app a rule deep-links to would leave that rule pointing at
+                        // nothing (config.validate rejects it), so send the user to fix the rule.
+                        let users = rulesDeepLinking(to: rewriter.id)
+                        Button(users.isEmpty ? "Delete" : "Used by \(users.joined(separator: ", "))",
+                               role: .destructive) {
+                            state.updateConfig { config in
+                                config.customRewriters.removeAll { $0.id == rewriter.id }
+                                config.enabledRewriters.removeAll { $0 == rewriter.id }
+                            }
+                        }
+                        .disabled(!users.isEmpty)
+                    }
+            }
+            Button("Add App…") { editing = .add }
+        } header: {
+            Text("Your apps")
+        } footer: {
+            Text("Teach Junction any app with a URL scheme. An app you add is on straight away. Double-click to edit.")
+                .font(.caption).foregroundStyle(.secondary)
+        }
+    }
+
+    private func rulesDeepLinking(to id: String) -> [String] {
+        state.config.rules.compactMap { rule in
+            if case .deepLink(let target) = rule.action, target == id { return rule.name }
+            return nil
+        }
+    }
+
+    private func saveRewriter(_ rewriter: Rewriter, original: Rewriter?) {
+        state.updateConfig { config in
+            if let original, let i = config.customRewriters.firstIndex(where: { $0.id == original.id }) {
+                config.customRewriters[i] = rewriter
+            } else {
+                config.customRewriters.append(rewriter)
+                if !config.enabledRewriters.contains(rewriter.id) {
+                    config.enabledRewriters.append(rewriter.id)
+                }
+            }
+        }
+        editing = nil
     }
 
     /// Slack's scheme takes team IDs, never subdomains, and a permalink carries only the

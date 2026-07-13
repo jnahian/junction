@@ -63,13 +63,15 @@ public struct RoutingEngine: Sendable {
     /// the given URL scheme is installed. Defaults to "assume installed".
     public var isSchemeHandled: @Sendable (String) -> Bool
 
+    /// `rewriters` is the *base* pack, not the final one: `config.customRewriters` is always
+    /// merged in on top, so passing an empty store does not mean "no rewriters".
     public init(
         config: Config,
         rewriters: RewriterStore = .builtin(),
         isSchemeHandled: @escaping @Sendable (String) -> Bool = { _ in true }
     ) {
         self.config = config
-        self.rewriters = rewriters
+        self.rewriters = rewriters.merging(custom: config.customRewriters)
         self.compiled = config.rules.enumerated().compactMap { CompiledRule(index: $0.offset, rule: $0.element) }
         self.stripper = TrackingParamStripper.builtin(extra: config.extraTrackingParams)
         self.isSchemeHandled = isSchemeHandled

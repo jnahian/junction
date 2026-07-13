@@ -3,6 +3,10 @@
 Notes for each release. The section matching the app's version is shown in the
 Sparkle update dialog, so write it for users, not for contributors.
 
+## Unreleased
+
+- Add your own deep-link apps. Settings → Deep Links → "Add App…" takes the app's URL scheme, a pattern for the web link, and a template for the app link, with a test field to try it before saving. Your apps sit alongside the built-in ones, work as a rule's deep-link action, and can replace a built-in by using the same name.
+
 ## 0.4.3
 
 - Double-clicking a local .html file works again. Making Junction your default browser also hands it your HTML files, and it was quietly dropping them; they now open in your fallback browser.

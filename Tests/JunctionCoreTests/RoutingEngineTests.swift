@@ -85,6 +85,53 @@ final class RoutingEngineTests: XCTestCase {
         guard case .fallback = d else { return XCTFail("\(d)") }
     }
 
+    // MARK: Custom (user-defined) rewriters
+
+    private let linear = Rewriter(
+        id: "linear", name: "Linear",
+        patterns: ["^https?://linear\\.app/(.*)$"],
+        template: "linear://$1", scheme: "linear"
+    )
+
+    func testCustomRewriterFiresWhenEnabled() {
+        var config = makeConfig()
+        config.customRewriters = [linear]
+        config.enabledRewriters = ["linear"]
+        let d = engine(config).route(event("https://linear.app/acme/issue/ENG-1"))
+        guard case .deepLink(let url, let id, _) = d else { return XCTFail("\(d)") }
+        XCTAssertEqual(id, "linear")
+        XCTAssertEqual(url.absoluteString, "linear://acme/issue/ENG-1")
+    }
+
+    func testCustomRewriterIsOptInLikeBuiltins() {
+        var config = makeConfig()
+        config.customRewriters = [linear] // present but not in enabledRewriters
+        guard case .fallback = engine(config).route(event("https://linear.app/acme/issue/ENG-1")) else {
+            return XCTFail("unenabled custom rewriter must not fire")
+        }
+    }
+
+    func testCustomRewriterFallsBackWhenAppMissing() {
+        var config = makeConfig()
+        config.customRewriters = [linear]
+        config.enabledRewriters = ["linear"]
+        let d = engine(config, schemeHandled: { _ in false }).route(event("https://linear.app/x"))
+        guard case .fallback = d else { return XCTFail("\(d)") }
+    }
+
+    func testCustomRewriterUsableFromDeepLinkRuleAndShadowsBuiltin() {
+        var config = makeConfig()
+        // Same id as the built-in "zoom": the user's definition wins.
+        config.customRewriters = [Rewriter(
+            id: "zoom", name: "Zoom", patterns: ["^https?://zoom\\.example/(\\d+)"],
+            template: "zoommtg://zoom.us/join?confno=$1", scheme: "zoommtg"
+        )]
+        config.rules = [Rule(name: "Zoom", match: Match(patterns: ["zoom.example/*"]), action: .deepLink("zoom"))]
+        let d = engine(config).route(event("https://zoom.example/42"))
+        guard case .deepLink(let url, _, _) = d else { return XCTFail("\(d)") }
+        XCTAssertEqual(url.absoluteString, "zoommtg://zoom.us/join?confno=42")
+    }
+
     func testTrackingParamsStrippedBeforeRouting() {
         let d = engine().route(event("https://unmatched.example/a?utm_source=x&keep=1&fbclid=zzz"))
         XCTAssertEqual(d.url.absoluteString, "https://unmatched.example/a?keep=1")
