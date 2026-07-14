@@ -73,8 +73,9 @@
   .note .tag{font-family:var(--mono);font-size:11px;letter-spacing:.06em;text-transform:uppercase;color:var(--brand);flex:none;padding-top:1px}
   .note b{color:var(--text)}
 
-  /* reference table */
-  .ref{width:100%;border-collapse:collapse;margin:18px 0;font-size:14px}
+  /* reference table — wrapper scrolls horizontally so wide rows don't blow out the page on mobile */
+  .table-wrap{overflow-x:auto;margin:18px 0}
+  .ref{width:100%;border-collapse:collapse;margin:0;font-size:14px}
   .ref th{text-align:left;font-family:var(--mono);font-size:11px;letter-spacing:.1em;text-transform:uppercase;color:var(--faint);padding:10px 14px;border-bottom:1px solid var(--line-strong)}
   .ref td{padding:12px 14px;border-bottom:1px solid var(--line);color:var(--body-fg);vertical-align:top}
   .ref td:first-child{white-space:nowrap}

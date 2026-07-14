@@ -70,3 +70,15 @@
 @media (max-width: 720px) {
   .menubar .left span { display: none }
 }
+
+/* keep the topbar on one line on phones: tighten spacing, and below the
+   narrowest widths drop the version pill (the version is also in the hero
+   and the download button) so the Docs/Changelog/GitHub links still fit */
+@media (max-width: 600px) {
+  .topbar { --bar-pad: 16px }
+  .topbar .right { gap: 3px }
+  .tlink { padding: 8px 9px; font-size: 13.5px }
+}
+@media (max-width: 480px) {
+  .ver { display: none }
+}
