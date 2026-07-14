@@ -1,0 +1,15 @@
+---
+import docs from "../../data/docs.json";
+import site from "../../data/site.json";
+---
+
+<section id="menubar">
+  <h2>Menu bar &amp; updates</h2>
+  <p>Junction has no windows and no Dock icon. Click the menu-bar icon for:</p>
+  <ul>
+    {docs.menubarActions.map((action) => (
+      <li><b>{action.label}</b> — <Fragment set:html={action.body} /></li>
+    ))}
+  </ul>
+  <p>Updates arrive through <a href={site.sparkle}>Sparkle</a>, and you can trigger a check from the menu bar or <b>Settings → General → Updates</b>. They're EdDSA-signed, so the app only installs builds signed with the maintainer's key. Homebrew users can also <code>brew upgrade</code> — each release bumps the cask.</p>
+</section>

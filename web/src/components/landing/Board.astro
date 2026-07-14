@@ -1,0 +1,80 @@
+---
+import diagram from "../../data/diagram.json";
+import landing from "../../data/landing.json";
+const { chips, destinations, columns, file } = diagram;
+const rules = landing.matcher.rules.slice(0, chips.length);
+
+
+// whitespace inside <pre> is load-bearing, so this one block is assembled as raw HTML
+const ruleCard = [
+  '<span class="p">{</span>',
+  '  <span class="p">"rules": [</span>',
+  ...rules.map(
+    (rule, i) =>
+      `    <span class="rule" data-rule="${i}">{ <span class="m">"patterns": ["${rule.pattern}"]</span>, <span class="o">"action": ${rule.action}</span> }</span>`
+  ),
+  '  <span class="p">]</span>',
+  '<span class="p">}</span>',
+].join("\n");
+---
+
+<section class="board" aria-label="How Junction routes a link">
+  <div class="cols">{columns.map((c) => <span>{c}</span>)}</div>
+  <div class="stage">
+    <svg class="diagram" viewBox="0 0 1000 560" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Links flowing through the Junction router to destination apps">
+      <defs>
+        <filter id="glow" x="-60%" y="-60%" width="220%" height="220%">
+          <feGaussianBlur stdDeviation="5" result="b"/><feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge>
+        </filter>
+        <radialGradient id="jgrad" cx="50%" cy="50%" r="50%">
+          <stop offset="0%" stop-color="#5eead4" stop-opacity=".9"/>
+          <stop offset="100%" stop-color="#9b6cf6" stop-opacity=".05"/>
+        </radialGradient>
+      </defs>
+
+      <g fill="none" stroke-linecap="round">
+        {chips.map((chip, i) => (
+          <path id={`in${i}`} d={`M250,${chip.y + 20} C 360,${chip.y + 20} 360,280 452,280`} stroke="var(--line-strong)" stroke-width="1.5"/>
+        ))}
+        {destinations.map((dest, i) => (
+          <path id={`d${i}`} d={`M548,280 C 650,280 650,${dest.y + 30} 748,${dest.y + 30}`} stroke={dest.color} stroke-width="1.6" opacity=".38"/>
+        ))}
+      </g>
+
+      {chips.map((chip, i) => (
+        <g id={`chip${i}`} class="chip">
+          <rect class="chip-box" x="34" y={chip.y} width="216" height="40" rx="9" fill="rgba(17,27,43,.6)" stroke="var(--line)" stroke-width="1"/>
+          <text class="chip-label" x="52" y={chip.y + 25}>{chip.label}</text>
+        </g>
+      ))}
+
+      <g id="junction">
+        <circle id="jglow" cx="500" cy="280" r="72" fill="url(#jgrad)" opacity=".55"/>
+        <g id="jlogo">
+          <image id="jlogoImg" href="/logo.png" x="450" y="230" width="100" height="100" preserveAspectRatio="xMidYMid meet"/>
+        </g>
+        <text class="jcaption" x="500" y="378" text-anchor="middle">JUNCTION.APP</text>
+      </g>
+
+      {destinations.map((dest, i) => (
+        <g id={`dest${i}`} class="dest">
+          <rect x="748" y={dest.y} width="60" height="60" rx="13" fill={dest.fill} stroke={dest.color} stroke-width="1.4"/>
+          <text class="dest-mark" x="778" y={dest.y + 38} text-anchor="middle" fill={dest.color}>{dest.mark}</text>
+          <text class="dest-title" x="824" y={dest.y + 25}>{dest.title}</text>
+          <text class="dest-sub" x="824" y={dest.y + 45}>{dest.sub}</text>
+        </g>
+      ))}
+
+      <g id="packets"></g>
+    </svg>
+
+    <div class="rulecard" aria-hidden="true">
+      <div class="head">◆ <span class="fname">{file}</span></div>
+      <pre set:html={ruleCard} />
+    </div>
+  </div>
+</section>
+
+<script>
+  import "../../scripts/board.js";
+</script>

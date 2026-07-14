@@ -1,0 +1,5 @@
+---
+const { tag = "Note" } = Astro.props;
+---
+
+<div class="note"><span class="tag">{tag}</span><span><slot /></span></div>

@@ -1,0 +1,19 @@
+---
+import landing from "../../data/landing.json";
+const { features } = landing;
+---
+
+<section class="sec" data-reveal>
+  <span class="eyebrow">{features.eyebrow}</span>
+  <h2>{features.heading}</h2>
+  <p class="lead">{features.lead}</p>
+  <div class="feat-grid">
+    {features.cards.map((card) => (
+      <div class="feat">
+        <div class="tag" set:html={card.tag} />
+        <h3>{card.title}</h3>
+        <p set:html={card.body} />
+      </div>
+    ))}
+  </div>
+</section>

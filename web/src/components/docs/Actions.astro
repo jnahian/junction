@@ -1,0 +1,28 @@
+---
+import Note from "./Note.astro";
+import docs from "../../data/docs.json";
+import { highlightJson } from "../../lib/highlight.js";
+---
+
+<section id="actions">
+  <h2>Actions</h2>
+  <p>The <code>action</code> decides what happens to a matched link:</p>
+  <table class="ref">
+    <thead><tr><th>Action</th><th>What it does</th></tr></thead>
+    <tbody>
+      {docs.actions.map((row) => (
+        <tr>
+          <td><code set:html={highlightJson(row.action)} /></td>
+          <td set:html={row.body} />
+        </tr>
+      ))}
+    </tbody>
+  </table>
+  <Note>
+    A <code>profile</code> is a Chromium profile <i>directory</i> or a Firefox profile <i>name</i>. If a rule names a profile that no longer exists, the link degrades to your fallback browser rather than opening in the wrong one.
+  </Note>
+  <p><b>Not supported:</b></p>
+  <ul>
+    {docs.unsupported.map((item) => <li set:html={item} />)}
+  </ul>
+</section>

@@ -1,0 +1,16 @@
+---
+import docs from "../../data/docs.json";
+---
+
+<nav class="sidebar" id="sidebar">
+  {docs.nav.map((group) => (
+    <div class="side-group">
+      <h5>{group.title}</h5>
+      {group.links.map((link) => <a href={link.href}>{link.label}</a>)}
+    </div>
+  ))}
+</nav>
+
+<script>
+  import "../../scripts/docs-nav.js";
+</script>

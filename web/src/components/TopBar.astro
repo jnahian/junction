@@ -1,0 +1,31 @@
+---
+import site from "../data/site.json";
+const { kind, brandHref, menuButton = false, version, links } = Astro.props;
+---
+
+<header class="topbar">
+  <div class="bar-inner">
+  {menuButton ? (
+    <div class="lead-l">
+      <button class="menu-btn" id="menuBtn" aria-label="Open navigation">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="4" y1="7" x2="20" y2="7"/><line x1="4" y1="12" x2="20" y2="12"/><line x1="4" y1="17" x2="20" y2="17"/></svg>
+      </button>
+      <a class="brand" href={brandHref}>
+        <img id="logo" src="/logo.png" alt={site.name}>
+        <span class="name">{site.name}</span>
+        <span class="kind">{kind}</span>
+      </a>
+    </div>
+  ) : (
+    <a class="brand" href={brandHref}>
+      <img id="logo" src="/logo.png" alt={site.name}>
+      <span class="name">{site.name}</span>
+      <span class="kind">{kind}</span>
+    </a>
+  )}
+  <div class="right">
+    <a class="ver" href={version.href}>{version.label}</a>
+    {links.map((link) => <a class="tlink" href={link.href}>{link.label}</a>)}
+  </div>
+  </div>
+</header>

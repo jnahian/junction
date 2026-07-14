@@ -1,0 +1,21 @@
+---
+import CodeBlock from "./CodeBlock.astro";
+import docs from "../../data/docs.json";
+---
+
+<section id="cli">
+  <h2>Command line</h2>
+  <p>The app bundle ships a companion CLI at <code>Contents/Helpers/junction</code> (Homebrew links it onto your PATH automatically).</p>
+  <CodeBlock title="Terminal">
+    {docs.cliCommands.map((c, i) => (
+      <Fragment>
+        {i > 0 && "\n"}<span class="tk-cmd">{c.command}</span>{c.arg}{" ".repeat(Math.max(1, 48 - c.command.length - c.arg.length))}<span class="tk-cmt">{c.comment}</span>
+      </Fragment>
+    ))}
+  </CodeBlock>
+  <p><code>junction test</code> is the fastest way to reason about precedence — it prints which rule matched and what Junction would do, without opening anything. Add <code>--source &lt;bundle-id&gt;</code> to test a source-app rule:</p>
+  <CodeBlock title="Terminal">
+    <span class="tk-cmd">junction test</span> "https://mycorp.atlassian.net/browse/X-1" --source com.tinyspeck.slackmacgap
+  </CodeBlock>
+  <p><code>junction config validate</code> runs the same validation the GUI and the file watcher use, so a config that passes here is a config the app will load.</p>
+</section>

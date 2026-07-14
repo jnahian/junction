@@ -1,0 +1,46 @@
+---
+import landing from "../../data/landing.json";
+import site from "../../data/site.json";
+const { install } = landing;
+---
+
+<section class="sec" data-reveal id="install">
+  <span class="eyebrow">{install.eyebrow}</span>
+  <h2>{install.heading}</h2>
+  <div class="install-wrap">
+    <div class="icard">
+      <div class="rec">Recommended</div>
+      <h3>Homebrew</h3>
+      <div class="term" data-copy={site.brewTap}>
+        <span class="line"><span class="pfx">$ </span>{site.brewTap}</span>
+        <span class="cp">COPY</span>
+      </div>
+      <div class="term" data-copy={site.brewTrust}>
+        <span class="line"><span class="pfx">$ </span>{site.brewTrust}</span>
+        <span class="cp">COPY</span>
+      </div>
+      <div class="term" data-copy={site.brewInstall}>
+        <span class="line"><span class="pfx">$ </span>{site.brewInstall}</span>
+        <span class="cp">COPY</span>
+      </div>
+      <p class="req" set:html={install.homebrewNote} />
+    </div>
+    <div class="icard">
+      <div class="rec" style="color:var(--violet)">Direct</div>
+      <h3>Download the DMG</h3>
+      <a class="dl-btn" href={site.latestRelease} id="dmg">↓&nbsp; Junction.dmg · {site.version}</a>
+      <p class="req" set:html={install.requirements} />
+    </div>
+    <div class="install-note">
+      <p set:html={install.quarantineNote} />
+      <div class="term" data-copy={site.quarantine}>
+        <span class="line"><span class="pfx">$ </span>{site.quarantine}</span>
+        <span class="cp">COPY</span>
+      </div>
+    </div>
+  </div>
+</section>
+
+<script>
+  import "../../scripts/install-copy.js";
+</script>

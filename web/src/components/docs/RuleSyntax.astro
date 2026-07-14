@@ -1,0 +1,41 @@
+---
+import CodeBlock from "./CodeBlock.astro";
+import Note from "./Note.astro";
+import docs from "../../data/docs.json";
+import { highlightJson } from "../../lib/highlight.js";
+---
+
+<section id="rules">
+  <h2>Rule syntax</h2>
+  <p>A rule is a <b>name</b>, a <b>match</b>, and an <b>action</b>:</p>
+  <CodeBlock title="one rule">
+    <Fragment set:html={highlightJson(docs.samples.rule)} />
+  </CodeBlock>
+
+  <h3>Match patterns</h3>
+  <p>Patterns are matched against the link's <code>host/path</code>. The scheme is ignored unless you write it, the host is case-insensitive, the path is case-sensitive, and the query string is ignored — use <code>regex</code> when the query matters.</p>
+  <table class="ref">
+    <thead><tr><th>Pattern</th><th>Matches</th></tr></thead>
+    <tbody>
+      {docs.patterns.map((row) => (
+        <tr>
+          <td><code>{row.pattern}</code></td>
+          <td set:html={row.matches} />
+        </tr>
+      ))}
+    </tbody>
+  </table>
+
+  <h3>Match on the source app</h3>
+  <p>A rule can also match <b>where the click came from</b> — the bundle ID of the app that opened the link. Combine it with patterns to narrow a rule to one app's links:</p>
+  <CodeBlock title="source-app rule">
+    <Fragment set:html={highlightJson(docs.samples.sourceApp)} />
+  </CodeBlock>
+
+  <h3>Precedence</h3>
+  <p>Order is the logic. Junction walks the list from the top and stops at the <b>first</b> rule that matches, so put specific patterns above broad ones. If two rules could match the same link, the one higher in the file wins.</p>
+
+  <h3>Fallback</h3>
+  <p>If no rule matches, the link opens in your <code>fallback</code> browser. So does any rule that <i>can't</i> be carried out — a browser that isn't installed, a profile that was deleted. Junction never drops a click.</p>
+  <Note tag="Tip">Not sure which rule wins? <code>junction test &lt;url&gt;</code> prints the matching rule and the decision without opening anything. See <a href="#cli">Command line</a>.</Note>
+</section>

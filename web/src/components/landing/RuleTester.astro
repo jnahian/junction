@@ -1,0 +1,32 @@
+---
+import landing from "../../data/landing.json";
+const { matcher } = landing;
+---
+
+<section class="sec" data-reveal>
+  <span class="eyebrow">{matcher.eyebrow}</span>
+  <h2>A rule is a <span class="accent">match</span> and a destination.</h2>
+  <p class="lead">{matcher.lead}</p>
+  <div class="matcher">
+    <div class="bar">
+      <label>You click</label>
+      <input id="urlIn" type="text" spellcheck="false" autocomplete="off" value={matcher.sample} aria-label="Test a URL against the rules">
+      <span class="result" id="mResult"></span>
+    </div>
+    <div class="rules" id="mRules">
+      {matcher.rules.map((rule, i) => (
+        <div class="mrule" data-pat={rule.pattern} data-dst={rule.destination} data-color={rule.color}>
+          <span>
+            <span class="num">{String(i + 1).padStart(2, "0")}</span>
+            <span class="pat">{rule.pattern}</span>
+          </span>
+          <span class="dst">→ {rule.destination}</span>
+        </div>
+      ))}
+    </div>
+  </div>
+</section>
+
+<script>
+  import "../../scripts/rule-tester.js";
+</script>

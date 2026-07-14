@@ -1,0 +1,13 @@
+---
+import docs from "../../data/docs.json";
+---
+
+<section id="troubleshooting">
+  <h2>Troubleshooting</h2>
+  {docs.troubleshooting.map((item) => (
+    <Fragment>
+      <h3>{item.title}</h3>
+      <p set:html={item.body} />
+    </Fragment>
+  ))}
+</section>

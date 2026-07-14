@@ -1,0 +1,96 @@
+{
+  "nav": [
+    {
+      "title": "Guide",
+      "links": [
+        { "label": "Overview", "href": "#overview" },
+        { "label": "Installation", "href": "#install" },
+        { "label": "First launch", "href": "#quickstart" }
+      ]
+    },
+    {
+      "title": "Configuration",
+      "links": [
+        { "label": "The config file", "href": "#config" },
+        { "label": "Rule syntax", "href": "#rules" },
+        { "label": "Actions", "href": "#actions" },
+        { "label": "Deep links", "href": "#deeplinks" }
+      ]
+    },
+    {
+      "title": "Using Junction",
+      "links": [
+        { "label": "Menu bar & updates", "href": "#menubar" },
+        { "label": "Command line", "href": "#cli" },
+        { "label": "Troubleshooting", "href": "#troubleshooting" },
+        { "label": "Privacy", "href": "#privacy" }
+      ]
+    },
+    {
+      "title": "Releases",
+      "links": [{ "label": "Changelog", "href": "/changelog" }]
+    }
+  ],
+  "samples": {
+    "config": "{\n  \"version\": 1,\n  \"fallback\": { \"app\": \"com.apple.Safari\" },\n  \"stripTrackingParams\": true,\n  \"rules\": [\n    {\n      \"name\": \"Work links → Chrome work profile\",\n      \"match\": { \"patterns\": [\"*.atlassian.net/*\", \"app.clickup.com/*\"] },\n      \"action\": { \"app\": \"com.google.Chrome\", \"profile\": \"Profile 1\" }\n    },\n    {\n      \"name\": \"Zoom → native app\",\n      \"match\": { \"patterns\": [\"*.zoom.us/j/*\", \"*.zoom.us/w/*\"] },\n      \"action\": { \"deepLink\": \"zoom\" }\n    },\n    {\n      \"name\": \"Links from Terminal → Chrome\",\n      \"match\": { \"sourceApps\": [\"com.googlecode.iterm2\", \"com.apple.Terminal\"] },\n      \"action\": { \"app\": \"com.google.Chrome\" }\n    }\n  ]\n}",
+    "rule": "{\n  \"name\": \"Personal → Firefox profile\",\n  \"match\": { \"patterns\": [\"reddit.com/*\", \"news.ycombinator.com/*\"] },\n  \"action\": { \"app\": \"org.mozilla.firefox\", \"profile\": \"personal\" }\n}",
+    "sourceApp": "{\n  \"name\": \"Meeting links from Calendar → picker\",\n  \"match\": {\n    \"patterns\": [\"meet.google.com/*\"],\n    \"sourceApps\": [\"com.apple.iCal\"]\n  },\n  \"action\": { \"prompt\": true }\n}",
+    "customRewriter": "{\n  \"customRewriters\": [\n    {\n      \"id\": \"linear\",\n      \"name\": \"Linear\",\n      \"patterns\": [\"^https?://linear\\\\.app/([^?#]*)\"],\n      \"template\": \"linear://$1\",\n      \"scheme\": \"linear\"\n    }\n  ],\n  \"enabledRewriters\": [\"zoom\", \"spotify\", \"linear\"],\n  \"slackTeams\": { \"acme\": \"T01ABCDEF\" }\n}"
+  },
+  "patterns": [
+    { "pattern": "*.atlassian.net/*", "matches": "Any subdomain of atlassian.net — and the apex domain itself — at any path depth" },
+    { "pattern": "app.clickup.com/*", "matches": "That exact host, any path below it" },
+    { "pattern": "reddit.com", "matches": "A bare host: matches all of its subpaths" },
+    { "pattern": "*.zoom.us/j/*", "matches": "<code>*</code> stays inside one path segment; <code>**</code> or a trailing <code>*</code> crosses segments" },
+    { "pattern": "*", "matches": "Everything — but you don't need it; unmatched links already go to your fallback" }
+  ],
+  "actions": [
+    { "action": "{ \"app\": \"com.google.Chrome\" }", "body": "Open in a browser or app, named by its <b>bundle ID</b>." },
+    { "action": "{ \"app\": \"com.google.Chrome\", \"profile\": \"Profile 1\" }", "body": "Open in a specific browser profile — a Chromium profile <i>directory</i> (<code>Default</code>, <code>Profile 1</code>) or a Firefox profile <i>name</i> (what <code>firefox -P</code> takes, listed in <b>Settings → Browsers</b>)." },
+    { "action": "{ \"deepLink\": \"zoom\" }", "body": "Rewrite the link to a native app deep link. Works whether or not the rewriter is enabled in <b>Settings → Deep Links</b>." },
+    { "action": "{ \"prompt\": true }", "body": "Show the picker and let you choose at click time." },
+    { "action": "{ \"clipboard\": true }", "body": "Copy the link instead of opening it." }
+  ],
+  "deepLinkApps": [
+    "Zoom", "Slack", "Figma", "Notion", "Spotify", "Linear", "Microsoft Teams", "Discord", "ClickUp",
+    "Telegram", "WhatsApp", "Apple Music", "Asana", "Todoist", "GitHub Desktop", "VS Code"
+  ],
+  "menubarActions": [
+    { "label": "Recent links", "body": "the last 10 links Junction routed, in a submenu. In memory only — never written to disk." },
+    { "label": "Settings", "body": "fallback browser, rules, browsers and profiles, deep links, updates." },
+    { "label": "Updates", "body": "a check runs on its own; the icon gets a dot and the menu offers <b>Update to …</b> when one is ready." }
+  ],
+  "cliCommands": [
+    { "command": "junction test", "arg": " \"https://mycorp.atlassian.net/browse/X-1\"", "comment": "# which rule wins, and why" },
+    { "command": "junction open", "arg": " \"https://example.com\"", "comment": "# route a link now" },
+    { "command": "junction config", "arg": " path", "comment": "# print the config path" },
+    { "command": "junction config", "arg": " validate", "comment": "# check the file before saving" }
+  ],
+  "troubleshooting": [
+    {
+      "title": "macOS refuses to open the app",
+      "body": "Junction isn't notarized yet, so macOS quarantines it. Clear the flag with <code>xattr -dr com.apple.quarantine /Applications/Junction.app</code>, or right-click <b>Junction.app → Open → Open</b>."
+    },
+    {
+      "title": "Nothing routes at all",
+      "body": "Junction only sees links when it is the <b>default browser</b> — that's the one step it can't work without. Re-select it under <b>System Settings → Desktop &amp; Dock → Default web browser</b>."
+    },
+    {
+      "title": "Links open in the wrong place",
+      "body": "Almost always precedence: a broader rule above is catching the link first. Run <code>junction test &lt;url&gt;</code> — it prints the matching rule and the decision without opening anything."
+    },
+    {
+      "title": "A rule opens the fallback instead of its app",
+      "body": "Junction degrades to the fallback rather than opening the wrong thing — a deleted browser profile, an app that isn't installed, or an unknown rewriter all land there. The menu-bar icon flags an invalid config, and the last-good rules stay live until you fix it."
+    },
+    {
+      "title": "Slack deep links open the browser",
+      "body": "Slack permalinks don't carry the team ID the app needs. Map each workspace subdomain to its team ID in <b>Settings → Deep Links</b> (or <code>slackTeams</code> in the config); unmapped workspaces open in the browser rather than on the wrong screen."
+    }
+  ],
+  "unsupported": [
+    "Firefox <b>containers</b> are an extension feature with no launch-flag equivalent — Firefox <i>profiles</i> are supported.",
+    "Arc <b>spaces</b> have no public API."
+  ],
+  "roadmap": "MVP under active development. Planned for v1.1+: redirect and shortener unwrapping (opt-in), <code>mailto:</code> routing, time- and network-based conditions, and Shortcuts actions."
+}

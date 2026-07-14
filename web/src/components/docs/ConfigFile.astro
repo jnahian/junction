@@ -1,0 +1,25 @@
+---
+import CodeBlock from "./CodeBlock.astro";
+import Note from "./Note.astro";
+import docs from "../../data/docs.json";
+import site from "../../data/site.json";
+import { highlightJson } from "../../lib/highlight.js";
+---
+
+<section id="config">
+  <h2>The config file</h2>
+  <p>Rules live in <code>{site.configPath}</code> (honors <code>$XDG_CONFIG_HOME</code>). Edit them in the GUI or in your editor — it's plain text you own, so commit it to your dotfiles, sync it, or share it with your team.</p>
+  <CodeBlock title={site.configPath}>
+    <Fragment set:html={highlightJson(docs.samples.config)} />
+  </CodeBlock>
+  <p>Top-level keys:</p>
+  <ul>
+    <li><code>rules</code> — the ordered rule list, checked top to bottom.</li>
+    <li><code>fallback</code> — where unmatched links go, named by bundle ID.</li>
+    <li><code>stripTrackingParams</code> — drop tracking parameters before routing.</li>
+    <li><code>enabledRewriters</code>, <code>customRewriters</code>, <code>slackTeams</code> — see <a href="#deeplinks">Deep links</a>.</li>
+  </ul>
+  <Note>
+    The file is watched and hot-reloads with validation. An invalid edit keeps the <b>last-good rules</b> live and shows a menu-bar warning rather than breaking routing. Comments and trailing commas are accepted on read; the GUI writes strict, stably-sorted JSON so git diffs stay clean.
+  </Note>
+</section>

@@ -1,0 +1,25 @@
+---
+import CodeBlock from "./CodeBlock.astro";
+import Note from "./Note.astro";
+import docs from "../../data/docs.json";
+import site from "../../data/site.json";
+import { highlightJson } from "../../lib/highlight.js";
+---
+
+<section id="deeplinks">
+  <h2>Deep links</h2>
+  <p>A deep-link rewriter turns a web URL into a native app URL, so the link skips the browser entirely. Junction ships 17 of them:</p>
+  <p class="applist">{docs.deepLinkApps.map((app) => <code>{app}</code>)}</p>
+  <p>The automatic rewriters are <b>off until you enable them</b> in <b>Settings → Deep Links</b> (<code>enabledRewriters</code> in the config). A rule with an explicit <code>deepLink</code> action always works regardless. A rewriter only fires if an app claiming its URL scheme is actually installed.</p>
+
+  <h3>Add your own</h3>
+  <p><b>Deep Links → Add App…</b> takes a name, the app's URL scheme, a regex for the web URL, and a template for the app URL, with a test field to check it before saving. It lands in <code>customRewriters</code> and behaves exactly like a built-in — including as a <code>deepLink</code> rule action. Naming yours after a built-in replaces that built-in.</p>
+  <CodeBlock title={site.configPath}>
+    <Fragment set:html={highlightJson(docs.samples.customRewriter)} />
+  </CodeBlock>
+  <p>Capture only the part of the link the app needs: <code>[^?#]*</code> keeps a link's query and fragment out of the app URL, which a catch-all <code>(.*)</code> would hand straight to the app.</p>
+  <Note tag="Slack">
+    Slack deep links need a team ID, which Slack permalinks don't carry. Map each workspace subdomain to its team ID in <code>slackTeams</code> (find it in <code>app.slack.com/client/TEAM_ID/…</code>). An unmapped workspace opens in the browser rather than on the wrong screen.
+  </Note>
+  <p>Rewriters are data, not code — <a href={site.rewritersJson}>rewriters.json</a>. Contributing one for everyone is a JSON-only pull request; see <a href={site.contributing}>CONTRIBUTING.md</a>.</p>
+</section>
