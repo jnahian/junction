@@ -1,6 +1,6 @@
 // The site's facts come from the repo, not from a copy of the repo.
 // Everything here runs at build time only — never import this from src/scripts/.
-import { readFileSync } from "node:fs";
+import { existsSync, readFileSync } from "node:fs";
 import { resolve } from "node:path";
 
 // Resolve against the repo root (the parent of this Astro project). Not import.meta.url:
@@ -68,6 +68,17 @@ export function releases() {
  */
 export function rewriters() {
   const { rewriters: all } = JSON.parse(read("Sources/JunctionCore/Resources/rewriters.json"));
-  const apps = [...new Set(all.map((r) => r.name.replace(/\s*\(.*\)$/, "")))];
+
+  const apps = [];
+  for (const { id, name } of all) {
+    const app = name.replace(/\s*\(.*\)$/, ""); // "Slack (message links)" → "Slack"
+    if (apps.some((a) => a.name === app)) continue; // two rewriters, one Slack
+
+    // icons are named after the rewriter id; a rewriter without one just renders as text
+    const icon = `/icons/${id}.svg`;
+    const hasIcon = existsSync(resolve(process.cwd(), "public", icon.slice(1)));
+    apps.push({ name: app, icon: hasIcon ? icon : null });
+  }
+
   return { count: all.length, apps };
 }
