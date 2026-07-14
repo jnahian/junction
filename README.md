@@ -69,7 +69,7 @@ junction config validate
 
 ## Install
 
-**Requirements:** an Apple-silicon Mac (arm64), macOS 13 Ventura or later. Intel builds are not published.
+**Requirements:** macOS 13 Ventura or later. Builds are universal — Apple silicon and Intel.
 
 Junction is not yet notarized by Apple (no Developer ID account yet), so macOS quarantines it and refuses the first launch. **Whichever way you install, clear the quarantine flag afterward:**
 
@@ -79,10 +79,12 @@ xattr -dr com.apple.quarantine /Applications/Junction.app
 
 ### Homebrew (recommended)
 
-This repo is its own tap, so point Homebrew straight at it:
+This repo is its own tap, so point Homebrew straight at it. The cask lives outside Homebrew's
+official taps, so trust it before installing:
 
 ```sh
 brew tap jnahian/junction https://github.com/jnahian/junction
+brew trust --cask jnahian/junction/junction
 brew install --cask junction
 xattr -dr com.apple.quarantine /Applications/Junction.app
 ```
