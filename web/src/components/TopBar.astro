@@ -13,14 +13,14 @@ const { kind, brandHref, menuButton = false, version, links } = Astro.props;
       <a class="brand" href={brandHref}>
         <img id="logo" src="/logo.png" alt={site.name}>
         <span class="name">{site.name}</span>
-        <span class="kind">{kind}</span>
+        {kind && <span class="kind">{kind}</span>}
       </a>
     </div>
   ) : (
     <a class="brand" href={brandHref}>
       <img id="logo" src="/logo.png" alt={site.name}>
       <span class="name">{site.name}</span>
-      <span class="kind">{kind}</span>
+      {kind && <span class="kind">{kind}</span>}
     </a>
   )}
   <div class="right">

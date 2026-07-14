@@ -1,6 +1,5 @@
 ---
 import Base from "../layouts/Base.astro";
-import TopBar from "../components/TopBar.astro";
 import Sidebar from "../components/docs/Sidebar.astro";
 import Overview from "../components/docs/Overview.astro";
 import Installation from "../components/docs/Installation.astro";
@@ -13,23 +12,10 @@ import MenuBar from "../components/docs/MenuBar.astro";
 import Cli from "../components/docs/Cli.astro";
 import Troubleshooting from "../components/docs/Troubleshooting.astro";
 import Privacy from "../components/docs/Privacy.astro";
-import site from "../data/site.json";
-import { version } from "../lib/repo.js";
 import "../styles/docs.css";
 ---
 
-<Base title="Junction — Documentation">
-  <TopBar
-    kind="Docs"
-    brandHref="#overview"
-    menuButton={true}
-    version={{ label: version(), href: "/changelog" }}
-    links={[
-      { label: "Home", href: "/" },
-      { label: "GitHub", href: site.github },
-    ]}
-  />
-
+<Base title="Junction — Documentation" topbar={{ kind: "Docs", menuButton: true }}>
   <div class="scrim" id="scrim"></div>
 
   <div class="layout">

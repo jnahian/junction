@@ -26,25 +26,7 @@
     min-height:100vh;-webkit-font-smoothing:antialiased;
   }
 
-  /* topbar */
-  .topbar{
-    position:sticky;top:0;z-index:40;
-    border-bottom:1px solid var(--line);
-    background:rgba(8,13,22,.82);backdrop-filter:blur(12px);
-  }
-  /* content lines up with .wrap below */
-  .topbar .bar-inner{
-    display:flex;align-items:center;justify-content:space-between;
-    height:56px;max-width:820px;margin:0 auto;padding:0 clamp(20px,5vw,40px);
-  }
-  .brand{display:flex;align-items:center;gap:11px;text-decoration:none;color:var(--text)}
-  .brand img{width:25px;height:25px;border-radius:7px;display:block}
-  .brand .name{font-family:var(--display);font-weight:700;font-size:16px;letter-spacing:-.01em}
-  .brand .kind{font-family:var(--mono);font-size:11px;color:var(--faint);border:1px solid var(--line-strong);padding:2px 7px;border-radius:6px}
-  .topbar .right{display:flex;align-items:center;gap:6px}
-  .ver{font-family:var(--mono);font-size:12px;color:var(--cyan);border:1px solid var(--line-strong);padding:5px 10px;border-radius:8px;text-decoration:none}
-  .tlink{font-size:14px;color:var(--muted);text-decoration:none;padding:8px 12px;border-radius:8px;transition:color .15s}
-  .tlink:hover{color:var(--text)}
+  .topbar{--bar-max:820px;--bar-pad:clamp(20px,5vw,40px)}
 
   .wrap{max-width:820px;margin:0 auto;padding:56px clamp(20px,5vw,40px) 120px}
   h1{font-family:var(--display);font-weight:600;font-size:clamp(32px,5vw,46px);letter-spacing:-.02em;margin-bottom:8px}

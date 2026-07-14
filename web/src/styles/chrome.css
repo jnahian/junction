@@ -1,0 +1,72 @@
+/* Site chrome: the fake macOS menu bar and the topbar under it. Loaded by the
+   layout, so it's on every page. Heights are variables because the docs sidebar
+   and scrim have to stick below both bars. */
+:root {
+  --menubar-h: 30px;
+  --topbar-h: 56px;
+  --chrome-h: 86px; /* --menubar-h + --topbar-h */
+}
+
+/* menu-bar strip: it lives in the menu bar */
+.menubar {
+  position: sticky;
+  top: 0;
+  z-index: 50;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  height: var(--menubar-h);
+  padding: 0 16px;
+  font-family: var(--mono);
+  font-size: 12px;
+  color: var(--faint);
+  border-bottom: 1px solid var(--line);
+  background: rgba(8, 13, 22, 0.86);
+  backdrop-filter: blur(8px);
+}
+.menubar .left { display: flex; gap: 16px }
+.menubar .left b { color: var(--muted); font-weight: 600 }
+.menubar .right { display: flex; align-items: center; gap: 16px }
+.menubar .status { display: flex; align-items: center; gap: 7px; color: var(--brand) }
+.menubar .sysicons { display: flex; align-items: center; gap: 11px; color: var(--muted) }
+.menubar .sysicons svg { display: block; height: 13px; width: auto }
+.mblogo { width: 16px; height: 16px; border-radius: 4px; display: block }
+
+/* topbar: sticks directly under the menu bar */
+.topbar {
+  position: sticky;
+  top: var(--menubar-h);
+  z-index: 40;
+  border-bottom: 1px solid var(--line);
+  background: rgba(8, 13, 22, 0.82);
+  backdrop-filter: blur(12px);
+}
+/* --bar-max is set per page so the contents line up with that page's content column */
+.topbar .bar-inner {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  height: var(--topbar-h);
+  max-width: var(--bar-max, 1120px);
+  margin: 0 auto;
+  padding: 0 var(--bar-pad, 20px);
+}
+.topbar .lead-l { display: flex; align-items: center; gap: 12px }
+.topbar .right { display: flex; align-items: center; gap: 6px }
+
+.brand { display: flex; align-items: center; gap: 11px; text-decoration: none; color: var(--text) }
+.brand img { width: 25px; height: 25px; border-radius: 7px; display: block }
+.brand .name { font-family: var(--display); font-weight: 700; font-size: 16px; letter-spacing: -0.01em }
+.brand .kind { font-family: var(--mono); font-size: 11px; color: var(--faint); border: 1px solid var(--line-strong); padding: 2px 7px; border-radius: 6px }
+
+.ver { font-family: var(--mono); font-size: 12px; color: var(--cyan); border: 1px solid var(--line-strong); padding: 5px 10px; border-radius: 8px; text-decoration: none }
+.tlink { font-size: 14px; color: var(--muted); text-decoration: none; padding: 8px 12px; border-radius: 8px; transition: color 0.15s }
+.tlink:hover { color: var(--text) }
+
+/* only the docs sidebar uses this; hidden until the drawer breakpoint */
+.menu-btn { display: none; align-items: center; justify-content: center; width: 34px; height: 34px; border: 1px solid var(--line-strong); border-radius: 8px; background: transparent; color: var(--muted); cursor: pointer }
+.menu-btn svg { width: 16px; height: 16px }
+
+@media (max-width: 720px) {
+  .menubar .left span { display: none }
+}

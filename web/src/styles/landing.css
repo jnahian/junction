@@ -45,31 +45,9 @@
     background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='140' height='140'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.9' numOctaves='2'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
   }
 
-  /* menu-bar strip: it lives in the menu bar */
-  .menubar{
-    position:sticky;top:0;z-index:50;
-    display:flex;align-items:center;justify-content:space-between;
-    height:30px;padding:0 16px;
-    font-family:var(--mono);font-size:12px;color:var(--faint);
-    border-bottom:1px solid var(--line);
-    background:rgba(8,13,22,.86);backdrop-filter:blur(8px);
-  }
-  .menubar .left{display:flex;gap:16px}
-  .menubar .left b{color:var(--muted);font-weight:600}
-  .menubar .right{display:flex;align-items:center;gap:16px}
-  .menubar .status{display:flex;align-items:center;gap:7px;color:var(--brand)}
-  .menubar .status .dot{
-    width:10px;height:10px;transform:rotate(45deg);
-    background:linear-gradient(135deg,var(--cyan),var(--violet));
-    box-shadow:0 0 10px rgba(94,234,212,.6);border-radius:2px;
-  }
-  .menubar .sysicons{display:flex;align-items:center;gap:11px;color:var(--muted)}
-  .menubar .sysicons svg{display:block;height:13px;width:auto}
-  .mblogo{width:16px;height:16px;border-radius:4px;display:block}
-  .appicon{
-    width:76px;height:76px;border-radius:18px;display:block;margin-bottom:24px;
-    box-shadow:0 18px 44px -14px rgba(0,0,0,.75), 0 0 0 1px rgba(255,255,255,.05);
-  }
+  /* topbar width for this page's content column (see chrome.css) */
+  .topbar{--bar-max:1120px;--bar-pad:24px}
+
   .wmlogo{width:27px;height:27px;border-radius:7px;display:block}
 
   .wrap{position:relative;z-index:1;max-width:1120px;margin:0 auto;padding:clamp(38px,7vw,88px) 24px 64px}
@@ -172,7 +150,6 @@
 
   @media (max-width:720px){
     .rulecard{position:static;width:100%;margin:0;border-radius:0;border-left:0;border-right:0;border-bottom:0}
-    .menubar .left{display:none}
     .board .cols{font-size:10px;letter-spacing:.08em;padding:13px 16px}
   }
   @media (prefers-reduced-motion:reduce){
