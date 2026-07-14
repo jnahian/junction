@@ -24,6 +24,45 @@ jobs:
           name: Junction.app
           path: dist/Junction.app
 
+      # v0.5.0 shipped an app that crashed on launch for everyone but the maintainer:
+      # SPM's generated `Bundle.module` only looks beside the executable and in the
+      # build dir, so the app resolved its resources from the maintainer's local
+      # .build and fatalError'd on any other Mac. Nothing above catches that — the
+      # build dir is always present in CI too. So: relocate the bundle, delete .build,
+      # and prove it stands on its own. Destructive, hence last.
+      - name: Bundle is self-contained (no .build, relocated)
+        run: |
+          set -euo pipefail
+
+          # 1. Nothing may use Bundle.module — it fatalErrors when the bundle is
+          #    missing. Use CoreResources, which searches Contents/Resources.
+          if grep -rn --include='*.swift' 'Bundle\.module' Sources/ | grep -v '///'; then
+            echo "::error::Bundle.module is unshippable — use CoreResources instead."
+            exit 1
+          fi
+
+          # 2. Every resource the app loads at runtime must be inside the shipped bundle.
+          RES="dist/Junction.app/Contents/Resources/Junction_JunctionCore.bundle/Contents/Resources"
+          for f in MenuBarIcon.svg starter-rules.json rewriters.json tracking-params.json; do
+            test -f "$RES/$f" || { echo "::error::$f missing from the shipped bundle"; exit 1; }
+          done
+
+          # 3. Resolve them with no build dir anywhere on disk. The CLI shares the app's
+          #    CoreResources lookup. Stripping utm_* proves tracking-params.json actually
+          #    loaded: when the pack is missing the engine skips stripping rather than
+          #    failing, so the params survive and this grep catches it. Deep-link rewriters
+          #    can't be asserted here — they're opt-in per user and need the target app
+          #    installed, so on a bare runner they correctly do nothing.
+          cp -R dist/Junction.app "$RUNNER_TEMP/Junction.app"
+          rm -rf .build dist
+          export XDG_CONFIG_HOME="$RUNNER_TEMP/config"   # no user config, like a fresh Mac
+          OUT="$("$RUNNER_TEMP/Junction.app/Contents/Helpers/junction" test \
+                 'https://example.com/p?utm_source=news&id=42')"
+          echo "$OUT"
+          grep -q 'transformed: https://example.com/p?id=42' <<<"$OUT" || {
+            echo "::error::tracking-params.json did not load from the shipped bundle"; exit 1; }
+          echo "✓ bundle resolves its resources with no build directory present"
+
   test-linux:
     name: Engine tests (Linux)
     runs-on: ubuntu-latest
