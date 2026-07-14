@@ -15,7 +15,7 @@
       "id": "spotify",
       "name": "Spotify",
       "patterns": [
-        "^https?://open\\.spotify\\.com/(track|album|artist|playlist|show|episode)/([A-Za-z0-9]+)"
+        "^https?://open\\.spotify\\.com/(?:intl-[a-z]{2}/)?(track|album|artist|playlist|show|episode)/([A-Za-z0-9]+)"
       ],
       "template": "spotify:$1:$2",
       "scheme": "spotify",
@@ -45,7 +45,7 @@
       "id": "figma",
       "name": "Figma",
       "patterns": [
-        "^https?://(?:www\\.)?figma\\.com/(?:file|design)/([A-Za-z0-9]+)(/[^?#]*)?"
+        "^https?://(?:www\\.)?figma\\.com/(?:file|design|board|slides|deck|proto)/([A-Za-z0-9]+)(/[^?#]*)?"
       ],
       "template": "figma://file/$1$2",
       "scheme": "figma",
@@ -55,7 +55,8 @@
       "id": "notion",
       "name": "Notion",
       "patterns": [
-        "^https?://(?:www\\.)?notion\\.so/(.*)$"
+        "^https?://(?:www\\.)?notion\\.so/(.*)$",
+        "^https?://app\\.notion\\.com/(.*)$"
       ],
       "template": "notion://www.notion.so/$1",
       "scheme": "notion",
@@ -108,6 +109,16 @@
         "^https?://app\\.clickup\\.com/t/([^/?#]+)"
       ],
       "template": "clickup://t/$1",
+      "scheme": "clickup",
+      "bundleID": "com.clickup.desktop-app"
+    },
+    {
+      "id": "clickup-doc",
+      "name": "ClickUp (docs)",
+      "patterns": [
+        "^https?://app\\.clickup\\.com/(\\d+/v/dc/[^?#]+)"
+      ],
+      "template": "clickup://$1",
       "scheme": "clickup",
       "bundleID": "com.clickup.desktop-app"
     },

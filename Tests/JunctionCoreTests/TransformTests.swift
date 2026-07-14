@@ -65,6 +65,38 @@ final class RewriterTests: XCTestCase {
         XCTAssertEqual(out?.absoluteString, "figma://file/AbC123/My-File")
     }
 
+    func testFigmaBoardAndSlides() {
+        let r = store.rewriter(id: "figma")!
+        XCTAssertEqual(
+            r.rewrite(URL(string: "https://www.figma.com/board/AbC123/My-Board")!)?.absoluteString,
+            "figma://file/AbC123/My-Board"
+        )
+        XCTAssertEqual(
+            r.rewrite(URL(string: "https://www.figma.com/slides/AbC123/Deck")!)?.absoluteString,
+            "figma://file/AbC123/Deck"
+        )
+    }
+
+    func testSpotifyLocalizedLink() {
+        let r = store.rewriter(id: "spotify")!
+        let out = r.rewrite(URL(string: "https://open.spotify.com/intl-de/track/4uLU6hMCjMI75M1A2tKUQC")!)
+        XCTAssertEqual(out?.absoluteString, "spotify:track:4uLU6hMCjMI75M1A2tKUQC")
+    }
+
+    func testNotionAppDomain() {
+        let r = store.rewriter(id: "notion")!
+        let out = r.rewrite(URL(string: "https://app.notion.com/Page-abc123")!)
+        XCTAssertEqual(out?.absoluteString, "notion://www.notion.so/Page-abc123")
+        // notion.com without the app subdomain is the marketing site, not the app.
+        XCTAssertNil(r.rewrite(URL(string: "https://www.notion.com/pricing")!))
+    }
+
+    func testClickUpDoc() {
+        let r = store.rewriter(id: "clickup-doc")!
+        let out = r.rewrite(URL(string: "https://app.clickup.com/9018159683/v/dc/8crccj3-10918/8crccj3-6218")!)
+        XCTAssertEqual(out?.absoluteString, "clickup://9018159683/v/dc/8crccj3-10918/8crccj3-6218")
+    }
+
     func testNonMatchingURLReturnsNil() {
         let r = store.rewriter(id: "zoom")!
         XCTAssertNil(r.rewrite(URL(string: "https://zoom.us/pricing")!))

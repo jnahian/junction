@@ -10,6 +10,13 @@ shape matters:
 - Every bullet starts with `Added:`, `Changed:`, or `Fixed:` — that marker drives
   the filter pills on the changelog page.
 
+## Unreleased
+
+- Added: ClickUp doc links open in the ClickUp app. Enable "ClickUp (docs)" under Settings → Deep Links; only task links (`/t/…`) were covered before, so docs still opened in the browser.
+- Fixed: Figma FigJam boards, Slides, and prototype links now open in the Figma app — previously only `/file/` and `/design/` links did.
+- Fixed: Spotify links shared from a non-English app now open in Spotify. They carry a language prefix (`open.spotify.com/intl-de/track/…`) that Junction did not recognize.
+- Fixed: Notion links on its new `app.notion.com` address open in the Notion app, alongside the old `notion.so` ones.
+
 ## 0.5.1 — 2026-07-14
 
 - Fixed: Junction now launches on Macs other than the one it was built on. 0.5.0 crashed on startup for everyone else — it looked for its icon and starter rules in a folder that only existed on the developer's machine, and gave up when it wasn't there. If 0.5.0 did nothing when you opened it, this is why.

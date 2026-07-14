@@ -20,7 +20,7 @@ for (const release of shipped) {
 }
 
 const { count, apps } = rewriters();
-assert.equal(count, 17);
+assert.equal(count, 18);
 const names = apps.map((a) => a.name);
 assert.ok(names.includes("Slack") && names.includes("Zoom"));
 assert.equal(new Set(names).size, names.length, "two Slack rewriters, one Slack app");
