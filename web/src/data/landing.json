@@ -45,7 +45,7 @@
       {
         "tag": "Deep links",
         "title": "Skip the tab entirely",
-        "body": "17 built-in rewriters — Zoom, Slack, Figma, Notion, Spotify, Linear, Teams and more — turn a web URL into a native app link. Add your own from <b>Settings → Deep Links</b>."
+        "body": "{count} built-in rewriters — Zoom, Slack, Figma, Notion, Spotify, Linear, Teams and more — turn a web URL into a native app link. Add your own from <b>Settings → Deep Links</b>."
       },
       {
         "tag": "Picker",

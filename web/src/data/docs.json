@@ -3,32 +3,70 @@
     {
       "title": "Guide",
       "links": [
-        { "label": "Overview", "href": "#overview" },
-        { "label": "Installation", "href": "#install" },
-        { "label": "First launch", "href": "#quickstart" }
+        {
+          "label": "Overview",
+          "href": "#overview"
+        },
+        {
+          "label": "Installation",
+          "href": "#install"
+        },
+        {
+          "label": "First launch",
+          "href": "#quickstart"
+        }
       ]
     },
     {
       "title": "Configuration",
       "links": [
-        { "label": "The config file", "href": "#config" },
-        { "label": "Rule syntax", "href": "#rules" },
-        { "label": "Actions", "href": "#actions" },
-        { "label": "Deep links", "href": "#deeplinks" }
+        {
+          "label": "The config file",
+          "href": "#config"
+        },
+        {
+          "label": "Rule syntax",
+          "href": "#rules"
+        },
+        {
+          "label": "Actions",
+          "href": "#actions"
+        },
+        {
+          "label": "Deep links",
+          "href": "#deeplinks"
+        }
       ]
     },
     {
       "title": "Using Junction",
       "links": [
-        { "label": "Menu bar & updates", "href": "#menubar" },
-        { "label": "Command line", "href": "#cli" },
-        { "label": "Troubleshooting", "href": "#troubleshooting" },
-        { "label": "Privacy", "href": "#privacy" }
+        {
+          "label": "Menu bar & updates",
+          "href": "#menubar"
+        },
+        {
+          "label": "Command line",
+          "href": "#cli"
+        },
+        {
+          "label": "Troubleshooting",
+          "href": "#troubleshooting"
+        },
+        {
+          "label": "Privacy",
+          "href": "#privacy"
+        }
       ]
     },
     {
       "title": "Releases",
-      "links": [{ "label": "Changelog", "href": "/changelog" }]
+      "links": [
+        {
+          "label": "Changelog",
+          "href": "/changelog"
+        }
+      ]
     }
   ],
   "samples": {
@@ -38,33 +76,84 @@
     "customRewriter": "{\n  \"customRewriters\": [\n    {\n      \"id\": \"linear\",\n      \"name\": \"Linear\",\n      \"patterns\": [\"^https?://linear\\\\.app/([^?#]*)\"],\n      \"template\": \"linear://$1\",\n      \"scheme\": \"linear\"\n    }\n  ],\n  \"enabledRewriters\": [\"zoom\", \"spotify\", \"linear\"],\n  \"slackTeams\": { \"acme\": \"T01ABCDEF\" }\n}"
   },
   "patterns": [
-    { "pattern": "*.atlassian.net/*", "matches": "Any subdomain of atlassian.net — and the apex domain itself — at any path depth" },
-    { "pattern": "app.clickup.com/*", "matches": "That exact host, any path below it" },
-    { "pattern": "reddit.com", "matches": "A bare host: matches all of its subpaths" },
-    { "pattern": "*.zoom.us/j/*", "matches": "<code>*</code> stays inside one path segment; <code>**</code> or a trailing <code>*</code> crosses segments" },
-    { "pattern": "*", "matches": "Everything — but you don't need it; unmatched links already go to your fallback" }
+    {
+      "pattern": "*.atlassian.net/*",
+      "matches": "Any subdomain of atlassian.net — and the apex domain itself — at any path depth"
+    },
+    {
+      "pattern": "app.clickup.com/*",
+      "matches": "That exact host, any path below it"
+    },
+    {
+      "pattern": "reddit.com",
+      "matches": "A bare host: matches all of its subpaths"
+    },
+    {
+      "pattern": "*.zoom.us/j/*",
+      "matches": "<code>*</code> stays inside one path segment; <code>**</code> or a trailing <code>*</code> crosses segments"
+    },
+    {
+      "pattern": "*",
+      "matches": "Everything — but you don't need it; unmatched links already go to your fallback"
+    }
   ],
   "actions": [
-    { "action": "{ \"app\": \"com.google.Chrome\" }", "body": "Open in a browser or app, named by its <b>bundle ID</b>." },
-    { "action": "{ \"app\": \"com.google.Chrome\", \"profile\": \"Profile 1\" }", "body": "Open in a specific browser profile — a Chromium profile <i>directory</i> (<code>Default</code>, <code>Profile 1</code>) or a Firefox profile <i>name</i> (what <code>firefox -P</code> takes, listed in <b>Settings → Browsers</b>)." },
-    { "action": "{ \"deepLink\": \"zoom\" }", "body": "Rewrite the link to a native app deep link. Works whether or not the rewriter is enabled in <b>Settings → Deep Links</b>." },
-    { "action": "{ \"prompt\": true }", "body": "Show the picker and let you choose at click time." },
-    { "action": "{ \"clipboard\": true }", "body": "Copy the link instead of opening it." }
-  ],
-  "deepLinkApps": [
-    "Zoom", "Slack", "Figma", "Notion", "Spotify", "Linear", "Microsoft Teams", "Discord", "ClickUp",
-    "Telegram", "WhatsApp", "Apple Music", "Asana", "Todoist", "GitHub Desktop", "VS Code"
+    {
+      "action": "{ \"app\": \"com.google.Chrome\" }",
+      "body": "Open in a browser or app, named by its <b>bundle ID</b>."
+    },
+    {
+      "action": "{ \"app\": \"com.google.Chrome\", \"profile\": \"Profile 1\" }",
+      "body": "Open in a specific browser profile — a Chromium profile <i>directory</i> (<code>Default</code>, <code>Profile 1</code>) or a Firefox profile <i>name</i> (what <code>firefox -P</code> takes, listed in <b>Settings → Browsers</b>)."
+    },
+    {
+      "action": "{ \"deepLink\": \"zoom\" }",
+      "body": "Rewrite the link to a native app deep link. Works whether or not the rewriter is enabled in <b>Settings → Deep Links</b>."
+    },
+    {
+      "action": "{ \"prompt\": true }",
+      "body": "Show the picker and let you choose at click time."
+    },
+    {
+      "action": "{ \"clipboard\": true }",
+      "body": "Copy the link instead of opening it."
+    }
   ],
   "menubarActions": [
-    { "label": "Recent links", "body": "the last 10 links Junction routed, in a submenu. In memory only — never written to disk." },
-    { "label": "Settings", "body": "fallback browser, rules, browsers and profiles, deep links, updates." },
-    { "label": "Updates", "body": "a check runs on its own; the icon gets a dot and the menu offers <b>Update to …</b> when one is ready." }
+    {
+      "label": "Recent links",
+      "body": "the last 10 links Junction routed, in a submenu. In memory only — never written to disk."
+    },
+    {
+      "label": "Settings",
+      "body": "fallback browser, rules, browsers and profiles, deep links, updates."
+    },
+    {
+      "label": "Updates",
+      "body": "a check runs on its own; the icon gets a dot and the menu offers <b>Update to …</b> when one is ready."
+    }
   ],
   "cliCommands": [
-    { "command": "junction test", "arg": " \"https://mycorp.atlassian.net/browse/X-1\"", "comment": "# which rule wins, and why" },
-    { "command": "junction open", "arg": " \"https://example.com\"", "comment": "# route a link now" },
-    { "command": "junction config", "arg": " path", "comment": "# print the config path" },
-    { "command": "junction config", "arg": " validate", "comment": "# check the file before saving" }
+    {
+      "command": "junction test",
+      "arg": " \"https://mycorp.atlassian.net/browse/X-1\"",
+      "comment": "# which rule wins, and why"
+    },
+    {
+      "command": "junction open",
+      "arg": " \"https://example.com\"",
+      "comment": "# route a link now"
+    },
+    {
+      "command": "junction config",
+      "arg": " path",
+      "comment": "# print the config path"
+    },
+    {
+      "command": "junction config",
+      "arg": " validate",
+      "comment": "# check the file before saving"
+    }
   ],
   "troubleshooting": [
     {

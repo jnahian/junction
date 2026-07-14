@@ -1,6 +1,5 @@
 {
   "name": "Junction",
-  "version": "v0.5.1",
   "tagline": "A rule-based link router for macOS. Junction sits as your default browser and sends every link to the right browser, profile, or native app. Open source, MIT licensed, zero telemetry.",
   "configPath": "~/.config/junction/config.json",
   "brewTap": "brew tap jnahian/junction https://github.com/jnahian/junction",
@@ -89,5 +88,6 @@
         }
       ]
     }
-  ]
+  ],
+  "changelogNote": "The section matching your installed version is what Junction shows you in the update dialog."
 }
