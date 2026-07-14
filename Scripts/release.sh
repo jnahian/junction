@@ -45,14 +45,11 @@ cp "$DMG" "$STAGE/"
 
 # Release notes: generate_appcast embeds an HTML fragment named after the archive
 # (Junction.html next to Junction.dmg) as the item's <description>, which is what
-# Sparkle's update dialog renders. Build it from this version's CHANGELOG section.
-awk -v version="$VERSION" '
-  $0 == "## " version { inSection = 1; next }
-  /^## / { inSection = 0 }
-  inSection && /^- / { if (!open) { print "<ul>"; open = 1 }; sub(/^- /, ""); print "<li>" $0 "</li>" }
-  END { if (open) print "</ul>" }
-' CHANGELOG.md > "$STAGE/Junction.html"
-[ -s "$STAGE/Junction.html" ] || echo "Warning: no '## ${VERSION}' section in CHANGELOG.md — the update dialog will show no notes."
+# Sparkle's update dialog renders. release-notes.sh builds it from this version's
+# CHANGELOG section and fails if there isn't one — empty notes are a release bug,
+# not a warning, since nobody finds out until a user opens the dialog. CI runs the
+# same script, so the release stops at the pull request instead.
+"$(dirname "$0")/release-notes.sh" "$VERSION" > "$STAGE/Junction.html"
 
 "$GEN" --account "$KEY_ACCOUNT" \
   --download-url-prefix "https://github.com/${REPO}/releases/download/${TAG}/" "$STAGE"

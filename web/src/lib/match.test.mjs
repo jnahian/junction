@@ -16,6 +16,10 @@ assert.ok(!matches("https://clickup.com/t/86a", "app.clickup.com/*"));
 assert.ok(matches("https://reddit.com/r/macapps", "reddit.com/*"));
 assert.ok(matches("reddit.com", "reddit.com"));
 
+// an explicit ** behaves like a trailing * (the branch that replaced the lookbehind)
+assert.ok(matches("https://mycorp.atlassian.net/browse/X-1", "*.atlassian.net/**"));
+assert.ok(matches("https://zoom.us/j/98765", "*.zoom.us/j/**"));
+
 // the catch-all
 assert.ok(matches("https://anything.example/x", "*"));
 assert.ok(!matches("", "*"));

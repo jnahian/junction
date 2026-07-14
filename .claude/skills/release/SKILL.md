@@ -51,15 +51,18 @@ the website parses. If there's no `Unreleased` section, the work shipped
 undocumented: write the entries now, from the commits since the last tag, before
 going further. See the `document-change` skill.
 
-Check it parses and matches the bump you just made:
+Check it parses, and that Sparkle will actually have notes to show:
 
 ```sh
 cd web && npm test && cd ..
+Scripts/release-notes.sh NEW_DISPLAY     # the fragment the update dialog renders
 ```
 
-That asserts the newest shipped changelog section equals
-`CFBundleShortVersionString`, so a release with no notes fails here rather than
-reaching users as an empty update dialog.
+`npm test` asserts the newest shipped changelog section equals
+`CFBundleShortVersionString`. `release-notes.sh` is the same script `release.sh`
+pipes into the appcast — run it here and you see exactly what users will read.
+It exits non-zero when the section is missing, so a release with no notes stops
+here rather than reaching users as an empty update dialog. CI runs both.
 
 ## 4. Commit and push the bump — before releasing
 
