@@ -21,7 +21,10 @@ for (const release of shipped) {
 
 const { count, apps } = rewriters();
 assert.equal(count, 17);
-assert.ok(apps.includes("Slack") && apps.includes("Zoom"));
-assert.equal(new Set(apps).size, apps.length, "app list should be deduped");
+const names = apps.map((a) => a.name);
+assert.ok(names.includes("Slack") && names.includes("Zoom"));
+assert.equal(new Set(names).size, names.length, "two Slack rewriters, one Slack app");
+assert.ok(apps.every((a) => a.icon === null || a.icon.startsWith("/icons/")));
+assert.ok(apps.filter((a) => a.icon).length >= 15, "the shipped apps should have icons");
 
 console.log("repo ok");

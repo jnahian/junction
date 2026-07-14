@@ -13,7 +13,14 @@ const { count, apps } = rewriters();
 <section id="deeplinks">
   <h2>Deep links</h2>
   <p>A deep-link rewriter turns a web URL into a native app URL, so the link skips the browser entirely. Junction ships {count} of them, covering these apps:</p>
-  <p class="applist">{apps.map((app) => <code>{app}</code>)}</p>
+  <ul class="applist">
+    {apps.map((app) => (
+      <li>
+        {app.icon && <img src={app.icon} alt="" width="18" height="18" loading="lazy" />}
+        {app.name}
+      </li>
+    ))}
+  </ul>
   <p>The automatic rewriters are <b>off until you enable them</b> in <b>Settings → Deep Links</b> (<code>enabledRewriters</code> in the config). A rule with an explicit <code>deepLink</code> action always works regardless. A rewriter only fires if an app claiming its URL scheme is actually installed.</p>
 
   <h3>Add your own</h3>

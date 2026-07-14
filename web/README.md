@@ -100,6 +100,28 @@ external assets and the HTML only references them.
   also asserts the newest shipped changelog entry matches the version in
   `Info.plist`, which catches a release that forgot its notes
 
+## App icons
+
+`public/icons/*.svg` are the real brand marks, from [thesvg.org](https://thesvg.org)
+(`/icons/<slug>/default.svg`). They're used in two places: the routing diagram's
+destination tiles (`diagram.json` → `icon`) and the deep-link app list in the docs.
+
+Files are named after the **rewriter id** in `rewriters.json`, which is how
+`repo.js` pairs them up — `teams.svg`, `vscode.svg`, `github-desktop.svg`. A
+rewriter with no icon file renders as text, so adding one to `rewriters.json`
+without an icon degrades rather than breaking.
+
+Two gotchas, already handled, that will bite again if you add icons:
+
+- GitHub's `default.svg` is broken at the source — a 16-unit path inside a
+  `0 0 1024 1024` viewBox, so it renders as a speck. `github-desktop.svg` is
+  built from their `light.svg` with the near-black `#1b1f23` fill swapped for
+  `#e9eef7`, since the original is invisible on this background.
+- Check any new icon against the dark background before shipping it.
+
+These are third-party trademarks, used to identify the apps Junction routes to.
+They aren't ours and aren't MIT-licensed with the rest of the repo.
+
 ## Adding a page
 
 Add `src/pages/<name>.astro`, wrap it in `Base`, import a stylesheet. Links are

@@ -117,5 +117,6 @@
   }
 
   /* deep-link app list */
-  .doc .applist{display:flex;flex-wrap:wrap;gap:8px}
-  .doc .applist code{font-size:12.5px}
+  .doc ul.applist{display:flex;flex-wrap:wrap;gap:8px;margin:18px 0;padding:0;list-style:none}
+  .doc ul.applist li{display:flex;align-items:center;gap:8px;padding:7px 12px 7px 9px;font-size:13.5px;color:var(--body-fg);border:1px solid var(--line);border-radius:9px;background:rgba(17,27,43,.5)}
+  .doc ul.applist img{width:18px;height:18px;display:block;flex:none}

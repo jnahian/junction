@@ -1,15 +1,63 @@
 {
   "file": "~/.config/junction/config.json",
-  "columns": ["You click", "Junction decides", "It opens here"],
+  "columns": [
+    "You click",
+    "Junction decides",
+    "It opens here"
+  ],
   "chips": [
-    { "label": "mycorp.atlassian.net/…", "y": 90, "dest": 0, "rule": 0 },
-    { "label": "zoom.us/j/98765", "y": 200, "dest": 1, "rule": 1 },
-    { "label": "reddit.com/r/macapps", "y": 320, "dest": 2, "rule": 2 },
-    { "label": "app.clickup.com/t/86a…", "y": 430, "dest": 0, "rule": 3 }
+    {
+      "label": "mycorp.atlassian.net/…",
+      "y": 90,
+      "dest": 0,
+      "rule": 0
+    },
+    {
+      "label": "zoom.us/j/98765",
+      "y": 200,
+      "dest": 1,
+      "rule": 1
+    },
+    {
+      "label": "reddit.com/r/macapps",
+      "y": 320,
+      "dest": 2,
+      "rule": 2
+    },
+    {
+      "label": "app.clickup.com/t/86a…",
+      "y": 430,
+      "dest": 0,
+      "rule": 3
+    }
   ],
   "destinations": [
-    { "title": "Chrome", "sub": "Profile 1 · work", "mark": "C", "y": 120, "color": "var(--cyan)", "hex": "#2dd4bf", "fill": "rgba(45,212,191,.10)" },
-    { "title": "Zoom", "sub": "Native app", "mark": "Z", "y": 250, "color": "var(--violet)", "hex": "#9b6cf6", "fill": "rgba(139,140,255,.10)" },
-    { "title": "Firefox", "sub": "personal profile", "mark": "F", "y": 380, "color": "var(--green)", "hex": "#2ed19b", "fill": "rgba(46,209,155,.10)" }
+    {
+      "title": "Chrome",
+      "sub": "Profile 1 · work",
+      "y": 120,
+      "color": "var(--cyan)",
+      "hex": "#2dd4bf",
+      "fill": "rgba(45,212,191,.10)",
+      "icon": "/icons/chrome.svg"
+    },
+    {
+      "title": "Zoom",
+      "sub": "Native app",
+      "y": 250,
+      "color": "var(--violet)",
+      "hex": "#9b6cf6",
+      "fill": "rgba(139,140,255,.10)",
+      "icon": "/icons/zoom.svg"
+    },
+    {
+      "title": "Firefox",
+      "sub": "personal profile",
+      "y": 380,
+      "color": "var(--green)",
+      "hex": "#2ed19b",
+      "fill": "rgba(46,209,155,.10)",
+      "icon": "/icons/firefox.svg"
+    }
   ]
 }

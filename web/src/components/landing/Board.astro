@@ -59,7 +59,7 @@ const ruleCard = [
       {destinations.map((dest, i) => (
         <g id={`dest${i}`} class="dest">
           <rect x="748" y={dest.y} width="60" height="60" rx="13" fill={dest.fill} stroke={dest.color} stroke-width="1.4"/>
-          <text class="dest-mark" x="778" y={dest.y + 38} text-anchor="middle" fill={dest.color}>{dest.mark}</text>
+          <image href={dest.icon} x="765" y={dest.y + 17} width="26" height="26" preserveAspectRatio="xMidYMid meet"/>
           <text class="dest-title" x="824" y={dest.y + 25}>{dest.title}</text>
           <text class="dest-sub" x="824" y={dest.y + 45}>{dest.sub}</text>
         </g>
