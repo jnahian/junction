@@ -71,6 +71,37 @@ jobs:
       - uses: actions/checkout@v4
       - run: swift test
 
+  website:
+    name: Website + release notes
+    runs-on: ubuntu-latest
+    steps:
+      # Full checkout, not sparse: the site reads CHANGELOG.md, App/Info.plist and
+      # rewriters.json from the repo root at build time (web/src/lib/repo.js).
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: web/package-lock.json
+
+      # Parses CHANGELOG.md and asserts the newest shipped section matches the
+      # version in App/Info.plist, so a release with no notes fails here.
+      - name: Web self-checks
+        run: npm ci && npm test
+        working-directory: web
+
+      - name: Site builds
+        run: npm run build
+        working-directory: web
+
+      # The same script release.sh uses for the Sparkle update dialog. A CHANGELOG
+      # format change once blanked those notes silently; this is the guard.
+      - name: Sparkle release notes exist for the shipped version
+        run: |
+          VERSION=$(sed -n '/CFBundleShortVersionString/{n;s/.*<string>\(.*\)<\/string>.*/\1/p;}' App/Info.plist)
+          echo "App/Info.plist version: $VERSION"
+          Scripts/release-notes.sh "$VERSION"
+
   validate-rewriters:
     name: Validate rewriters.json
     runs-on: ubuntu-latest
