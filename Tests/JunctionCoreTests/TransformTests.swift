@@ -65,6 +65,51 @@ final class RewriterTests: XCTestCase {
         XCTAssertEqual(out?.absoluteString, "figma://file/AbC123/My-File")
     }
 
+    func testFigmaNonDesignFileTypes() {
+        let r = store.rewriter(id: "figma")!
+        // Every file type normalizes to figma://file/<key>, as design links already did.
+        for (path, expected) in [
+            ("board/AbC123/My-Board", "figma://file/AbC123/My-Board"),
+            ("slides/AbC123/Deck", "figma://file/AbC123/Deck"),
+            ("deck/AbC123/Deck", "figma://file/AbC123/Deck"),
+            ("proto/AbC123/Flow", "figma://file/AbC123/Flow"),
+        ] {
+            let out = r.rewrite(URL(string: "https://www.figma.com/\(path)")!)
+            XCTAssertEqual(out?.absoluteString, expected, path)
+        }
+    }
+
+    func testSpotifyLocalizedLink() {
+        let r = store.rewriter(id: "spotify")!
+        for locale in ["intl-de", "intl-pt-br"] {
+            let out = r.rewrite(URL(string: "https://open.spotify.com/\(locale)/track/4uLU6hMCjMI75M1A2tKUQC")!)
+            XCTAssertEqual(out?.absoluteString, "spotify:track:4uLU6hMCjMI75M1A2tKUQC", locale)
+        }
+    }
+
+    func testNotionAppDomain() {
+        let r = store.rewriter(id: "notion")!
+        let out = r.rewrite(URL(string: "https://app.notion.com/Page-abc123")!)
+        XCTAssertEqual(out?.absoluteString, "notion://www.notion.so/Page-abc123")
+        // notion.com without the app subdomain is the marketing site, not the app.
+        XCTAssertNil(r.rewrite(URL(string: "https://www.notion.com/pricing")!))
+    }
+
+    func testClickUpDoc() {
+        let r = store.rewriter(id: "clickup-doc")!
+        // A doc's own page, and a page inside it.
+        XCTAssertEqual(
+            r.rewrite(URL(string: "https://app.clickup.com/9018159683/v/dc/8crccj3-10918")!)?.absoluteString,
+            "clickup://9018159683/v/dc/8crccj3-10918"
+        )
+        XCTAssertEqual(
+            r.rewrite(URL(string: "https://app.clickup.com/9018159683/v/dc/8crccj3-10918/8crccj3-6218")!)?.absoluteString,
+            "clickup://9018159683/v/dc/8crccj3-10918/8crccj3-6218"
+        )
+        // Task links belong to the `clickup` rewriter, not this one.
+        XCTAssertNil(r.rewrite(URL(string: "https://app.clickup.com/t/86ey9pu32")!))
+    }
+
     func testNonMatchingURLReturnsNil() {
         let r = store.rewriter(id: "zoom")!
         XCTAssertNil(r.rewrite(URL(string: "https://zoom.us/pricing")!))
