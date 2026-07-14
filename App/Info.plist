@@ -19,7 +19,7 @@
 	<key>CFBundlePackageType</key>
 	<string>APPL</string>
 	<key>CFBundleShortVersionString</key>
-	<string>0.5.0</string>
+	<string>0.5.1</string>
 	<!-- Being the default browser also makes us the handler for local .html files;
 	     without this declaration Finder has nothing to open them with. -->
 	<key>CFBundleDocumentTypes</key>

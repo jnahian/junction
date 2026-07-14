@@ -3,6 +3,11 @@
 Notes for each release. The section matching the app's version is shown in the
 Sparkle update dialog, so write it for users, not for contributors.
 
+## 0.5.1
+
+- Junction now launches on Macs other than the one it was built on. 0.5.0 crashed on startup for everyone else — it looked for its icon and starter rules in a folder that only existed on the developer's machine, and gave up when it wasn't there. If 0.5.0 did nothing when you opened it, this is why.
+- Intel Macs are supported again. Previous builds only contained Apple-silicon code, so they could not start on an Intel Mac at all.
+
 ## 0.5.0
 
 - Add your own deep-link apps. Settings → Deep Links → "Add App…" takes the app's URL scheme, a pattern for the web link, and a template for the app link, with a test field to try it before saving. Your apps sit alongside the built-in ones, work as a rule's deep-link action, and can replace a built-in by using the same name.
