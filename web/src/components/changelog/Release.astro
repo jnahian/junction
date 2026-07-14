@@ -1,0 +1,22 @@
+---
+import changelog from "../../data/changelog.json";
+const { release } = Astro.props;
+const slug = release.version.replace(/\./g, "-");
+const labels = Object.fromEntries(changelog.filters.map((f) => [f.key, f.label]));
+---
+
+<div class="release" id={slug}>
+  <div class="rel-head">
+    <a class="ver-n" href={`#${slug}`}>{release.version}</a>
+    <span class="date">{release.date}</span>
+    {release.badge && <span class="badge">{release.badge}</span>}
+  </div>
+  <ul class="rel-list">
+    {release.changes.map((change) => (
+      <li data-type={change.type}>
+        <span class={`chip ${change.type}`}>{labels[change.type]}</span>
+        <span set:html={change.body} />
+      </li>
+    ))}
+  </ul>
+</div>

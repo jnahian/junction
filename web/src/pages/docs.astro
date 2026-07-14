@@ -1,0 +1,52 @@
+---
+import Base from "../layouts/Base.astro";
+import TopBar from "../components/TopBar.astro";
+import Sidebar from "../components/docs/Sidebar.astro";
+import Overview from "../components/docs/Overview.astro";
+import Installation from "../components/docs/Installation.astro";
+import QuickStart from "../components/docs/QuickStart.astro";
+import ConfigFile from "../components/docs/ConfigFile.astro";
+import RuleSyntax from "../components/docs/RuleSyntax.astro";
+import Actions from "../components/docs/Actions.astro";
+import DeepLinks from "../components/docs/DeepLinks.astro";
+import MenuBar from "../components/docs/MenuBar.astro";
+import Cli from "../components/docs/Cli.astro";
+import Troubleshooting from "../components/docs/Troubleshooting.astro";
+import Privacy from "../components/docs/Privacy.astro";
+import site from "../data/site.json";
+import "../styles/docs.css";
+---
+
+<Base title="Junction — Documentation">
+  <TopBar
+    kind="Docs"
+    brandHref="#overview"
+    menuButton={true}
+    version={{ label: site.version, href: "/changelog" }}
+    links={[
+      { label: "Home", href: "/" },
+      { label: "GitHub", href: site.github },
+    ]}
+  />
+
+  <div class="scrim" id="scrim"></div>
+
+  <div class="layout">
+    <Sidebar />
+    <main class="content">
+      <article class="doc">
+        <Overview />
+        <Installation />
+        <QuickStart />
+        <ConfigFile />
+        <RuleSyntax />
+        <Actions />
+        <DeepLinks />
+        <MenuBar />
+        <Cli />
+        <Troubleshooting />
+        <Privacy />
+      </article>
+    </main>
+  </div>
+</Base>

@@ -1,0 +1,16 @@
+---
+import changelog from "../../data/changelog.json";
+---
+
+<div class="filters" id="filters">
+  {changelog.filters.map((f, i) => (
+    <button class:list={["fpill", { active: i === 0 }]} data-f={f.key}>
+      {i > 0 && <span class="d"></span>}
+      {f.label}
+    </button>
+  ))}
+</div>
+
+<script>
+  import "../../scripts/changelog-filters.js";
+</script>

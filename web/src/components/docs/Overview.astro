@@ -1,0 +1,12 @@
+---
+import Note from "./Note.astro";
+import site from "../../data/site.json";
+---
+
+<section id="overview">
+  <h1>Documentation</h1>
+  <p class="lead">Junction is a rule-based link router for macOS. It sits as your default browser and sends every link you click to the right browser, browser profile, or native app — by rules you write once.</p>
+  <p>macOS allows exactly one default browser. If you juggle work and personal Chrome profiles, want Zoom links in the Zoom app instead of a tab, or want links from Terminal to open somewhere other than links from Mail, you need a router in between. Junction takes the default-browser slot: it receives the link, checks it against your ordered rule list, and hands it off to wherever it belongs. <b>First match wins</b>; anything unmatched opens in your fallback browser.</p>
+  <p>It's a menu-bar app — no windows, no Dock icon. Open source (MIT), with a GUI <i>and</i> a human-readable config file you can check into your dotfiles, plus a CLI. Zero telemetry.</p>
+  <Note>A link is never lost. Every failure path — a missing browser, an app that isn't installed, a deleted Firefox profile, an unknown rewriter, an invalid rule — degrades to your fallback browser rather than dropping the link or opening the wrong thing.</Note>
+</section>

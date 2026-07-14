@@ -1,0 +1,93 @@
+{
+  "name": "Junction",
+  "version": "v0.5.1",
+  "tagline": "A rule-based link router for macOS. Junction sits as your default browser and sends every link to the right browser, profile, or native app. Open source, MIT licensed, zero telemetry.",
+  "configPath": "~/.config/junction/config.json",
+  "brewTap": "brew tap jnahian/junction https://github.com/jnahian/junction",
+  "brewTrust": "brew trust --cask jnahian/junction/junction",
+  "brewInstall": "brew install --cask junction",
+  "quarantine": "xattr -dr com.apple.quarantine /Applications/Junction.app",
+  "github": "https://github.com/jnahian/junction",
+  "releases": "https://github.com/jnahian/junction/releases",
+  "latestRelease": "https://github.com/jnahian/junction/releases/latest",
+  "issues": "https://github.com/jnahian/junction/issues",
+  "license": "https://github.com/jnahian/junction/blob/main/LICENSE",
+  "contributing": "https://github.com/jnahian/junction/blob/main/CONTRIBUTING.md",
+  "rewritersJson": "https://github.com/jnahian/junction/blob/main/Sources/JunctionCore/Resources/rewriters.json",
+  "sparkle": "https://sparkle-project.org",
+  "author": {
+    "handle": "jnahian",
+    "github": "https://github.com/jnahian",
+    "site": "https://jnahian.me",
+    "location": "Dhaka"
+  },
+  "footer": [
+    {
+      "title": "Docs",
+      "links": [
+        {
+          "label": "Overview",
+          "href": "/docs"
+        },
+        {
+          "label": "Rule syntax",
+          "href": "/docs#rules"
+        },
+        {
+          "label": "Deep links",
+          "href": "/docs#deeplinks"
+        },
+        {
+          "label": "Command line",
+          "href": "/docs#cli"
+        }
+      ]
+    },
+    {
+      "title": "Source",
+      "links": [
+        {
+          "label": "GitHub",
+          "href": "https://github.com/jnahian/junction"
+        },
+        {
+          "label": "Releases",
+          "href": "https://github.com/jnahian/junction/releases"
+        },
+        {
+          "label": "Contributing",
+          "href": "https://github.com/jnahian/junction/blob/main/CONTRIBUTING.md"
+        },
+        {
+          "label": "Report an issue",
+          "href": "https://github.com/jnahian/junction/issues"
+        },
+        {
+          "label": "MIT License",
+          "href": "https://github.com/jnahian/junction/blob/main/LICENSE"
+        }
+      ]
+    },
+    {
+      "title": "Project",
+      "links": [
+        {
+          "label": "Install",
+          "href": "#install"
+        },
+        {
+          "label": "Changelog",
+          "href": "/changelog"
+        },
+        {
+          "label": "Privacy",
+          "href": "/docs#privacy"
+        },
+        {
+          "label": "jnahian.me",
+          "href": "https://jnahian.me"
+        }
+      ]
+    }
+  ]
+}

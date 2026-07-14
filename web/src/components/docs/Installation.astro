@@ -1,0 +1,37 @@
+---
+import CodeBlock from "./CodeBlock.astro";
+import Note from "./Note.astro";
+import site from "../../data/site.json";
+---
+
+<section id="install">
+  <h2>Installation</h2>
+  <p><b>Requirements:</b> macOS 13 Ventura or later. Builds are universal — Apple silicon and Intel.</p>
+  <Note tag="Heads up">
+    Junction is not notarized by Apple yet, so macOS quarantines it and refuses the first launch.{" "}
+    <b>Whichever way you install, clear the quarantine flag afterward</b> (or right-click <b>Junction.app → Open → Open</b>).
+  </Note>
+
+  <h3>Homebrew (recommended)</h3>
+  <p>The repo is its own tap, so point Homebrew straight at it. The cask lives outside Homebrew's official taps, so trust it before installing:</p>
+  <CodeBlock title="Terminal">
+    <span class="tk-cmd">brew tap</span> jnahian/junction https://github.com/jnahian/junction
+<span class="tk-cmd">brew trust</span> --cask jnahian/junction/junction
+<span class="tk-cmd">brew install</span> --cask junction
+<span class="tk-cmd">xattr</span> -dr com.apple.quarantine /Applications/Junction.app
+  </CodeBlock>
+  <p>Homebrew also symlinks the bundled <code>junction</code> CLI onto your PATH.</p>
+
+  <h3>Manual DMG</h3>
+  <p>Download <code>Junction.dmg</code> from the <a href={site.latestRelease}>latest release</a>, open it, and drag <b>Junction</b> into Applications. Then run the <code>xattr</code> command above. With a manual install, link the CLI yourself if you want it:</p>
+  <CodeBlock title="Terminal">
+    <span class="tk-cmd">ln</span> -sf "/Applications/Junction.app/Contents/Helpers/junction" /usr/local/bin/junction
+  </CodeBlock>
+
+  <h3>Uninstall</h3>
+  <CodeBlock title="Terminal">
+    <span class="tk-cmd">brew uninstall</span> --zap --cask junction     <span class="tk-cmt"># Homebrew: also removes config + prefs</span>
+<span class="tk-cmd">rm</span> -rf /Applications/Junction.app        <span class="tk-cmt"># manual install</span>
+  </CodeBlock>
+  <p>Your rules live at <code>{site.configPath}</code> — delete that too on a manual uninstall if you want a clean slate.</p>
+</section>

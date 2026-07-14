@@ -1,0 +1,14 @@
+---
+import Note from "./Note.astro";
+import docs from "../../data/docs.json";
+import site from "../../data/site.json";
+---
+
+<section id="privacy">
+  <h2>Privacy</h2>
+  <p>Zero telemetry, zero analytics. Junction makes exactly one kind of network request: the Sparkle update check against this repository's release feed. The links you route are never sent anywhere and never logged to disk — the recent-links list is in memory, capped at 10, and cleared on quit.</p>
+  <p>Being the default browser is a high-trust position. That's the argument for open source, for CI that builds and tests every commit, and for updates that only install if they carry a valid EdDSA signature from the maintainer's key.</p>
+  <Note tag="Status">
+    <Fragment set:html={docs.roadmap} /> Track it on <a href={site.github}>GitHub</a>, or read the <a href="/changelog">changelog</a>.
+  </Note>
+</section>

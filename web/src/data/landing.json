@@ -1,0 +1,112 @@
+{
+  "menubar": {
+    "left": [
+      "File",
+      "Rules",
+      "Window",
+      "Help"
+    ],
+    "clock": "Wed 14 · 9:41"
+  },
+  "hero": {
+    "eyebrow": "Open source · Lives in your menu bar",
+    "headline": [
+      "Every link opens in the",
+      "right app"
+    ],
+    "sub": "Junction becomes your default browser and routes every link you click — to the right browser, browser <b>profile</b>, or <b>native app</b> — by rules you write once. First match wins; anything unmatched opens in your fallback browser.",
+    "facts": [
+      "Open source · MIT",
+      "A config file you own",
+      "Zero telemetry",
+      "Universal · Apple silicon + Intel"
+    ]
+  },
+  "features": {
+    "eyebrow": "The routing engine",
+    "heading": "Match on more than the domain.",
+    "lead": "Rules are checked top to bottom and the first match wins. Every failure path — a missing browser, a deleted profile, an app that isn't installed — degrades to your fallback browser. A link is never lost.",
+    "cards": [
+      {
+        "tag": "Patterns",
+        "title": "Wildcards, or full regex",
+        "body": "Match on <code>host/path</code> — <code>*.atlassian.net/*</code>, <code>app.clickup.com/*</code>. <code>*</code> stays inside a segment, <code>**</code> crosses them, and <code>*.example.com</code> includes the apex domain. Drop to <code>regex</code> when the query string matters."
+      },
+      {
+        "tag": "Source app",
+        "title": "Route by where the click came from",
+        "body": "A rule can match the app that opened the link — <code>sourceApps: [\"com.googlecode.iterm2\"]</code> sends Terminal links somewhere other than Mail links."
+      },
+      {
+        "tag": "Profiles",
+        "title": "Down to the browser profile",
+        "body": "Chromium profile directories (<code>Default</code>, <code>Profile 1</code>) and Firefox profile names. Work links land in the work profile, not just the work browser."
+      },
+      {
+        "tag": "Deep links",
+        "title": "Skip the tab entirely",
+        "body": "17 built-in rewriters — Zoom, Slack, Figma, Notion, Spotify, Linear, Teams and more — turn a web URL into a native app link. Add your own from <b>Settings → Deep Links</b>."
+      },
+      {
+        "tag": "Picker",
+        "title": "Decide at click time",
+        "body": "Hold <b>⌥ Option</b> while clicking any link to force the picker, or give a rule a <code>prompt</code> action so it always asks."
+      },
+      {
+        "tag": "Yours",
+        "title": "A config file you own",
+        "body": "Rules live in JSON at <code>~/.config/junction/config.json</code> (honors <code>$XDG_CONFIG_HOME</code>). Edit in the GUI or your editor; it hot-reloads, and an invalid edit keeps the last-good rules."
+      }
+    ]
+  },
+  "matcher": {
+    "eyebrow": "Write it once",
+    "lead": "Rules are checked top to bottom, first match wins. Type a URL to see which rule catches it and where Junction would send it.",
+    "sample": "mycorp.atlassian.net/browse/X-1",
+    "rules": [
+      {
+        "pattern": "*.atlassian.net/*",
+        "destination": "Chrome · Profile 1",
+        "color": "#2dd4bf",
+        "action": "{ \"app\": \"com.google.Chrome\", \"profile\": \"Profile 1\" }"
+      },
+      {
+        "pattern": "*.zoom.us/j/*",
+        "destination": "Zoom · deep link",
+        "color": "#9b6cf6",
+        "action": "{ \"deepLink\": \"zoom\" }"
+      },
+      {
+        "pattern": "reddit.com/*",
+        "destination": "Firefox · personal",
+        "color": "#2ed19b",
+        "action": "{ \"app\": \"org.mozilla.firefox\", \"profile\": \"personal\" }"
+      },
+      {
+        "pattern": "app.clickup.com/*",
+        "destination": "Chrome · Profile 1",
+        "color": "#2dd4bf",
+        "action": "{ \"app\": \"com.google.Chrome\", \"profile\": \"Profile 1\" }"
+      },
+      {
+        "pattern": "open.spotify.com/*",
+        "destination": "Spotify · deep link",
+        "color": "#9b6cf6",
+        "action": "{ \"deepLink\": \"spotify\" }"
+      },
+      {
+        "pattern": "*",
+        "destination": "Safari · fallback",
+        "color": "#5a6a84",
+        "action": "{ \"app\": \"com.apple.Safari\" }"
+      }
+    ]
+  },
+  "install": {
+    "eyebrow": "Ship it to your Mac",
+    "heading": "Two ways to install.",
+    "homebrewNote": "The repo is its own tap, so point Homebrew straight at it — then trust the cask, since it lives outside Homebrew's official taps.<br>Homebrew also symlinks the bundled <b>junction</b> CLI onto your PATH.",
+    "requirements": "macOS 13 Ventura or later · Universal (Apple silicon + Intel)<br>Open the DMG and drag Junction into Applications.",
+    "quarantineNote": "Junction isn't notarized by Apple yet, so macOS quarantines it and refuses the first launch — whichever way you install. Clear the flag afterward (or right-click <b>Junction.app → Open → Open</b>):"
+  }
+}

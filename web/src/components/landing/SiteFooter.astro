@@ -1,0 +1,24 @@
+---
+import site from "../../data/site.json";
+---
+
+<footer class="site-foot" data-reveal>
+  <div class="foot-inner">
+    <div class="brandcol">
+      <div class="wm"><img class="wmlogo" src="/logo.png" alt={site.name}>{site.name}</div>
+      <p>{site.tagline}</p>
+    </div>
+    {site.footer.map((col) => (
+      <div class="fcol">
+        <h4>{col.title}</h4>
+        {col.links.map((link) => <a href={link.href}>{link.label}</a>)}
+      </div>
+    ))}
+  </div>
+  <div class="foot-bar">
+    <span>© 2026 {site.name} · MIT licensed</span>
+    <span>
+      Built by <a href={site.author.github}>@{site.author.handle}</a> · {site.author.location}
+    </span>
+  </div>
+</footer>

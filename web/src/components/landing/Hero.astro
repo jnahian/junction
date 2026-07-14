@@ -1,0 +1,18 @@
+---
+import landing from "../../data/landing.json";
+import site from "../../data/site.json";
+const { hero } = landing;
+const [headStart, headAccent] = hero.headline;
+---
+
+<img class="appicon" src="/logo.png" alt={`${site.name} — app icon`}>
+<span class="eyebrow"><span class="live"></span>{hero.eyebrow}</span>
+
+<h1>{headStart}&nbsp;<span class="routed">{headAccent}</span>.</h1>
+
+<p class="sub" set:html={hero.sub} />
+
+<div class="cta">
+  <a class="dl-btn" href="#install">↓&nbsp; Install Junction · {site.version}</a>
+  <a class="ghost" href={site.github} id="ghLink"><span class="star">★</span> Star on GitHub</a>
+</div>

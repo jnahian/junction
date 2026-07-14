@@ -1,0 +1,35 @@
+---
+import Base from "../layouts/Base.astro";
+import MenuBar from "../components/landing/MenuBar.astro";
+import Hero from "../components/landing/Hero.astro";
+import Board from "../components/landing/Board.astro";
+import Features from "../components/landing/Features.astro";
+import RuleTester from "../components/landing/RuleTester.astro";
+import Install from "../components/landing/Install.astro";
+import SiteFooter from "../components/landing/SiteFooter.astro";
+import landing from "../data/landing.json";
+import "../styles/landing.css";
+---
+
+<Base title="Junction — Every link, in the right app">
+  <MenuBar />
+
+  <main class="wrap">
+    <Hero />
+    <Board />
+    <div class="foot">
+      {landing.hero.facts.map((fact) => (
+        <span><i></i><Fragment set:html={fact} /></span>
+      ))}
+    </div>
+  </main>
+
+  <Features />
+  <RuleTester />
+  <Install />
+  <SiteFooter />
+</Base>
+
+<script>
+  import "../scripts/reveal.js";
+</script>

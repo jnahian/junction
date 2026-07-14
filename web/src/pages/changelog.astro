@@ -1,0 +1,42 @@
+---
+import Base from "../layouts/Base.astro";
+import TopBar from "../components/TopBar.astro";
+import Filters from "../components/changelog/Filters.astro";
+import Release from "../components/changelog/Release.astro";
+import Note from "../components/docs/Note.astro";
+import changelog from "../data/changelog.json";
+import site from "../data/site.json";
+import "../styles/changelog.css";
+
+const latest = changelog.releases[0];
+---
+
+<Base title="Junction — Changelog">
+  <TopBar
+    kind="Changelog"
+    brandHref="/"
+    version={{ label: `Latest · ${latest.version}`, href: `#${latest.version.replace(/\./g, "-")}` }}
+    links={[
+      { label: "Docs", href: "/docs" },
+      { label: "Home", href: "/" },
+      { label: "GitHub", href: site.github },
+    ]}
+  />
+
+  <main class="wrap">
+    <h1>Changelog</h1>
+    <p class="lead">Every notable change to Junction, newest first.</p>
+
+    <Note>{changelog.note}</Note>
+
+    <Filters />
+
+    <div class="log" id="log">
+      {changelog.releases.map((release) => <Release release={release} />)}
+    </div>
+
+    <footer class="cl-foot">
+      <p>Watch <a href={site.releases}>Releases on GitHub</a> to get notified when a new version ships, or read the <a href="/docs">documentation</a> to get set up.</p>
+    </footer>
+  </main>
+</Base>
