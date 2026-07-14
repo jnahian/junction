@@ -15,7 +15,7 @@
       "id": "spotify",
       "name": "Spotify",
       "patterns": [
-        "^https?://open\\.spotify\\.com/(?:intl-[a-z]{2}/)?(track|album|artist|playlist|show|episode)/([A-Za-z0-9]+)"
+        "^https?://open\\.spotify\\.com/(?:intl-[a-z-]{2,5}/)?(track|album|artist|playlist|show|episode)/([A-Za-z0-9]+)"
       ],
       "template": "spotify:$1:$2",
       "scheme": "spotify",

@@ -13,7 +13,7 @@ shape matters:
 ## Unreleased
 
 - Added: ClickUp doc links open in the ClickUp app. Enable "ClickUp (docs)" under Settings → Deep Links; only task links (`/t/…`) were covered before, so docs still opened in the browser.
-- Fixed: Figma FigJam boards, Slides, and prototype links now open in the Figma app — previously only `/file/` and `/design/` links did.
+- Fixed: Figma FigJam boards, Slides, and prototype links now open in the Figma app — previously only design files did. They open the file in the editor; a prototype link does not start in presentation mode.
 - Fixed: Spotify links shared from a non-English app now open in Spotify. They carry a language prefix (`open.spotify.com/intl-de/track/…`) that Junction did not recognize.
 - Fixed: Notion links on its new `app.notion.com` address open in the Notion app, alongside the old `notion.so` ones.
 

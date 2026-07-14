@@ -65,22 +65,26 @@ final class RewriterTests: XCTestCase {
         XCTAssertEqual(out?.absoluteString, "figma://file/AbC123/My-File")
     }
 
-    func testFigmaBoardAndSlides() {
+    func testFigmaNonDesignFileTypes() {
         let r = store.rewriter(id: "figma")!
-        XCTAssertEqual(
-            r.rewrite(URL(string: "https://www.figma.com/board/AbC123/My-Board")!)?.absoluteString,
-            "figma://file/AbC123/My-Board"
-        )
-        XCTAssertEqual(
-            r.rewrite(URL(string: "https://www.figma.com/slides/AbC123/Deck")!)?.absoluteString,
-            "figma://file/AbC123/Deck"
-        )
+        // Every file type normalizes to figma://file/<key>, as design links already did.
+        for (path, expected) in [
+            ("board/AbC123/My-Board", "figma://file/AbC123/My-Board"),
+            ("slides/AbC123/Deck", "figma://file/AbC123/Deck"),
+            ("deck/AbC123/Deck", "figma://file/AbC123/Deck"),
+            ("proto/AbC123/Flow", "figma://file/AbC123/Flow"),
+        ] {
+            let out = r.rewrite(URL(string: "https://www.figma.com/\(path)")!)
+            XCTAssertEqual(out?.absoluteString, expected, path)
+        }
     }
 
     func testSpotifyLocalizedLink() {
         let r = store.rewriter(id: "spotify")!
-        let out = r.rewrite(URL(string: "https://open.spotify.com/intl-de/track/4uLU6hMCjMI75M1A2tKUQC")!)
-        XCTAssertEqual(out?.absoluteString, "spotify:track:4uLU6hMCjMI75M1A2tKUQC")
+        for locale in ["intl-de", "intl-pt-br"] {
+            let out = r.rewrite(URL(string: "https://open.spotify.com/\(locale)/track/4uLU6hMCjMI75M1A2tKUQC")!)
+            XCTAssertEqual(out?.absoluteString, "spotify:track:4uLU6hMCjMI75M1A2tKUQC", locale)
+        }
     }
 
     func testNotionAppDomain() {
@@ -93,8 +97,17 @@ final class RewriterTests: XCTestCase {
 
     func testClickUpDoc() {
         let r = store.rewriter(id: "clickup-doc")!
-        let out = r.rewrite(URL(string: "https://app.clickup.com/9018159683/v/dc/8crccj3-10918/8crccj3-6218")!)
-        XCTAssertEqual(out?.absoluteString, "clickup://9018159683/v/dc/8crccj3-10918/8crccj3-6218")
+        // A doc's own page, and a page inside it.
+        XCTAssertEqual(
+            r.rewrite(URL(string: "https://app.clickup.com/9018159683/v/dc/8crccj3-10918")!)?.absoluteString,
+            "clickup://9018159683/v/dc/8crccj3-10918"
+        )
+        XCTAssertEqual(
+            r.rewrite(URL(string: "https://app.clickup.com/9018159683/v/dc/8crccj3-10918/8crccj3-6218")!)?.absoluteString,
+            "clickup://9018159683/v/dc/8crccj3-10918/8crccj3-6218"
+        )
+        // Task links belong to the `clickup` rewriter, not this one.
+        XCTAssertNil(r.rewrite(URL(string: "https://app.clickup.com/t/86ey9pu32")!))
     }
 
     func testNonMatchingURLReturnsNil() {
