@@ -77,7 +77,7 @@ final class StatusItemController: NSObject, NSMenuDelegate {
 
     /// Template rendition of the app icon (three-way branch), shipped as an SVG resource.
     private static let branchIcon: NSImage? = {
-        guard let url = Bundle.module.url(forResource: "MenuBarIcon", withExtension: "svg"),
+        guard let url = CoreResources.url(forResource: "MenuBarIcon", withExtension: "svg"),
               let image = NSImage(contentsOf: url) else { return nil }
         image.size = NSSize(width: 18, height: 18)
         image.isTemplate = true

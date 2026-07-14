@@ -14,7 +14,7 @@ private final class BundleFinder {}
 /// - the CLI at `Junction.app/Contents/Helpers/junction` (../Resources)
 ///
 /// Note: Darwin names the artifact `.bundle`; other platforms use `.resources`.
-enum CoreResources {
+public enum CoreResources {
     static let bundle: Bundle? = {
         let bundleNames = ["Junction_JunctionCore.bundle", "Junction_JunctionCore.resources"]
 
@@ -46,7 +46,7 @@ enum CoreResources {
         return nil
     }()
 
-    static func url(forResource name: String, withExtension ext: String) -> URL? {
+    public static func url(forResource name: String, withExtension ext: String) -> URL? {
         bundle?.url(forResource: name, withExtension: ext)
     }
 }

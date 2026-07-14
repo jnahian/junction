@@ -23,6 +23,12 @@ let package = Package(
             resources: [
                 .copy("Resources/rewriters.json"),
                 .copy("Resources/tracking-params.json"),
+                // App-facing data, but it lives here so it resolves through CoreResources.
+                // JunctionApp must not carry its own resource bundle: SPM's generated
+                // Bundle.module only looks beside the executable and in the build dir,
+                // neither of which exists in a shipped .app on someone else's machine.
+                .copy("Resources/starter-rules.json"),
+                .copy("Resources/MenuBarIcon.svg"),
             ]
         ),
         // macOS glue shared by the app and the CLI: dispatch, browser discovery, source-app resolution.
@@ -36,10 +42,6 @@ let package = Package(
                 "JunctionCore",
                 "JunctionMacKit",
                 .product(name: "Sparkle", package: "Sparkle"),
-            ],
-            resources: [
-                .copy("Resources/starter-rules.json"),
-                .copy("Resources/MenuBarIcon.svg"),
             ]
         ),
         .executableTarget(

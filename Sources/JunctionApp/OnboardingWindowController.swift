@@ -52,7 +52,7 @@ struct StarterTemplate: Decodable, Identifiable {
 enum StarterTemplates {
     static func load() -> [StarterTemplate] {
         struct FileFormat: Decodable { var templates: [StarterTemplate] }
-        guard let url = Bundle.module.url(forResource: "starter-rules", withExtension: "json"),
+        guard let url = CoreResources.url(forResource: "starter-rules", withExtension: "json"),
               let data = try? Data(contentsOf: url),
               let parsed = try? JSONDecoder().decode(FileFormat.self, from: data) else { return [] }
         return parsed.templates
