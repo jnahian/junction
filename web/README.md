@@ -63,12 +63,28 @@ component.
 src/
   data/         the copy (above)
   lib/          repo.js (repo facts) · match.js (pattern matcher) · highlight.js (JSON syntax colors)
-  layouts/      Base.astro — <head>, fonts, favicon
-  components/   one per section: landing/*, docs/*, changelog/*, shared TopBar
+  layouts/      Base.astro — <head>, favicons, and the site chrome
+  components/   MenuBar + TopBar (chrome) · one per section: landing/*, docs/*, changelog/*
   scripts/      client JS, one module per behavior
-  styles/       one stylesheet per page
+  styles/       chrome.css (shared) + one stylesheet per page
   pages/        index · docs · changelog
 ```
+
+`Base.astro` renders the fake macOS menu bar and the topbar on **every** page, so
+a page only declares what's page-specific:
+
+```astro
+<Base title="Junction — Documentation" topbar={{ kind: "Docs", menuButton: true }}>
+```
+
+Both bars are sticky and stack: the menu bar at `top: 0`, the topbar at
+`top: var(--menubar-h)`. Anything else that pins to the top (the docs sidebar,
+its mobile scrim) offsets by `var(--chrome-h)` — the two heights added. Change a
+bar's height in `chrome.css` and the rest follows.
+
+Each page sets `--bar-max` on `.topbar` so the topbar contents line up with that
+page's own content column (1120px on the landing page, 1240px on docs, 820px on
+the changelog).
 
 No inline `<script>` or `<style>` survives the build — Astro emits hashed
 external assets and the HTML only references them.

@@ -1,5 +1,19 @@
 ---
-const { title } = Astro.props;
+import MenuBar from "../components/MenuBar.astro";
+import TopBar from "../components/TopBar.astro";
+import site from "../data/site.json";
+import { version } from "../lib/repo.js";
+import "../styles/chrome.css";
+
+// `topbar` is the page-specific part: the section chip, the brand link, and any
+// extra nav. Every page gets the same menu bar and the same version pill.
+const { title, topbar } = Astro.props;
+
+const links = [
+  { label: "Docs", href: "/docs" },
+  { label: "Changelog", href: "/changelog" },
+  { label: "GitHub", href: site.github },
+];
 ---
 
 <!DOCTYPE html>
@@ -19,6 +33,14 @@ const { title } = Astro.props;
 <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
 </head>
 <body>
+  <MenuBar />
+  <TopBar
+    kind={topbar?.kind}
+    brandHref={topbar?.brandHref ?? "/"}
+    menuButton={topbar?.menuButton ?? false}
+    version={{ label: version(), href: "/changelog" }}
+    links={links}
+  />
   <slot />
   <script>
     import "../scripts/external-links.js";
