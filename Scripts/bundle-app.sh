@@ -11,10 +11,12 @@ ROOT="$PWD"
 DIST="$ROOT/dist"
 APP="$DIST/Junction.app"
 
-echo "▸ swift build -c release"
-swift build -c release
+# Universal: a host-arch-only build won't launch at all on the other architecture
+# ("not supported on this Mac"), and Rosetta can't help an arm64 binary on Intel.
+echo "▸ swift build -c release (universal)"
+swift build -c release --arch arm64 --arch x86_64
 
-BIN="$ROOT/.build/release"
+BIN="$ROOT/.build/apple/Products/Release"
 
 echo "▸ assembling $APP"
 rm -rf "$APP"
