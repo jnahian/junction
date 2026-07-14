@@ -196,12 +196,12 @@
 
   /* install */
   .install-wrap{display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-top:46px}
-  .icard{padding:28px;border:1px solid var(--line);border-radius:18px;background:linear-gradient(180deg,rgba(17,27,43,.55),rgba(11,18,32,.28));display:flex;flex-direction:column}
+  .icard{padding:28px;border:1px solid var(--line);border-radius:18px;background:linear-gradient(180deg,rgba(17,27,43,.55),rgba(11,18,32,.28));display:flex;flex-direction:column;min-width:0}
   .icard .rec{font-family:var(--mono);font-size:11px;letter-spacing:.14em;text-transform:uppercase;color:var(--cyan)}
   .icard h3{font-family:var(--display);font-weight:600;font-size:22px;margin:12px 0 18px}
   .term{font-family:var(--mono);font-size:13.5px;background:rgba(6,11,20,.9);border:1px solid var(--line-strong);border-radius:11px;padding:14px 16px;color:var(--text);display:flex;align-items:center;justify-content:space-between;gap:12px;cursor:pointer;transition:border-color .2s ease}
   .term:hover{border-color:rgba(94,234,212,.45)}
-  .term .line{white-space:nowrap;overflow:auto}
+  .term .line{white-space:nowrap;overflow:auto;min-width:0}
   .term .line .pfx{color:var(--brand)}
   .term .cp{font-size:11px;color:var(--faint);letter-spacing:.06em;flex:none}
   .term.copied .cp{color:var(--cyan)}
@@ -209,7 +209,7 @@
   .dl-btn:hover{transform:translateY(-2px);box-shadow:0 16px 40px -14px rgba(45,212,191,.65)}
   .req{margin-top:auto;padding-top:16px;font-family:var(--mono);font-size:12.5px;color:var(--faint);line-height:1.8}
   .icard .term + .term{margin-top:8px}
-  .install-note{grid-column:1/-1;display:flex;flex-direction:column;gap:10px;padding:20px 24px;border:1px solid var(--line);border-radius:14px;background:rgba(139,140,255,.05)}
+  .install-note{grid-column:1/-1;min-width:0;display:flex;flex-direction:column;gap:10px;padding:20px 24px;border:1px solid var(--line);border-radius:14px;background:rgba(139,140,255,.05)}
   .install-note p{font-size:14.5px;color:var(--muted);line-height:1.7}
   @media (max-width:720px){.install-wrap{grid-template-columns:1fr}}
 
