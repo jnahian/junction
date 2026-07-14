@@ -1,6 +1,8 @@
 ---
 import landing from "../../data/landing.json";
+import { rewriters } from "../../lib/repo.js";
 const { features } = landing;
+const { count } = rewriters();
 ---
 
 <section class="sec" data-reveal>
@@ -12,7 +14,7 @@ const { features } = landing;
       <div class="feat">
         <div class="tag" set:html={card.tag} />
         <h3>{card.title}</h3>
-        <p set:html={card.body} />
+        <p set:html={card.body.replace("{count}", count)} />
       </div>
     ))}
   </div>

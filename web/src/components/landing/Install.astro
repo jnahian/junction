@@ -1,6 +1,7 @@
 ---
 import landing from "../../data/landing.json";
 import site from "../../data/site.json";
+import { version } from "../../lib/repo.js";
 const { install } = landing;
 ---
 
@@ -28,7 +29,7 @@ const { install } = landing;
     <div class="icard">
       <div class="rec" style="color:var(--violet)">Direct</div>
       <h3>Download the DMG</h3>
-      <a class="dl-btn" href={site.latestRelease} id="dmg">↓&nbsp; Junction.dmg · {site.version}</a>
+      <a class="dl-btn" href={site.latestRelease} id="dmg">↓&nbsp; Junction.dmg · {version()}</a>
       <p class="req" set:html={install.requirements} />
     </div>
     <div class="install-note">

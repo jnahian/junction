@@ -1,12 +1,12 @@
 ---
-import changelog from "../../data/changelog.json";
+import { CHANGE_TYPES } from "../../lib/repo.js";
 ---
 
 <div class="filters" id="filters">
-  {changelog.filters.map((f, i) => (
-    <button class:list={["fpill", { active: i === 0 }]} data-f={f.key}>
+  {CHANGE_TYPES.map((type, i) => (
+    <button class:list={["fpill", { active: i === 0 }]} data-f={type.key}>
       {i > 0 && <span class="d"></span>}
-      {f.label}
+      {type.label}
     </button>
   ))}
 </div>

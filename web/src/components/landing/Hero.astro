@@ -1,6 +1,7 @@
 ---
 import landing from "../../data/landing.json";
 import site from "../../data/site.json";
+import { version } from "../../lib/repo.js";
 const { hero } = landing;
 const [headStart, headAccent] = hero.headline;
 ---
@@ -13,6 +14,6 @@ const [headStart, headAccent] = hero.headline;
 <p class="sub" set:html={hero.sub} />
 
 <div class="cta">
-  <a class="dl-btn" href="#install">↓&nbsp; Install Junction · {site.version}</a>
+  <a class="dl-btn" href="#install">↓&nbsp; Install Junction · {version()}</a>
   <a class="ghost" href={site.github} id="ghLink"><span class="star">★</span> Star on GitHub</a>
 </div>

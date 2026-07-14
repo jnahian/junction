@@ -14,6 +14,7 @@ import Cli from "../components/docs/Cli.astro";
 import Troubleshooting from "../components/docs/Troubleshooting.astro";
 import Privacy from "../components/docs/Privacy.astro";
 import site from "../data/site.json";
+import { version } from "../lib/repo.js";
 import "../styles/docs.css";
 ---
 
@@ -22,7 +23,7 @@ import "../styles/docs.css";
     kind="Docs"
     brandHref="#overview"
     menuButton={true}
-    version={{ label: site.version, href: "/changelog" }}
+    version={{ label: version(), href: "/changelog" }}
     links={[
       { label: "Home", href: "/" },
       { label: "GitHub", href: site.github },

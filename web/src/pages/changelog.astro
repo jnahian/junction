@@ -4,18 +4,20 @@ import TopBar from "../components/TopBar.astro";
 import Filters from "../components/changelog/Filters.astro";
 import Release from "../components/changelog/Release.astro";
 import Note from "../components/docs/Note.astro";
-import changelog from "../data/changelog.json";
 import site from "../data/site.json";
+import { releases, version } from "../lib/repo.js";
 import "../styles/changelog.css";
 
-const latest = changelog.releases[0];
+// straight from CHANGELOG.md — the page can't fall behind the repo
+const all = releases();
+const latest = all[0];
 ---
 
 <Base title="Junction — Changelog">
   <TopBar
     kind="Changelog"
     brandHref="/"
-    version={{ label: `Latest · ${latest.version}`, href: `#${latest.version.replace(/\./g, "-")}` }}
+    version={{ label: `Latest · ${version()}`, href: `#${latest.version.replace(/\./g, "-")}` }}
     links={[
       { label: "Docs", href: "/docs" },
       { label: "Home", href: "/" },
@@ -27,12 +29,12 @@ const latest = changelog.releases[0];
     <h1>Changelog</h1>
     <p class="lead">Every notable change to Junction, newest first.</p>
 
-    <Note>{changelog.note}</Note>
+    <Note>{site.changelogNote}</Note>
 
     <Filters />
 
     <div class="log" id="log">
-      {changelog.releases.map((release) => <Release release={release} />)}
+      {all.map((release) => <Release release={release} />)}
     </div>
 
     <footer class="cl-foot">
