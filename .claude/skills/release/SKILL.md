@@ -35,18 +35,47 @@ Edit the one value:
 
 Leave `CFBundleVersion` alone — it's stamped at build time.
 
-## 3. Commit and push the bump — before releasing
+## 3. Close out the changelog
+
+Users read `CHANGELOG.md` twice: in the Sparkle update dialog (the section whose
+heading matches the version) and on the website's changelog page, which is
+generated from this file. Rename the `## Unreleased` heading to the version and
+today's date:
+
+```md
+## NEW_DISPLAY — YYYY-MM-DD
+```
+
+Bullets must already be prefixed `Added:` / `Changed:` / `Fixed:` — that's what
+the website parses. If there's no `Unreleased` section, the work shipped
+undocumented: write the entries now, from the commits since the last tag, before
+going further. See the `document-change` skill.
+
+Check it parses and matches the bump you just made:
+
+```sh
+cd web && npm test && cd ..
+```
+
+That asserts the newest shipped changelog section equals
+`CFBundleShortVersionString`, so a release with no notes fails here rather than
+reaching users as an empty update dialog.
+
+## 4. Commit and push the bump — before releasing
 
 `gh release create` tags the latest **pushed** commit. If the bump isn't
 committed and pushed, the tag and the DMG's source won't match.
 
 ```sh
-git add App/Info.plist
+git add App/Info.plist CHANGELOG.md
 git commit -m "chore(release): bump version to NEW_DISPLAY"
 git push
 ```
 
-## 4. Build the app
+Nothing else needs a version bump: the website reads `App/Info.plist` and
+`CHANGELOG.md` at build time, and `release.sh` rewrites the Homebrew cask.
+
+## 5. Build the app
 
 ```sh
 Scripts/bundle-app.sh
@@ -66,7 +95,7 @@ Optional smoke test: `open dist/Junction.app`, then menu bar → **Check for
 Updates…** should say you're up to date (it compares against the *published*
 build, which is older).
 
-## 5. Publish
+## 6. Publish
 
 ```sh
 Scripts/release.sh
@@ -81,7 +110,7 @@ GitHub release. It then rewrites
 commits that (`chore: update Homebrew cask …`), so the `brew install --cask` tap
 tracks the release automatically — nothing to bump by hand.
 
-## 6. Confirm
+## 7. Confirm
 
 ```sh
 gh release view "vNEW_DISPLAY" --repo jnahian/junction
@@ -89,13 +118,15 @@ gh release view "vNEW_DISPLAY" --repo jnahian/junction
 
 The release must be the newest non-prerelease (so
 `releases/latest/download/appcast.xml` resolves) and carry both `Junction.dmg`
-and `appcast.xml`. Updates reach Apple-silicon Macs only (arm64 binary).
+and `appcast.xml`. The build is universal, so updates reach both Apple-silicon
+and Intel Macs.
 
 ## What goes missing if you skip a step
 
 | Skipped | Symptom |
 | --- | --- |
 | Version not bumped in `App/Info.plist` | Release is tagged `vNEW` but the app reports the old version |
+| `CHANGELOG.md` section not renamed from `Unreleased` | Sparkle shows an empty update dialog; the website's changelog has no entry for the release |
 | Bump not committed/pushed before release | Tag points at old source; DMG ≠ tag |
 | `appcast.xml` not uploaded | Every client silently sees "no update" |
 | `release.sh` cask commit not pushed | `brew install --cask` serves the previous version |

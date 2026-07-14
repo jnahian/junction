@@ -27,6 +27,22 @@ bundles the app, smoke-tests the CLI, and validates `rewriters.json` with a Pyth
 Releasing has its own skill (`.claude/skills/release/SKILL.md`) — use it; the version bump, the tag,
 and the signed appcast must stay in lockstep or updates break silently.
 
+## The website is generated from this repo
+
+`web/` is the Astro site (landing, docs, changelog; deployed on Vercel with root dir `web`). It
+**reads repo facts at build time** rather than copying them — `web/src/lib/repo.js` pulls the version
+from `App/Info.plist`, the releases from `CHANGELOG.md`, and the deep-link app list from
+`rewriters.json`. Never hand-edit a copy of those in `web/src/data/`; there isn't one.
+
+That makes `CHANGELOG.md` a parsed file, not free-form prose: headings are `## X.Y.Z — YYYY-MM-DD`,
+work in progress goes under `## Unreleased`, and every bullet starts with `Added:`, `Changed:`, or
+`Fixed:`. `cd web && npm test` fails on a malformed entry, and on a version bump whose release has no
+notes.
+
+A user-visible change to `Sources/` needs a changelog entry and possibly docs updates — the
+`document-change` skill (`.claude/skills/document-change/SKILL.md`) is the checklist. `web/README.md`
+covers the site itself.
+
 ## Target layout and the one hard rule
 
 Four SPM targets, and the dependency direction matters:
