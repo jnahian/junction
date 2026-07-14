@@ -1,4 +1,4 @@
-# <img src="docs/logo.png" alt="" width="28" align="absmiddle"> Junction
+# <img src="docs/logo.png" alt="" width="40" align="absmiddle"> Junction
 
 **A rule-based link router for macOS.** Junction sits as your default browser and routes every link you click to the right browser, browser profile, or native app, based on rules you define.
 
