@@ -59,7 +59,7 @@
       "title": "Links from Terminal → your dev browser",
       "description": "URLs clicked in Terminal or iTerm open in the browser you pick (handy for localhost).",
       "rule": {
-        "name": "Terminal links → Chrome",
+        "name": "Terminal links → dev browser",
         "match": {
           "sourceApps": [
             "com.apple.Terminal",

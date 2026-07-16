@@ -88,6 +88,16 @@ final class AppState: ObservableObject {
         case .needsPicker(let url):
             pickerPresenter?(url)
             record(event, outcome: "picker")
+            // A rule whose target vanished degrades to the picker fallback; still tell
+            // the user the rule is broken (one-time), like the browser-fallback path.
+            switch trace.decision {
+            case .open(let app, _, _):
+                notifyBrokenRule(reason: "\(app) is not installed", rule: trace.matchedRule)
+            case .deepLink(let deepURL, _, _):
+                notifyBrokenRule(reason: "No app installed for \(deepURL.scheme ?? "?")://", rule: trace.matchedRule)
+            default:
+                break
+            }
         case .degradedToFallback(let reason):
             record(event, outcome: "fallback (\(reason))")
             notifyBrokenRule(reason: reason, rule: trace.matchedRule)

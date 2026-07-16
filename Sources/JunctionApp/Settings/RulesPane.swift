@@ -53,7 +53,7 @@ struct RulesPane: View {
                             .font(.system(size: 36, weight: .light))
                             .foregroundStyle(.tertiary)
                         Text("No Rules").font(.title3.weight(.medium))
-                        Text("Every link opens in your fallback browser until you add one.")
+                        Text("Every link goes to your fallback until you add one.")
                             .font(.callout)
                             .foregroundStyle(.secondary)
                     }

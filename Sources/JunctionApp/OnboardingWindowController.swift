@@ -69,6 +69,10 @@ private struct OnboardingView: View {
     @State private var selectedTemplates: Set<String> = []
     /// Template id → browser the user picked for it (browser-opening templates only).
     @State private var templateBrowsers: [String: String] = [:]
+    /// What this tour run has written, so Back-and-deselect can undo it without
+    /// touching rewriters or rules the user configured outside the tour.
+    @State private var appliedRewriters: Set<String> = []
+    @State private var appliedRuleNames: Set<String> = []
     @State private var launchAtLogin = SMAppService.mainApp.status == .enabled
     private let templates = StarterTemplates.load()
 
@@ -331,8 +335,9 @@ private struct OnboardingView: View {
 
     private func advance() {
         // Step 3 is the last configuring step; apply there so the send-off's test link
-        // routes through the choices just made. Re-applying after Back is harmless —
-        // every write below is idempotent.
+        // routes through the choices just made. Re-applying after Back reconciles:
+        // a deselected template's contribution is removed again, but only if this
+        // tour run wrote it.
         if step == 3 { applyChoices() }
         if isLastStep { onDone() } else { step += 1 }
     }
@@ -340,27 +345,43 @@ private struct OnboardingView: View {
     private func applyChoices() {
         state.updateConfig { config in
             config.fallback.app = fallbackBundleID
-            for template in availableTemplates where selectedTemplates.contains(template.id) {
+            for template in availableTemplates {
+                let selected = selectedTemplates.contains(template.id)
                 switch template.rule.action {
                 case .deepLink(let id):
                     // Switching on the built-in rewriter beats copying its patterns into a
                     // rule: it stays maintained with rewriters.json and teaches Deep Links.
-                    if !config.enabledRewriters.contains(id) {
-                        config.enabledRewriters.append(id)
+                    if selected {
+                        if !config.enabledRewriters.contains(id) {
+                            config.enabledRewriters.append(id)
+                            appliedRewriters.insert(id)
+                        }
+                    } else if appliedRewriters.remove(id) != nil {
+                        config.enabledRewriters.removeAll { $0 == id }
                     }
                 case .open(let seedApp, let seedProfile):
-                    var rule = template.rule
-                    let chosen = templateBrowsers[template.id] ?? seedApp
-                    // The seed profile only means something on the seed browser.
-                    rule.action = .open(app: chosen, profile: chosen == seedApp ? seedProfile : nil)
-                    if !config.rules.contains(rule) {
-                        // Replace an earlier run's variant of the same starter rule.
-                        config.rules.removeAll { $0.name == rule.name }
-                        config.rules.append(rule)
+                    if selected {
+                        var rule = template.rule
+                        let chosen = templateBrowsers[template.id] ?? seedApp
+                        // The seed profile only means something on the seed browser.
+                        rule.action = .open(app: chosen, profile: chosen == seedApp ? seedProfile : nil)
+                        if !config.rules.contains(rule) {
+                            // Replace an earlier run's variant of the same starter rule.
+                            config.rules.removeAll { $0.name == rule.name }
+                            config.rules.append(rule)
+                            appliedRuleNames.insert(rule.name)
+                        }
+                    } else if appliedRuleNames.remove(template.rule.name) != nil {
+                        config.rules.removeAll { $0.name == template.rule.name }
                     }
                 case .prompt, .clipboard:
-                    if !config.rules.contains(template.rule) {
-                        config.rules.append(template.rule)
+                    if selected {
+                        if !config.rules.contains(template.rule) {
+                            config.rules.append(template.rule)
+                            appliedRuleNames.insert(template.rule.name)
+                        }
+                    } else if appliedRuleNames.remove(template.rule.name) != nil {
+                        config.rules.removeAll { $0.name == template.rule.name }
                     }
                 }
             }
