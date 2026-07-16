@@ -10,7 +10,7 @@ shape matters:
 - Every bullet starts with `Added:`, `Changed:`, or `Fixed:` — that marker drives
   the filter pills on the changelog page.
 
-## Unreleased
+## 0.7.0 — 2026-07-16
 
 - Added: "Ask every time" as the fallback — Junction shows the picker for any link no rule handles, instead of silently opening a browser. Choose it in Settings → Browsers or the welcome tour, where it's now the suggested default. In the config file it's `"fallback": { "app": "picker" }`.
 - Added: Hide browsers or profiles you never use from the picker, with the new checkboxes in Settings → Browsers.
