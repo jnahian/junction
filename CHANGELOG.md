@@ -10,6 +10,17 @@ shape matters:
 - Every bullet starts with `Added:`, `Changed:`, or `Fixed:` — that marker drives
   the filter pills on the changelog page.
 
+## Unreleased
+
+- Added: "Ask every time" as the fallback — Junction shows the picker for any link no rule handles, instead of silently opening a browser. Choose it in Settings → Browsers or the welcome tour, where it's now the suggested default. In the config file it's `"fallback": { "app": "picker" }`.
+- Added: Hide browsers or profiles you never use from the picker, with the new checkboxes in Settings → Browsers.
+- Added: The welcome tour offers "Launch Junction at login" alongside the default-browser step.
+- Changed: The welcome tour's starter suggestions no longer assume Chrome — you pick the browser for the work and terminal suggestions. Zoom and Spotify now switch on the matching deep link (Settings → Deep Links) instead of adding a duplicate rule.
+- Added: The welcome tour ends with a "You're all set" page that shows the menu-bar icon and can send a test link through your new setup, so you can watch Junction work before the window closes.
+- Changed: Pressing Esc in the picker now just closes it. It used to open the link in your fallback browser, so there was no way to dismiss the picker without opening something.
+- Added: The picker has a visible "Copy Link" button — ⌘C still works too.
+- Added: Copying a link to the clipboard (from the picker or a clipboard rule) now shows a brief "Link copied" confirmation. Before, a clipboard rule looked like nothing happened.
+
 ## 0.6.0 — 2026-07-14
 
 - Added: ClickUp doc links open in the ClickUp app. Turn on "ClickUp (docs)" in Settings → Deep Links. Only task links were recognized before, so docs still opened in the browser.
