@@ -14,7 +14,7 @@ macOS allows exactly one default browser. If you juggle work and personal Chrome
 2. Every clicked `http(s)` link goes through your ordered rule list; **first match wins**.
 3. Rules match on URL wildcards (`*.atlassian.net/*`), regex, and/or the **source app** the click came from.
 4. Actions: open in a browser, open in a specific **browser profile** (Chromium or Firefox), rewrite to a **native app deep link** (17 built in, including Zoom, Spotify, Slack, Figma, Notion, Teams, Discord, Linear, Telegram, WhatsApp, Apple Music), show a **picker**, or copy to clipboard.
-5. Anything unmatched opens in your fallback browser. A link is never lost.
+5. Anything unmatched goes to your fallback — a browser, or the picker if you'd rather be asked every time. A link is never lost.
 
 Hold **⌥ Option** while clicking any link to force the picker.
 
@@ -53,6 +53,8 @@ Rules live in `~/.config/junction/config.json` (respects `$XDG_CONFIG_HOME`). Ed
 ```
 
 `profile` is a Chromium profile *directory* (`Default`, `Profile 1`) or a Firefox profile *name* (the one `firefox -P` takes, listed in **Settings → Browsers**). If a rule names a profile that no longer exists, the link degrades to your fallback browser rather than opening in the wrong one.
+
+`fallback.app` is a browser bundle ID, or the special value `"picker"` to be asked with the picker on every unmatched link.
 
 Pattern semantics: matched against `host/path`, scheme ignored unless written. `*` stays within a segment, `**` (or a trailing `*`) crosses segments, `*.example.com` includes the apex domain, bare `example.com` matches all subpaths. Host is case-insensitive, path case-sensitive, query ignored (use `regex` when the query matters).
 
@@ -105,7 +107,7 @@ ln -sf "/Applications/Junction.app/Contents/Helpers/junction" /usr/local/bin/jun
 
 ### First launch
 
-Junction is a menu-bar app — no Dock icon, no window. It opens a short setup: pick a fallback browser, set Junction as your **default browser** (the one step it can't work without, since that's how it sees every clicked link), and optionally enable a few starter rules. After that it lives in the menu bar; click the icon for recent links, settings, and updates.
+Junction is a menu-bar app — no Dock icon, no window. It opens a short setup: choose what happens to unmatched links (ask with the picker, or a fallback browser), set Junction as your **default browser** (the one step it can't work without, since that's how it sees every clicked link), and optionally automate your first links with starter suggestions. After that it lives in the menu bar; click the icon for recent links, settings, and updates.
 
 ### Updates
 

@@ -5,7 +5,7 @@ import JunctionMacKit
 import SwiftUI
 
 /// Floating, keyboard-first browser picker (F7): appears at the cursor,
-/// `1–9` open, arrows+Return navigate, `Esc` = fallback, `⌘C` = copy.
+/// `1–9` open, arrows+Return navigate, `Esc` = close, `⌘C` = copy.
 @MainActor
 final class PickerPanelController {
     private let state: AppState
@@ -30,15 +30,22 @@ final class PickerPanelController {
         dismiss()
         state.refreshBrowsers()
 
-        var choices: [Choice] = []
-        for browser in state.browsers {
-            choices.append(Choice(browser: browser, profile: nil))
-            for profile in browser.profiles {
-                choices.append(Choice(browser: browser, profile: profile))
-            }
-        }
+        // Rows the user hid in Settings → Browsers (key: bundleID or bundleID/profileDir).
+        // If hiding emptied the whole list, ignore the hidden set — an unusable picker is worse.
+        let hidden = Set(state.config.pickerHidden)
+        var choices = buildChoices(skipping: hidden)
+        if choices.isEmpty { choices = buildChoices(skipping: []) }
         guard !choices.isEmpty else {
-            state.openInFallback(url)
+            // No browsers detected at all. With a browser fallback, degrade there; with the
+            // picker fallback there is nothing to open (recursing here would loop), so keep
+            // the link on the clipboard instead of dropping it.
+            if state.config.fallback.isPicker {
+                NSPasteboard.general.clearContents()
+                NSPasteboard.general.setString(url.absoluteString, forType: .string)
+                state.showCopiedConfirmation()
+            } else {
+                state.openInFallback(url)
+            }
             return
         }
 
@@ -53,9 +60,11 @@ final class PickerPanelController {
                 NSPasteboard.general.clearContents()
                 NSPasteboard.general.setString(url.absoluteString, forType: .string)
                 self?.dismiss()
+                self?.state.showCopiedConfirmation()
             },
+            // Esc abandons the link on purpose — closing without opening anything is
+            // the user's choice, not a lost link.
             onCancel: { [weak self] in
-                self?.state.openInFallback(url)
                 self?.dismiss()
             },
             onCreateRule: { [weak self] in
@@ -99,6 +108,20 @@ final class PickerPanelController {
         self.panel = panel
         panel.makeKeyAndOrderFront(nil)
         NSApp.activate(ignoringOtherApps: true)
+    }
+
+    private func buildChoices(skipping hidden: Set<String>) -> [Choice] {
+        var choices: [Choice] = []
+        for browser in state.browsers {
+            if !hidden.contains(browser.bundleID) {
+                choices.append(Choice(browser: browser, profile: nil))
+            }
+            for profile in browser.profiles
+            where !hidden.contains("\(browser.bundleID)/\(profile.directory)") {
+                choices.append(Choice(browser: browser, profile: profile))
+            }
+        }
+        return choices
     }
 
     func dismiss() {
@@ -171,8 +194,11 @@ private struct PickerView: View {
                 Button("Create Rule for This Link…", action: onCreateRule)
                     .buttonStyle(.link)
                     .font(.caption)
+                Button("Copy Link", action: onCopy)
+                    .buttonStyle(.link)
+                    .font(.caption)
                 Spacer()
-                Text("esc fallback · ⌘C copy")
+                Text("esc close · ⌘C copy")
                     .font(.caption2)
                     .foregroundStyle(.tertiary)
             }

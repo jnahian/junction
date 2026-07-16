@@ -112,7 +112,7 @@
     },
     {
       "action": "{ \"prompt\": true }",
-      "body": "Show the picker and let you choose at click time."
+      "body": "Show the picker and let you choose at click time. The picker can also be your fallback for <i>every</i> unmatched link: <code>\"fallback\": { \"app\": \"picker\" }</code>."
     },
     {
       "action": "{ \"clipboard\": true }",
@@ -126,7 +126,7 @@
     },
     {
       "label": "Settings",
-      "body": "fallback browser, rules, browsers and profiles, deep links, updates."
+      "body": "fallback (a browser, or the ask-every-time picker), rules, browsers and profiles — including which appear in the picker — deep links, updates."
     },
     {
       "label": "Updates",

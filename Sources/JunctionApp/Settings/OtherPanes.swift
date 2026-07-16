@@ -14,41 +14,48 @@ struct BrowsersPane: View {
 
     var body: some View {
         Form {
-            Section("Fallback browser (used when no rule matches)") {
+            Section("Fallback (used when no rule matches)") {
                 Picker("Fallback", selection: Binding(
                     get: { state.config.fallback.app },
                     set: { id in state.updateConfig { $0.fallback.app = id } }
                 )) {
+                    Text("Ask every time (show the picker)").tag(Fallback.picker)
+                    Divider()
                     ForEach(state.browsers) { b in Text(b.name).tag(b.bundleID) }
-                    if !state.browsers.contains(where: { $0.bundleID == state.config.fallback.app }) {
+                    if state.config.fallback.app != Fallback.picker,
+                       !state.browsers.contains(where: { $0.bundleID == state.config.fallback.app }) {
                         Text(state.config.fallback.app).tag(state.config.fallback.app)
                     }
                 }
             }
-            Section("Detected browsers & profiles") {
+            Section {
                 ForEach(state.browsers) { browser in
-                    VStack(alignment: .leading, spacing: 2) {
+                    Toggle(isOn: pickerVisibility(browser.bundleID)) {
                         HStack {
                             Image(nsImage: NSWorkspace.shared.icon(forFile: browser.appURL.path))
                                 .resizable().frame(width: 18, height: 18)
                             Text(browser.name)
                             Text(browser.bundleID).font(.caption.monospaced()).foregroundStyle(.tertiary)
                         }
-                        if !browser.profiles.isEmpty {
-                            Text("Profiles: " + browser.profiles.map {
-                                // Firefox has no label distinct from its profile name, so
-                                // don't render "default (default)".
-                                $0.displayName == $0.directory
-                                    ? $0.displayName
-                                    : "\($0.displayName) (\($0.directory))"
-                            }.joined(separator: ", "))
-                            .font(.caption)
-                            .foregroundStyle(.secondary)
-                            .padding(.leading, 26)
+                    }
+                    ForEach(browser.profiles) { profile in
+                        Toggle(isOn: pickerVisibility("\(browser.bundleID)/\(profile.directory)")) {
+                            // Firefox has no label distinct from its profile name, so
+                            // don't render "default (default)".
+                            Text(profile.displayName == profile.directory
+                                ? profile.displayName
+                                : "\(profile.displayName) (\(profile.directory))")
+                                .font(.callout)
+                                .padding(.leading, 26)
                         }
                     }
                 }
                 Button("Refresh") { state.refreshBrowsers() }
+            } header: {
+                Text("Detected browsers & profiles")
+            } footer: {
+                Text("Checked entries appear in the picker. Hidden ones can still be a rule target or the fallback.")
+                    .font(.caption).foregroundStyle(.secondary)
             }
             Section {
                 Text("Chromium and Firefox profiles are detected automatically. Firefox containers are an extension feature with no launch-flag equivalent, so they are unsupported, as are Arc spaces (no public API).")
@@ -57,6 +64,22 @@ struct BrowsersPane: View {
         }
         .formStyle(.grouped)
         .onAppear { state.refreshBrowsers() }
+    }
+
+    /// Shown-in-picker toggle backed by `config.pickerHidden` (stored inverted).
+    private func pickerVisibility(_ key: String) -> Binding<Bool> {
+        Binding(
+            get: { !state.config.pickerHidden.contains(key) },
+            set: { shown in
+                state.updateConfig { config in
+                    if shown {
+                        config.pickerHidden.removeAll { $0 == key }
+                    } else if !config.pickerHidden.contains(key) {
+                        config.pickerHidden.append(key)
+                    }
+                }
+            }
+        )
     }
 }
 

@@ -18,6 +18,10 @@ public struct Config: Codable, Equatable, Sendable {
     /// scheme takes team IDs only, and a permalink carries just the subdomain, so without
     /// this map a Slack link can't be deep-linked and falls back to the browser.
     public var slackTeams: [String: String]
+    /// Picker entries the user has hidden: a browser bundle ID, or
+    /// `bundleID/profileDirectory` for a single profile. Hidden entries stay
+    /// valid as fallback and rule targets — this only trims the picker list.
+    public var pickerHidden: [String]
     public var rules: [Rule]
 
     public init(
@@ -28,6 +32,7 @@ public struct Config: Codable, Equatable, Sendable {
         enabledRewriters: [String] = [],
         customRewriters: [Rewriter] = [],
         slackTeams: [String: String] = [:],
+        pickerHidden: [String] = [],
         rules: [Rule] = []
     ) {
         self.version = version
@@ -37,12 +42,13 @@ public struct Config: Codable, Equatable, Sendable {
         self.enabledRewriters = enabledRewriters
         self.customRewriters = customRewriters
         self.slackTeams = slackTeams
+        self.pickerHidden = pickerHidden
         self.rules = rules
     }
 
     enum CodingKeys: String, CodingKey {
         case version, fallback, stripTrackingParams, extraTrackingParams, enabledRewriters,
-             customRewriters, slackTeams, rules
+             customRewriters, slackTeams, pickerHidden, rules
     }
 
     public init(from decoder: Decoder) throws {
@@ -54,14 +60,18 @@ public struct Config: Codable, Equatable, Sendable {
         enabledRewriters = try c.decodeIfPresent([String].self, forKey: .enabledRewriters) ?? []
         customRewriters = try c.decodeIfPresent([Rewriter].self, forKey: .customRewriters) ?? []
         slackTeams = try c.decodeIfPresent([String: String].self, forKey: .slackTeams) ?? [:]
+        pickerHidden = try c.decodeIfPresent([String].self, forKey: .pickerHidden) ?? []
         rules = try c.decodeIfPresent([Rule].self, forKey: .rules) ?? []
     }
 }
 
 public struct Fallback: Codable, Equatable, Sendable {
-    /// Bundle identifier of the catch-all browser.
+    /// Sentinel `app` value: unmatched links show the picker instead of opening a browser.
+    public static let picker = "picker"
+    /// Bundle identifier of the catch-all browser, or `Fallback.picker`.
     public var app: String
     public init(app: String) { self.app = app }
+    public var isPicker: Bool { app == Self.picker }
 }
 
 public struct Rule: Codable, Sendable, Identifiable {

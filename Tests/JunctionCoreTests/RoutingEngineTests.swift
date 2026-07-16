@@ -190,6 +190,21 @@ final class RoutingEngineTests: XCTestCase {
         XCTAssertEqual(t.transformedURL.absoluteString, "https://app.clickup.com/t/1")
     }
 
+    func testPickerFallbackPromptsOnNoMatch() {
+        var config = makeConfig()
+        config.fallback = Fallback(app: Fallback.picker)
+        let d = engine(config).route(event("https://unmatched.example/x"))
+        guard case .prompt = d else { return XCTFail("\(d)") }
+    }
+
+    func testPickerFallbackPromptsWhenDeepLinkAppMissing() {
+        var config = makeConfig()
+        config.fallback = Fallback(app: Fallback.picker)
+        let d = engine(config, schemeHandled: { _ in false })
+            .route(event("https://us02web.zoom.us/j/9876543210"))
+        guard case .prompt = d else { return XCTFail("\(d)") }
+    }
+
     func testRegexMatcher() {
         let config = Config(rules: [
             Rule(

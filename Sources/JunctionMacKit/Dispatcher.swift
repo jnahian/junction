@@ -35,7 +35,8 @@ public struct Dispatcher {
                 completion?(.opened)
                 return .opened
             }
-            _ = openInBrowser(bundleID: fallbackApp, profile: nil, url: originalURL, completion: completion)
+            let outcome = openInBrowser(bundleID: fallbackApp, profile: nil, url: originalURL, completion: completion)
+            if case .needsPicker = outcome { return outcome }
             return .degradedToFallback(reason: "No app installed for \(url.scheme ?? "?")://")
 
         case .prompt(let url):
@@ -61,6 +62,14 @@ public struct Dispatcher {
         completion: (@Sendable (DispatchOutcome) -> Void)? = nil
     ) -> DispatchOutcome {
         guard let appURL = NSWorkspace.shared.urlForApplication(withBundleIdentifier: bundleID) else {
+            // Picker fallback: never try to "open" the sentinel — the last-resort
+            // NSWorkspace.open below would hand the link back to Junction (the default
+            // browser) and loop. Every fallback dispatch funnels through here, so this
+            // one check covers .fallback decisions and all degrade paths.
+            if fallbackApp == Fallback.picker {
+                completion?(.needsPicker(url))
+                return .needsPicker(url)
+            }
             // Target browser missing (e.g. dotfiles synced to a Mac without it) → fallback.
             if bundleID != fallbackApp,
                let fallbackURL = NSWorkspace.shared.urlForApplication(withBundleIdentifier: fallbackApp) {

@@ -2,44 +2,73 @@
   "templates": [
     {
       "id": "work-profile",
-      "title": "Work links → Chrome",
-      "description": "Jira, ClickUp, and Google Workspace open in Chrome's Default profile. Point it at another profile in Settings.",
+      "title": "Work links → one browser",
+      "description": "Jira, ClickUp, and Google Workspace always open in the browser you pick.",
       "rule": {
         "name": "Work links → work profile",
         "match": {
-          "patterns": ["*.atlassian.net/*", "app.clickup.com/*", "docs.google.com/*", "drive.google.com/*", "mail.google.com/*"]
+          "patterns": [
+            "*.atlassian.net/*",
+            "app.clickup.com/*",
+            "docs.google.com/*",
+            "drive.google.com/*",
+            "mail.google.com/*"
+          ]
         },
-        "action": { "app": "com.google.Chrome", "profile": "Default" }
+        "action": {
+          "app": "com.google.Chrome",
+          "profile": "Default"
+        }
       }
     },
     {
       "id": "zoom-native",
       "title": "Zoom links → Zoom app",
-      "description": "Meeting links open the native Zoom app instead of a browser tab.",
+      "description": "Turns on the Zoom deep link: meeting links open the native app instead of a browser tab.",
       "rule": {
         "name": "Zoom → native app",
-        "match": { "patterns": ["*.zoom.us/j/*", "*.zoom.us/w/*"] },
-        "action": { "deepLink": "zoom" }
+        "match": {
+          "patterns": [
+            "*.zoom.us/j/*",
+            "*.zoom.us/w/*"
+          ]
+        },
+        "action": {
+          "deepLink": "zoom"
+        }
       }
     },
     {
       "id": "spotify-native",
       "title": "Spotify links → Spotify app",
-      "description": "Tracks, albums, and playlists open in the Spotify app.",
+      "description": "Turns on the Spotify deep link: tracks, albums, and playlists open in the app.",
       "rule": {
         "name": "Spotify → native app",
-        "match": { "patterns": ["open.spotify.com/*"] },
-        "action": { "deepLink": "spotify" }
+        "match": {
+          "patterns": [
+            "open.spotify.com/*"
+          ]
+        },
+        "action": {
+          "deepLink": "spotify"
+        }
       }
     },
     {
       "id": "terminal-dev",
       "title": "Links from Terminal → your dev browser",
-      "description": "URLs clicked in Terminal or iTerm open in Chrome (handy for localhost).",
+      "description": "URLs clicked in Terminal or iTerm open in the browser you pick (handy for localhost).",
       "rule": {
-        "name": "Terminal links → Chrome",
-        "match": { "sourceApps": ["com.apple.Terminal", "com.googlecode.iterm2"] },
-        "action": { "app": "com.google.Chrome" }
+        "name": "Terminal links → dev browser",
+        "match": {
+          "sourceApps": [
+            "com.apple.Terminal",
+            "com.googlecode.iterm2"
+          ]
+        },
+        "action": {
+          "app": "com.google.Chrome"
+        }
       }
     }
   ]

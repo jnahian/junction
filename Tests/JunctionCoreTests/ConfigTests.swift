@@ -113,6 +113,8 @@ final class ConfigStoreTests: XCTestCase {
     func testSaveWritesStrictSortedJSONAndRoundTrips() throws {
         let store = ConfigStore(fileURL: configURL)
         var config = Config()
+        config.fallback = Fallback(app: Fallback.picker)
+        config.pickerHidden = ["org.mozilla.firefox", "com.google.Chrome/Profile 2"]
         config.rules = [
             Rule(name: "Test", match: Match(patterns: ["example.com"]), action: .clipboard)
         ]
