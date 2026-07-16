@@ -65,7 +65,7 @@ struct RulesPane: View {
             HStack(spacing: 0) {
                 Button {
                     isNewRule = true
-                    editingRule = Rule(name: "New rule", match: Match(), action: .open(app: state.config.fallback.app, profile: nil))
+                    editingRule = Rule(name: "New rule", match: Match(), action: .open(app: draftBrowser, profile: nil))
                 } label: {
                     Image(systemName: "plus")
                         .frame(width: 24, height: 20)
@@ -118,9 +118,15 @@ struct RulesPane: View {
             editingRule = Rule(
                 name: url?.host.map { "Links on \($0)" } ?? "New rule",
                 match: match,
-                action: .open(app: state.config.fallback.app, profile: nil)
+                action: .open(app: draftBrowser, profile: nil)
             )
         }
+    }
+
+    /// Seed for a new rule's browser: the fallback when it's a real browser; the picker
+    /// sentinel would make an unsendable draft, so leave the choice empty instead.
+    private var draftBrowser: String {
+        state.config.fallback.isPicker ? "" : state.config.fallback.app
     }
 
     private func actionLabel(_ action: Action) -> String {

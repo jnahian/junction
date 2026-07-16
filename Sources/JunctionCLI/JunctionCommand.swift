@@ -118,6 +118,12 @@ struct Open: ParsableCommand {
 
         // The picker needs Junction.app's UI; from the CLI, degrade to the fallback browser.
         if case .prompt(let promptURL) = decision {
+            if engine.config.fallback.isPicker {
+                // No fallback browser to degrade to — hand the link to the system default
+                // handler. Normally that's Junction.app itself, which shows the picker.
+                NSWorkspace.shared.open(promptURL)
+                return
+            }
             print("note: picker rules fall back to the default browser when run from the CLI")
             decision = .fallback(app: engine.config.fallback.app, url: promptURL)
         }
@@ -128,8 +134,15 @@ struct Open: ParsableCommand {
         let dispatcher = Dispatcher(fallbackApp: engine.config.fallback.app)
         let semaphore = DispatchSemaphore(value: 0)
         dispatcher.dispatch(decision) { outcome in
-            if case .failed(let message) = outcome {
+            switch outcome {
+            case .failed(let message):
                 FileHandle.standardError.write(Data("junction: failed to open: \(message)\n".utf8))
+            case .needsPicker(let url):
+                // Degraded to a picker fallback (e.g. rule's browser missing) — the CLI
+                // has no picker UI, so hand off to the system default handler.
+                NSWorkspace.shared.open(url)
+            default:
+                break
             }
             semaphore.signal()
         }

@@ -3,9 +3,10 @@ import AppKit
 import Foundation
 import JunctionCore
 import JunctionMacKit
+import ServiceManagement
 import SwiftUI
 
-/// First-launch flow (PRD §10): explain → pick fallback → set default → starter rules.
+/// First-launch flow (PRD §10): explain → pick fallback → set default → automate → send-off.
 @MainActor
 final class OnboardingWindowController {
     private let state: AppState
@@ -64,25 +65,27 @@ private struct OnboardingView: View {
     let onDone: () -> Void
 
     @State private var step = 0
-    @State private var fallbackBundleID: String = "com.apple.Safari"
+    @State private var fallbackBundleID: String = Fallback.picker
     @State private var selectedTemplates: Set<String> = []
+    /// Template id → browser the user picked for it (browser-opening templates only).
+    @State private var templateBrowsers: [String: String] = [:]
+    @State private var launchAtLogin = SMAppService.mainApp.status == .enabled
     private let templates = StarterTemplates.load()
 
     private static let rewriters = RewriterStore.builtin()
-    private static let stepCount = 4
+    private static let stepCount = 5
     private var isLastStep: Bool { step == Self.stepCount - 1 }
     /// Step 2 is the only one Junction can't work without, so name the opt-out instead of
     /// letting "Continue" quietly mean "no".
     private var isSkippingDefaultBrowser: Bool { step == 2 && !state.isDefaultBrowser }
 
-    /// Templates naming an app the user doesn't have would create rules that can never dispatch,
-    /// so don't offer them. Browsers are matched by bundle ID; deep links by whether anything
-    /// installed claims the rewriter's URL scheme.
+    /// Deep-link templates only make sense when the target app is installed; browser
+    /// templates let the user pick the browser, so any installed browser will do.
     private var availableTemplates: [StarterTemplate] {
         templates.filter { template in
             switch template.rule.action {
-            case .open(let app, _):
-                return state.browsers.contains { $0.bundleID == app }
+            case .open:
+                return !state.browsers.isEmpty
             case .deepLink(let id):
                 guard let scheme = Self.rewriters.rewriter(id: id)?.scheme else { return false }
                 return BrowserDiscovery.isSchemeHandled(scheme)
@@ -102,7 +105,8 @@ private struct OnboardingView: View {
                     case 0: welcome
                     case 1: fallbackPicker
                     case 2: defaultBrowser
-                    default: starterRules
+                    case 3: starterRules
+                    default: allSet
                     }
                 }
                 .frame(maxWidth: .infinity, alignment: .leading)
@@ -165,9 +169,9 @@ private struct OnboardingView: View {
             }
             .padding(.bottom, Metrics.controlSpacing)
             Text("""
-            Junction becomes your default browser, but it never shows a window. \
-            When you click a link anywhere, Junction checks your rules and instantly \
-            hands the link to the right browser, browser profile, or native app.
+            Junction becomes your default browser. When you click a link anywhere, \
+            Junction checks your rules and instantly hands the link to the right \
+            browser, browser profile, or native app — or asks you with a quick picker.
 
             No telemetry, ever.
             """)
@@ -176,10 +180,12 @@ private struct OnboardingView: View {
 
     private var fallbackPicker: some View {
         VStack(alignment: .leading, spacing: 12) {
-            Text("Pick your fallback browser").font(.title2.bold())
-            Text("Any link that doesn't match a rule opens here. You can change this anytime.")
+            Text("What happens with unmatched links?").font(.title2.bold())
+            Text("Any link that doesn't match a rule goes here. You can change this anytime.")
                 .foregroundStyle(.secondary)
-            Picker("Fallback browser", selection: $fallbackBundleID) {
+            Picker("Fallback", selection: $fallbackBundleID) {
+                Text("Ask every time — Junction shows a quick picker")
+                    .tag(Fallback.picker)
                 ForEach(state.browsers) { browser in
                     Text(browser.name).tag(browser.bundleID)
                 }
@@ -189,9 +195,11 @@ private struct OnboardingView: View {
         }
         .onAppear {
             state.refreshBrowsers()
-            // Seed a default only when the current pick isn't installed. onAppear fires again
-            // when the user steps Back to here, and re-seeding would clobber their choice.
-            guard !state.browsers.contains(where: { $0.bundleID == fallbackBundleID }) else { return }
+            // Seed a default only when the current pick is neither the picker nor an
+            // installed browser. onAppear fires again when the user steps Back to here,
+            // and re-seeding would clobber their choice.
+            guard fallbackBundleID != Fallback.picker,
+                  !state.browsers.contains(where: { $0.bundleID == fallbackBundleID }) else { return }
             if let first = state.browsers.first(where: { $0.bundleID == "com.apple.Safari" }) ?? state.browsers.first {
                 fallbackBundleID = first.bundleID
             }
@@ -217,16 +225,29 @@ private struct OnboardingView: View {
                     .font(.caption)
                     .foregroundStyle(.secondary)
             }
+            Divider()
+            Toggle("Launch Junction at login", isOn: $launchAtLogin)
+                .onChange(of: launchAtLogin) { on in
+                    do {
+                        if on { try SMAppService.mainApp.register() }
+                        else { try SMAppService.mainApp.unregister() }
+                    } catch {
+                        launchAtLogin = SMAppService.mainApp.status == .enabled
+                    }
+                }
+            Text("Keeps Junction in the menu bar and saves the first click from waiting for it to start.")
+                .font(.caption)
+                .foregroundStyle(.secondary)
         }
     }
 
     private var starterRules: some View {
         VStack(alignment: .leading, spacing: 12) {
-            Text("Starter rules").font(.title2.bold())
-            Text("Pick any that fit. You can edit them later in Settings.")
+            Text("Make your first links automatic").font(.title2.bold())
+            Text("Until a rule or deep link takes over, Junction uses your fallback. Pick any that fit — everything can be changed later in Settings.")
                 .foregroundStyle(.secondary)
             if availableTemplates.isEmpty {
-                Text("No starter rules match the apps you have installed. You can add your own anytime in Settings.")
+                Text("None of the starter suggestions match the apps you have installed. You can add rules anytime in Settings.")
                     .foregroundStyle(.secondary)
             }
             ForEach(availableTemplates) { template in
@@ -241,22 +262,109 @@ private struct OnboardingView: View {
                         Text(template.description).font(.caption).foregroundStyle(.secondary)
                     }
                 }
+                // Browser templates aren't tied to the JSON's seed browser — pick your own.
+                if selectedTemplates.contains(template.id),
+                   case .open = template.rule.action {
+                    Picker("Browser", selection: browserBinding(template)) {
+                        ForEach(state.browsers) { b in Text(b.name).tag(b.bundleID) }
+                    }
+                    .frame(maxWidth: 260)
+                    .padding(.leading, 20)
+                }
+            }
+        }
+        .onAppear { seedTemplateBrowsers() }
+    }
+
+    private func browserBinding(_ template: StarterTemplate) -> Binding<String> {
+        Binding(
+            get: { templateBrowsers[template.id] ?? "" },
+            set: { templateBrowsers[template.id] = $0 }
+        )
+    }
+
+    /// Default each browser template to its JSON seed when installed, else the chosen
+    /// fallback browser, else the first browser found. Never re-seed a made choice.
+    private func seedTemplateBrowsers() {
+        for template in availableTemplates {
+            guard case .open(let app, _) = template.rule.action, templateBrowsers[template.id] == nil else { continue }
+            if state.browsers.contains(where: { $0.bundleID == app }) {
+                templateBrowsers[template.id] = app
+            } else if state.browsers.contains(where: { $0.bundleID == fallbackBundleID }) {
+                templateBrowsers[template.id] = fallbackBundleID
+            } else if let first = state.browsers.first {
+                templateBrowsers[template.id] = first.bundleID
             }
         }
     }
 
-    private func advance() {
-        if !isLastStep {
-            step += 1
-            return
+    private var allSet: some View {
+        VStack(alignment: .leading, spacing: 12) {
+            Text("You're all set").font(.title2.bold())
+            HStack(spacing: 10) {
+                if let icon = Self.menuBarIcon {
+                    Image(nsImage: icon).accessibilityHidden(true)
+                }
+                Text("Junction lives in your menu bar — that's where rules, deep links, and recent activity are.")
+                    .foregroundStyle(.secondary)
+            }
+            Divider()
+            Button("Send a Test Link Through Junction") {
+                state.handle(LinkEvent(
+                    url: URL(string: "https://example.com/hello-from-junction")!,
+                    sourceApp: Bundle.main.bundleIdentifier
+                ))
+            }
+            Text("Watch it route: the picker asks, a rule or deep link opens instantly, anything else lands in your fallback browser.")
+                .font(.caption)
+                .foregroundStyle(.secondary)
         }
+    }
+
+    private static let menuBarIcon: NSImage? = {
+        guard let url = CoreResources.url(forResource: "MenuBarIcon", withExtension: "svg"),
+              let image = NSImage(contentsOf: url) else { return nil }
+        image.size = NSSize(width: 18, height: 18)
+        image.isTemplate = true
+        return image
+    }()
+
+    private func advance() {
+        // Step 3 is the last configuring step; apply there so the send-off's test link
+        // routes through the choices just made. Re-applying after Back is harmless —
+        // every write below is idempotent.
+        if step == 3 { applyChoices() }
+        if isLastStep { onDone() } else { step += 1 }
+    }
+
+    private func applyChoices() {
         state.updateConfig { config in
             config.fallback.app = fallbackBundleID
-            let chosen = availableTemplates.filter { selectedTemplates.contains($0.id) }.map(\.rule)
-            // Skip templates already present (re-running the tour must not duplicate rules).
-            config.rules.append(contentsOf: chosen.filter { rule in !config.rules.contains(rule) })
+            for template in availableTemplates where selectedTemplates.contains(template.id) {
+                switch template.rule.action {
+                case .deepLink(let id):
+                    // Switching on the built-in rewriter beats copying its patterns into a
+                    // rule: it stays maintained with rewriters.json and teaches Deep Links.
+                    if !config.enabledRewriters.contains(id) {
+                        config.enabledRewriters.append(id)
+                    }
+                case .open(let seedApp, let seedProfile):
+                    var rule = template.rule
+                    let chosen = templateBrowsers[template.id] ?? seedApp
+                    // The seed profile only means something on the seed browser.
+                    rule.action = .open(app: chosen, profile: chosen == seedApp ? seedProfile : nil)
+                    if !config.rules.contains(rule) {
+                        // Replace an earlier run's variant of the same starter rule.
+                        config.rules.removeAll { $0.name == rule.name }
+                        config.rules.append(rule)
+                    }
+                case .prompt, .clipboard:
+                    if !config.rules.contains(template.rule) {
+                        config.rules.append(template.rule)
+                    }
+                }
+            }
         }
-        onDone()
     }
 }
 #endif

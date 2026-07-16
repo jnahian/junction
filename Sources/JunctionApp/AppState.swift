@@ -93,6 +93,7 @@ final class AppState: ObservableObject {
             notifyBrokenRule(reason: reason, rule: trace.matchedRule)
         case .copiedToClipboard:
             record(event, outcome: "copied")
+            showCopiedConfirmation()
         case .failed(let message):
             openInFallback(event.url)
             record(event, outcome: "failed (\(message)) → fallback")
@@ -102,13 +103,17 @@ final class AppState: ObservableObject {
     }
 
     func openInFallback(_ url: URL) {
-        Dispatcher(fallbackApp: config.fallback.app)
+        let outcome = Dispatcher(fallbackApp: config.fallback.app)
             .dispatch(.fallback(app: config.fallback.app, url: url))
+        // Picker-as-fallback: the dispatcher can't show UI, so it hands back here.
+        if case .needsPicker(let url) = outcome { pickerPresenter?(url) }
     }
 
     func open(url: URL, in browser: Browser, profile: BrowserProfile?) {
-        Dispatcher(fallbackApp: config.fallback.app)
+        let outcome = Dispatcher(fallbackApp: config.fallback.app)
             .openInBrowser(bundleID: browser.bundleID, profile: profile?.directory, url: url)
+        // The picked browser vanished mid-pick and the fallback is the picker: re-ask.
+        if case .needsPicker(let url) = outcome { pickerPresenter?(url) }
     }
 
     private func describe(_ trace: RoutingTrace) -> String {
@@ -131,6 +136,43 @@ final class AppState: ObservableObject {
         )
         if recentLinks.count > maxRecent {
             recentLinks.removeLast(recentLinks.count - maxRecent)
+        }
+    }
+
+    /// Transient "Link copied" HUD near the cursor — a clipboard action otherwise
+    /// looks like nothing happened.
+    func showCopiedConfirmation() {
+        let label = NSTextField(labelWithString: "Link copied")
+        label.font = .systemFont(ofSize: 13, weight: .medium)
+        label.sizeToFit()
+
+        let effect = NSVisualEffectView(frame: label.bounds.insetBy(dx: -16, dy: -10))
+        effect.material = .hudWindow
+        effect.state = .active
+        effect.wantsLayer = true
+        effect.layer?.cornerRadius = 8
+        label.setFrameOrigin(NSPoint(x: 16, y: 10))
+        effect.addSubview(label)
+
+        let panel = NSPanel(
+            contentRect: effect.frame,
+            styleMask: [.borderless, .nonactivatingPanel],
+            backing: .buffered,
+            defer: false
+        )
+        panel.contentView = effect
+        panel.isOpaque = false
+        panel.backgroundColor = .clear
+        panel.hasShadow = true
+        panel.level = .floating
+        panel.isReleasedWhenClosed = false
+
+        let mouse = NSEvent.mouseLocation
+        panel.setFrameOrigin(NSPoint(x: mouse.x - panel.frame.width / 2, y: mouse.y + 12))
+        panel.orderFrontRegardless()
+
+        DispatchQueue.main.asyncAfter(deadline: .now() + 1.2) {
+            panel.close()
         }
     }
 

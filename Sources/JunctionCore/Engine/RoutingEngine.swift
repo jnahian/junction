@@ -140,8 +140,15 @@ public struct RoutingEngine: Sendable {
         return RoutingTrace(
             input: event, transformedURL: transformedURL,
             matchedRule: nil, matchedRuleIndex: nil, rewriterID: nil,
-            decision: .fallback(app: config.fallback.app, url: url)
+            decision: fallbackDecision(url: url)
         )
+    }
+
+    /// The fallback can be a browser or the picker sentinel.
+    private func fallbackDecision(url: URL) -> RoutingDecision {
+        config.fallback.isPicker
+            ? .prompt(url: url)
+            : .fallback(app: config.fallback.app, url: url)
     }
 
     private func decide(action: Action, url: URL) -> RoutingDecision {
@@ -154,7 +161,7 @@ public struct RoutingEngine: Sendable {
                   let rewritten = rewriter.rewrite(url, lookup: config.slackTeams) else {
                 // Rewriter unknown, app missing, URL didn't match, or (Slack) the workspace has
                 // no team ID mapped → never lose a link.
-                return .fallback(app: config.fallback.app, url: url)
+                return fallbackDecision(url: url)
             }
             return .deepLink(url: rewritten, rewriterID: id, originalURL: url)
         case .prompt:
