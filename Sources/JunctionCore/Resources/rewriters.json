@@ -45,9 +45,9 @@
       "id": "figma",
       "name": "Figma",
       "patterns": [
-        "^https?://(?:www\\.)?figma\\.com/(?:file|design|board|slides|deck|proto)/([A-Za-z0-9]+)(/[^?#]*)?"
+        "^https?://(?:www\\.)?figma\\.com/(?:file|design|board|slides|deck|proto)/([A-Za-z0-9]+)(/[^?#]*)?(\\?[^#]*)?"
       ],
-      "template": "figma://file/$1$2",
+      "template": "figma://file/$1$2$3",
       "scheme": "figma",
       "bundleID": "com.figma.Desktop"
     },

@@ -10,6 +10,10 @@ shape matters:
 - Every bullet starts with `Added:`, `Changed:`, or `Fixed:` — that marker drives
   the filter pills on the changelog page.
 
+## Unreleased
+
+- Fixed: Figma links now open the Figma app at the exact frame you linked to. The node in the address (the `?node-id=…` part) was being dropped, so the app opened the file but stayed on whatever was last on screen instead of the frame you meant.
+
 ## 0.7.0 — 2026-07-16
 
 - Added: "Ask every time" as the fallback — Junction shows the picker for any link no rule handles, instead of silently opening a browser. Choose it in Settings → Browsers or the welcome tour, where it's now the suggested default. In the config file it's `"fallback": { "app": "picker" }`.

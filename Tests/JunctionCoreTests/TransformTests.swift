@@ -59,10 +59,24 @@ final class RewriterTests: XCTestCase {
         XCTAssertEqual(out?.absoluteString, "zoommtg://zoom.us/join?confno=123&pwd=abc.def")
     }
 
-    func testFigma() {
+    func testFigmaPreservesNodeID() {
         let r = store.rewriter(id: "figma")!
-        let out = r.rewrite(URL(string: "https://www.figma.com/design/AbC123/My-File?node-id=1")!)
-        XCTAssertEqual(out?.absoluteString, "figma://file/AbC123/My-File")
+        // node-id is what points the desktop app at the linked frame. Dropping it opened
+        // the file but left the app unable to navigate to the node (the reported bug).
+        XCTAssertEqual(
+            r.rewrite(URL(string: "https://www.figma.com/design/AbC123/My-File?node-id=15698-98442")!)?.absoluteString,
+            "figma://file/AbC123/My-File?node-id=15698-98442"
+        )
+        // Share links carry a `t=` token alongside node-id — keep the whole query.
+        XCTAssertEqual(
+            r.rewrite(URL(string: "https://www.figma.com/design/daCjzGc1Lz6FdNMuEoZkH7/StoreSEO-Deliverable?node-id=15698-98442&t=lREo598oCMUAQutK-1")!)?.absoluteString,
+            "figma://file/daCjzGc1Lz6FdNMuEoZkH7/StoreSEO-Deliverable?node-id=15698-98442&t=lREo598oCMUAQutK-1"
+        )
+        // No query → unchanged path, and no dangling `?`.
+        XCTAssertEqual(
+            r.rewrite(URL(string: "https://www.figma.com/design/AbC123/My-File")!)?.absoluteString,
+            "figma://file/AbC123/My-File"
+        )
     }
 
     func testFigmaNonDesignFileTypes() {
