@@ -389,12 +389,21 @@ struct GeneralPane: View {
                 Toggle("Launch at login", isOn: $launchAtLogin)
                     .onChange(of: launchAtLogin) { on in
                         do {
-                            if on { try SMAppService.mainApp.register() }
-                            else { try SMAppService.mainApp.unregister() }
+                            if on {
+                                guard SMAppService.mainAppCanRegister else { launchAtLogin = false; return }
+                                try SMAppService.mainApp.register()
+                            } else {
+                                try SMAppService.mainApp.unregister()
+                            }
                         } catch {
                             launchAtLogin = SMAppService.mainApp.status == .enabled
                         }
                     }
+                if !SMAppService.mainAppCanRegister {
+                    Text("Move Junction to /Applications to enable launch at login.")
+                        .font(.caption)
+                        .foregroundStyle(.secondary)
+                }
             }
             Section("Config file") {
                 LabeledContent("Path", value: state.configStore.fileURL.path)

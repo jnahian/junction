@@ -233,13 +233,19 @@ private struct OnboardingView: View {
             Toggle("Launch Junction at login", isOn: $launchAtLogin)
                 .onChange(of: launchAtLogin) { on in
                     do {
-                        if on { try SMAppService.mainApp.register() }
-                        else { try SMAppService.mainApp.unregister() }
+                        if on {
+                            guard SMAppService.mainAppCanRegister else { launchAtLogin = false; return }
+                            try SMAppService.mainApp.register()
+                        } else {
+                            try SMAppService.mainApp.unregister()
+                        }
                     } catch {
                         launchAtLogin = SMAppService.mainApp.status == .enabled
                     }
                 }
-            Text("Keeps Junction in the menu bar and saves the first click from waiting for it to start.")
+            Text(SMAppService.mainAppCanRegister
+                ? "Keeps Junction in the menu bar and saves the first click from waiting for it to start."
+                : "Move Junction to /Applications to enable launch at login.")
                 .font(.caption)
                 .foregroundStyle(.secondary)
         }

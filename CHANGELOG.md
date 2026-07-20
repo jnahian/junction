@@ -10,6 +10,10 @@ shape matters:
 - Every bullet starts with `Added:`, `Changed:`, or `Fixed:` — that marker drives
   the filter pills on the changelog page.
 
+## Unreleased
+
+- Fixed: Junction only registers itself as a login item when it's in /Applications, and a copy running from elsewhere now removes its own stale login-item registration on launch. Previously a stray copy could add a duplicate "Launch at login" entry — and a loose build could even open a Terminal window at every startup.
+
 ## 0.7.1 — 2026-07-20
 
 - Fixed: Figma links now open the Figma app at the exact frame you linked to. The node in the address (the `?node-id=…` part) was being dropped, so the app opened the file but stayed on whatever was last on screen instead of the frame you meant.

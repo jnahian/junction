@@ -3,6 +3,7 @@ import AppKit
 import Foundation
 import JunctionCore
 import JunctionMacKit
+import ServiceManagement
 
 @MainActor
 final class AppDelegate: NSObject, NSApplicationDelegate {
@@ -46,6 +47,13 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         }
         state.configStore.bootstrapIfMissing()
         state.configStore.startWatching()
+
+        // A copy run from outside /Applications (a dev build, a Downloads copy) may have
+        // registered itself as a login item — as a bare executable it launches into Terminal
+        // at startup. Self-heal: drop that registration so only the /Applications install stays.
+        if !SMAppService.mainAppCanRegister, SMAppService.mainApp.status == .enabled {
+            try? SMAppService.mainApp.unregister()
+        }
     }
 
     func applicationShouldTerminate(_ sender: NSApplication) -> NSApplication.TerminateReply {
