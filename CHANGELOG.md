@@ -10,7 +10,7 @@ shape matters:
 - Every bullet starts with `Added:`, `Changed:`, or `Fixed:` — that marker drives
   the filter pills on the changelog page.
 
-## Unreleased
+## 0.7.2 — 2026-07-20
 
 - Fixed: Junction only registers itself as a login item when it's in /Applications, and a copy running from elsewhere now removes its own stale login-item registration on launch. Previously a stray copy could add a duplicate "Launch at login" entry — and a loose build could even open a Terminal window at every startup.
 
