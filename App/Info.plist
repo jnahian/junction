@@ -6,18 +6,6 @@
 	<string>en</string>
 	<key>CFBundleDisplayName</key>
 	<string>Junction</string>
-	<key>CFBundleDocumentTypes</key>
-	<array>
-		<dict>
-			<key>CFBundleTypeRole</key>
-			<string>Viewer</string>
-			<key>LSItemContentTypes</key>
-			<array>
-				<string>public.html</string>
-				<string>public.xhtml</string>
-			</array>
-		</dict>
-	</array>
 	<key>CFBundleExecutable</key>
 	<string>Junction</string>
 	<key>CFBundleIconFile</key>
@@ -32,6 +20,20 @@
 	<string>APPL</string>
 	<key>CFBundleShortVersionString</key>
 	<string>0.7.1</string>
+	<!-- Being the default browser also makes us the handler for local .html files;
+	     without this declaration Finder has nothing to open them with. -->
+	<key>CFBundleDocumentTypes</key>
+	<array>
+		<dict>
+			<key>CFBundleTypeRole</key>
+			<string>Viewer</string>
+			<key>LSItemContentTypes</key>
+			<array>
+				<string>public.html</string>
+				<string>public.xhtml</string>
+			</array>
+		</dict>
+	</array>
 	<key>CFBundleURLTypes</key>
 	<array>
 		<dict>
@@ -46,6 +48,8 @@
 			</array>
 		</dict>
 	</array>
+	<!-- Stamped at build time by Scripts/bundle-app.sh. Sparkle compares this to
+	     decide "is there an update"; a static value means clients never see one. -->
 	<key>CFBundleVersion</key>
 	<string>0</string>
 	<key>LSApplicationCategoryType</key>
