@@ -1,3 +1,4 @@
+#if canImport(AppKit)
 import ServiceManagement
 
 extension SMAppService {
@@ -10,3 +11,4 @@ extension SMAppService {
         Bundle.main.bundlePath.hasPrefix("/Applications/")
     }
 }
+#endif
