@@ -88,7 +88,7 @@ struct BrowsersPane: View {
 struct DeepLinksPane: View {
     @ObservedObject var state: AppState
     @State private var newSubdomain = ""
-    @State private var newTeamID = ""
+    @State private var addError: String?
     @State private var editing: RewriterEditing?
 
     /// One sheet, not two: a blank draft's id is "" (slug of an empty name), so
@@ -237,31 +237,47 @@ struct DeepLinksPane: View {
                     .accessibilityLabel("Remove \(subdomain)")
                 }
             }
-            // One field per row: a grouped Form treats the first view of an HStack as the row's
-            // label, which left the team-ID field looking uneditable.
-            TextField("workspace", text: $newSubdomain)
-            TextField("T01ABCDEF", text: $newTeamID)
-            HStack {
-                Spacer()
-                Button("Add") {
-                    // A pasted "acme.slack.com" would never match the capture, which is just "acme".
-                    let subdomain = newSubdomain.trimmingCharacters(in: .whitespaces).lowercased()
-                        .replacingOccurrences(of: ".slack.com", with: "")
-                    let team = newTeamID.trimmingCharacters(in: .whitespaces).uppercased()
-                    guard !subdomain.isEmpty, !team.isEmpty else { return }
-                    state.updateConfig { $0.slackTeams[subdomain] = team }
-                    newSubdomain = ""
-                    newTeamID = ""
+            // A LabeledContent row, not a bare HStack: a grouped Form makes the first view of an
+            // HStack the row's label, which left the field looking uneditable.
+            LabeledContent("Workspace (acme.slack.com, or paste a link)") {
+                HStack {
+                    TextField("", text: $newSubdomain)
+                        .frame(width: 220)
+                        .onSubmit(addWorkspace)
+                    Button("Add", action: addWorkspace).disabled(trimmedSubdomain.isEmpty)
                 }
-                .disabled(newSubdomain.trimmingCharacters(in: .whitespaces).isEmpty
-                    || newTeamID.trimmingCharacters(in: .whitespaces).isEmpty)
+            }
+            if let addError {
+                Text(addError).font(.caption).foregroundStyle(.orange)
             }
         } header: {
             Text("Slack workspaces")
         } footer: {
-            Text("Slack's deep links need the team ID, which its permalinks don't carry. Open Slack in a browser: the URL reads app.slack.com/client/TEAM_ID/… — that's the ID. Unmapped workspaces open in the browser instead.")
+            Text("Slack's deep links need a team ID that its permalinks don't carry. Add a workspace you're signed into in the Slack app and Junction picks the ID up from there. Unmapped workspaces open in the browser instead.")
                 .font(.caption).foregroundStyle(.secondary)
         }
+    }
+
+    /// The capture a permalink yields is the bare subdomain, so reduce whatever was typed or
+    /// pasted — "acme", "acme.slack.com", a full permalink — to that.
+    private var trimmedSubdomain: String {
+        var text = newSubdomain.trimmingCharacters(in: .whitespaces).lowercased()
+        if let host = URL(string: text)?.host { text = host }
+        return text.replacingOccurrences(of: ".slack.com", with: "")
+            .components(separatedBy: "/")[0]
+    }
+
+    private func addWorkspace() {
+        let subdomain = trimmedSubdomain
+        guard !subdomain.isEmpty else { return }
+        guard let team = SlackWorkspaces.all()[subdomain] else {
+            addError = "Couldn't find \(subdomain).slack.com in the Slack app — sign in to that "
+                + "workspace there, then try again."
+            return
+        }
+        state.updateConfig { $0.slackTeams[subdomain] = team }
+        newSubdomain = ""
+        addError = nil
     }
 }
 

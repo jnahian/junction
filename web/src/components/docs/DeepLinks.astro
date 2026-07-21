@@ -30,7 +30,7 @@ const { count, apps } = rewriters();
   </CodeBlock>
   <p>Capture only the part of the link the app needs: <code>[^?#]*</code> keeps a link's query and fragment out of the app URL, which a catch-all <code>(.*)</code> would hand straight to the app.</p>
   <Note tag="Slack">
-    Slack deep links need a team ID, which Slack permalinks don't carry. Map each workspace subdomain to its team ID in <code>slackTeams</code> (find it in <code>app.slack.com/client/TEAM_ID/…</code>). An unmapped workspace opens in the browser rather than on the wrong screen.
+    Slack deep links need a team ID, which Slack permalinks don't carry. Add each workspace in <b>Settings → Deep Links</b> — type the workspace or paste a Slack link and Junction reads the ID from the signed-in Slack app — or map subdomain to team ID by hand in <code>slackTeams</code>. An unmapped workspace opens in the browser rather than on the wrong screen.
   </Note>
   <p>Rewriters are data, not code — <a href={site.rewritersJson}>rewriters.json</a>. Contributing one for everyone is a JSON-only pull request; see <a href={site.contributing}>CONTRIBUTING.md</a>.</p>
 </section>

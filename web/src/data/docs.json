@@ -174,7 +174,7 @@
     },
     {
       "title": "Slack deep links open the browser",
-      "body": "Slack permalinks don't carry the team ID the app needs. Map each workspace subdomain to its team ID in <b>Settings → Deep Links</b> (or <code>slackTeams</code> in the config); unmapped workspaces open in the browser rather than on the wrong screen."
+      "body": "Slack permalinks don't carry the team ID the app needs. Add the workspace in <b>Settings → Deep Links</b> — type it or paste a Slack link, and Junction reads the ID from the signed-in Slack app; unmapped workspaces open in the browser rather than on the wrong screen."
     }
   ],
   "unsupported": [

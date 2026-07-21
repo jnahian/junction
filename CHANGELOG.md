@@ -12,7 +12,7 @@ shape matters:
 
 ## 0.7.3 — 2026-07-21
 
-- Fixed: Adding a Slack workspace in Settings → Deep Links works again. The team-ID field rendered as a label rather than an editable field, so Add silently did nothing and Slack links kept opening in the browser. The workspace field now also accepts the full `acme.slack.com` host, not just `acme`.
+- Changed: Adding a Slack workspace in Settings → Deep Links now takes one field, not two — type the workspace or paste any Slack link and Junction reads the team ID from the Slack app you're signed into. Hunting for the ID by hand was the old way, and the field that wanted it wasn't even editable, so Add appeared to do nothing and Slack links kept opening in the browser.
 
 ## 0.7.2 — 2026-07-20
 
