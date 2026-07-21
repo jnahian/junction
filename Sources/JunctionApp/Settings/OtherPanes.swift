@@ -237,17 +237,24 @@ struct DeepLinksPane: View {
                     .accessibilityLabel("Remove \(subdomain)")
                 }
             }
+            // One field per row: a grouped Form treats the first view of an HStack as the row's
+            // label, which left the team-ID field looking uneditable.
+            TextField("workspace", text: $newSubdomain)
+            TextField("T01ABCDEF", text: $newTeamID)
             HStack {
-                TextField("workspace", text: $newSubdomain)
-                TextField("T01ABCDEF", text: $newTeamID)
+                Spacer()
                 Button("Add") {
+                    // A pasted "acme.slack.com" would never match the capture, which is just "acme".
                     let subdomain = newSubdomain.trimmingCharacters(in: .whitespaces).lowercased()
+                        .replacingOccurrences(of: ".slack.com", with: "")
                     let team = newTeamID.trimmingCharacters(in: .whitespaces).uppercased()
                     guard !subdomain.isEmpty, !team.isEmpty else { return }
                     state.updateConfig { $0.slackTeams[subdomain] = team }
                     newSubdomain = ""
                     newTeamID = ""
                 }
+                .disabled(newSubdomain.trimmingCharacters(in: .whitespaces).isEmpty
+                    || newTeamID.trimmingCharacters(in: .whitespaces).isEmpty)
             }
         } header: {
             Text("Slack workspaces")
