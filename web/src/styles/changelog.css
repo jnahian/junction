@@ -26,8 +26,6 @@
     min-height:100vh;-webkit-font-smoothing:antialiased;
   }
 
-  .topbar{--bar-max:820px;--bar-pad:clamp(20px,5vw,40px)}
-
   .wrap{max-width:820px;margin:0 auto;padding:56px clamp(20px,5vw,40px) 120px}
   h1{font-family:var(--display);font-weight:600;font-size:clamp(32px,5vw,46px);letter-spacing:-.02em;margin-bottom:8px}
   .lead{font-size:17px;color:var(--muted);line-height:1.6;max-width:60ch}

@@ -41,15 +41,19 @@
   background: rgba(8, 13, 22, 0.82);
   backdrop-filter: blur(12px);
 }
-/* --bar-max is set per page so the contents line up with that page's content column */
+/* One width on every page: the docs column (1240px), which is the widest of the
+   three. The header is chrome, not content — it stays put across navigation even
+   where the page's own column is narrower. */
 .topbar .bar-inner {
   display: flex;
   align-items: center;
   justify-content: space-between;
   height: var(--topbar-h);
-  max-width: var(--bar-max, 1120px);
+  max-width: 1240px;
   margin: 0 auto;
-  padding: 0 var(--bar-pad, 20px);
+  /* 26px = the docs sidebar's 16px padding + 10px link padding, so the brand
+     lines up with the sidebar links directly under it */
+  padding: 0 var(--bar-pad, 26px);
 }
 .topbar .lead-l { display: flex; align-items: center; gap: 12px }
 .topbar .right { display: flex; align-items: center; gap: 6px }

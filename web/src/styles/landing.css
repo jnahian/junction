@@ -45,9 +45,6 @@
     background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='140' height='140'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.9' numOctaves='2'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
   }
 
-  /* topbar width for this page's content column (see chrome.css) */
-  .topbar{--bar-max:1120px;--bar-pad:24px}
-
   .wmlogo{width:27px;height:27px;border-radius:7px;display:block}
 
   .wrap{position:relative;z-index:1;max-width:1120px;margin:0 auto;padding:clamp(38px,7vw,88px) 24px 64px}

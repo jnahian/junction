@@ -29,8 +29,6 @@
   }
   a{color:inherit}
 
-  .topbar{--bar-max:1240px}
-
   /* layout */
   .layout{max-width:1240px;margin:0 auto;display:grid;grid-template-columns:238px minmax(0,1fr)}
   .sidebar{
