@@ -10,7 +10,7 @@ shape matters:
 - Every bullet starts with `Added:`, `Changed:`, or `Fixed:` — that marker drives
   the filter pills on the changelog page.
 
-## Unreleased
+## 0.8.0 — 2026-08-01
 
 - Added: App Store links open in App Store.app instead of the web preview page. Turn it on in Settings → Deep Links. Note that `apps.apple.com` serves iPhone and iPad apps from the same kind of link, and there's no way to tell from the link itself — an iOS-only app will open the Mac App Store to a "not available on macOS" page, where the website would have shown you the iPhone listing. Leave it off if you follow a lot of iOS app links.
 
