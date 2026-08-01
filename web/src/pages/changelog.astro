@@ -2,6 +2,7 @@
 import Base from "../layouts/Base.astro";
 import Filters from "../components/changelog/Filters.astro";
 import Release from "../components/changelog/Release.astro";
+import Toc from "../components/changelog/Toc.astro";
 import Note from "../components/docs/Note.astro";
 import site from "../data/site.json";
 import { releases } from "../lib/repo.js";
@@ -12,6 +13,7 @@ const all = releases();
 ---
 
 <Base title="Junction — Changelog" topbar={{ kind: "Changelog" }}>
+  <div class="cl-layout">
   <main class="wrap">
     <h1>Changelog</h1>
     <p class="lead">Every notable change to Junction, newest first.</p>
@@ -28,4 +30,7 @@ const all = releases();
       <p>Watch <a href={site.releases}>Releases on GitHub</a> to get notified when a new version ships, or read the <a href="/docs">documentation</a> to get set up.</p>
     </footer>
   </main>
+
+  <Toc releases={all} />
+  </div>
 </Base>

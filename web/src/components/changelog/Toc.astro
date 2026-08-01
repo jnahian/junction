@@ -1,0 +1,18 @@
+---
+import { slug } from "../../lib/repo.js";
+const { releases } = Astro.props;
+---
+
+<nav class="cl-toc" aria-label="Releases">
+  <h5>Releases</h5>
+  {releases.map((release) => (
+    <a href={`#${slug(release.version)}`}>
+      <span class="v">{release.version}</span>
+      {release.date && <span class="d">{release.date}</span>}
+    </a>
+  ))}
+</nav>
+
+<script>
+  import "../../scripts/changelog-toc.js";
+</script>

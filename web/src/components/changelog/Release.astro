@@ -1,13 +1,12 @@
 ---
-import { CHANGE_TYPES } from "../../lib/repo.js";
+import { CHANGE_TYPES, slug } from "../../lib/repo.js";
 const { release } = Astro.props;
-const slug = release.version.replace(/\./g, "-");
 const labels = Object.fromEntries(CHANGE_TYPES.map((t) => [t.key, t.label]));
 ---
 
-<div class="release" id={slug}>
+<div class="release" id={slug(release.version)}>
   <div class="rel-head">
-    <a class="ver-n" href={`#${slug}`}>{release.version}</a>
+    <a class="ver-n" href={`#${slug(release.version)}`}>{release.version}</a>
     {release.date && <span class="date">{release.date}</span>}
     {release.unreleased && <span class="badge">Unreleased</span>}
   </div>

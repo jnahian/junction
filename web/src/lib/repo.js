@@ -16,6 +16,9 @@ export const CHANGE_TYPES = [
 
 const MARKERS = { added: "add", changed: "chg", fixed: "fix" };
 
+/** Anchor id for a release. Shared by the timeline and the TOC so they can't drift. */
+export const slug = (version) => version.replace(/\./g, "-");
+
 /** The shipped version, from the one place a release bumps it. */
 export function version() {
   const plist = read("App/Info.plist");

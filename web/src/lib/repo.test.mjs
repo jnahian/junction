@@ -1,5 +1,5 @@
 import assert from "node:assert/strict";
-import { version, releases, rewriters } from "./repo.js";
+import { version, releases, rewriters, slug } from "./repo.js";
 
 // version comes from App/Info.plist, the file a release actually bumps
 assert.match(version(), /^v\d+\.\d+\.\d+$/);
@@ -18,6 +18,11 @@ for (const release of shipped) {
     assert.ok(change.body.length > 0);
   }
 }
+
+// the changelog TOC links to these ids; a dotted or duplicated one breaks every anchor
+const slugs = all.map((r) => slug(r.version));
+for (const s of slugs) assert.match(s, /^[A-Za-z][\w-]*$/, `bad anchor id: ${s}`);
+assert.equal(new Set(slugs).size, slugs.length, "release anchor ids must be unique");
 
 const { count, apps } = rewriters();
 assert.equal(count, 19);
