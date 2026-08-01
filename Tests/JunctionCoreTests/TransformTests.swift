@@ -185,6 +185,12 @@ final class RewriterTests: XCTestCase {
         XCTAssertEqual(out?.absoluteString, "music://music.apple.com/us/album/blue/1440835967")
     }
 
+    func testAppStore() {
+        let r = store.rewriter(id: "app-store")!
+        let out = r.rewrite(URL(string: "https://apps.apple.com/us/app/things-3/id904237743")!)
+        XCTAssertEqual(out?.absoluteString, "macappstore://apps.apple.com/us/app/things-3/id904237743")
+    }
+
     func testCleanEmptyParams() {
         XCTAssertEqual(Rewriter.cleanEmptyParams("a://b?x=&y=1"), "a://b?y=1")
         XCTAssertEqual(Rewriter.cleanEmptyParams("a://b?x="), "a://b")

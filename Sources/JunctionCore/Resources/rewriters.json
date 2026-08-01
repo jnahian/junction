@@ -164,6 +164,16 @@
       "bundleID": "com.apple.Music"
     },
     {
+      "id": "app-store",
+      "name": "App Store",
+      "patterns": [
+        "^https?://apps\\.apple\\.com/([^?#]*)"
+      ],
+      "template": "macappstore://apps.apple.com/$1",
+      "scheme": "macappstore",
+      "bundleID": "com.apple.AppStore"
+    },
+    {
       "id": "asana",
       "name": "Asana",
       "patterns": [

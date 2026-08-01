@@ -10,6 +10,10 @@ shape matters:
 - Every bullet starts with `Added:`, `Changed:`, or `Fixed:` — that marker drives
   the filter pills on the changelog page.
 
+## Unreleased
+
+- Added: App Store links open in App Store.app instead of the web preview page. Turn it on in Settings → Deep Links. Note that `apps.apple.com` serves iPhone and iPad apps from the same kind of link, and there's no way to tell from the link itself — an iOS-only app will open the Mac App Store to a "not available on macOS" page, where the website would have shown you the iPhone listing. Leave it off if you follow a lot of iOS app links.
+
 ## 0.7.3 — 2026-07-21
 
 - Changed: Adding a Slack workspace in Settings → Deep Links now takes one field, not two — type the workspace or paste any Slack link and Junction reads the team ID from the Slack app you're signed into. Hunting for the ID by hand was the old way, and the field that wanted it wasn't even editable, so Add appeared to do nothing and Slack links kept opening in the browser.
