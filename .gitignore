@@ -8,6 +8,7 @@ DerivedData/
 .swiftpm/
 *.xcodeproj
 .netrc
+.playwright-mcp/
 
 # Sparkle EdDSA private key. This repo is public, and this key authorizes code to
 # run on every user's Mac — it must never be committed, encrypted or not.
