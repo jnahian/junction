@@ -19,6 +19,7 @@ swift build                                   # debug build of app + CLI
 Scripts/bundle-app.sh                         # release build → runnable dist/Junction.app
 Scripts/make-dmg.sh                           # dist/Junction.dmg
 Scripts/release.sh                            # sign, appcast, GitHub release, cask bump (maintainer-only)
+cd web && npm ci && npm test                  # CHANGELOG/version self-checks (see below)
 ```
 
 There is no lint step. CI (`.github/workflows/ci.yml`) runs `swift test` on macOS and Linux,
@@ -56,7 +57,19 @@ Four SPM targets, and the dependency direction matters:
 - **`JunctionApp`** — menu-bar app (SwiftUI in AppKit windows). No Dock icon, no main window.
 - **`JunctionCLI`** — the `junction` binary, shipped inside the app bundle at
   `Contents/Helpers/junction`. Named `junction-cli` as an SPM product only because APFS is
-  case-insensitive and would collide with the `Junction` app binary.
+  case-insensitive and would collide with the `Junction` app binary. Four subcommands, all
+  reading the same config the app does:
+
+  ```sh
+  junction test <url> [--source <bundleID>] [--config <path>]   # dry run: print the trace, open nothing
+  junction open <url> [--source <bundleID>] [--config <path>]   # route and actually open
+  junction config path                                          # print the config file path
+  junction config validate [--config <path>]                    # validate and explain any problems
+  ```
+
+  `--source` simulates the clicking app, so `sourceApps` rules are testable without that app.
+  `junction test` is the fastest way to check a routing change by hand — it prints the same
+  `RoutingTrace` the rule-tester UI shows, and CI smoke-tests it against the shipped bundle.
 
 ## How a link flows
 
@@ -107,6 +120,9 @@ always works regardless.
 - `CoreResources.swift` hand-rolls resource-bundle lookup instead of using SPM's `Bundle.module`,
   which `fatalError`s when the bundle isn't found — fatal for the CLI running outside the app bundle.
   Adding a resource to `JunctionCore` means it must resolve in all four deployment shapes listed there.
+  CI enforces this: it greps `Sources/` for `Bundle.module` and fails, then relocates the bundle, deletes
+  `.build`, and asserts the CLI still strips `utm_*` — v0.5.0 shipped an app that crashed for everyone
+  but the maintainer because the resources resolved out of a local build dir.
 - Profile switching is per browser family: Chromium takes `--profile-directory=`, Firefox takes `-P`.
   Both require `createsNewApplicationInstance = true`, because NSWorkspace only honors `arguments` for
   a new process. Never infer the family from whether profiles were found — derive it from the bundle ID
