@@ -13,6 +13,14 @@ shape matters:
 ## Unreleased
 
 - Fixed: ClickUp task links copied from your browser's address bar now open the right task in the ClickUp app. A link like `app.clickup.com/t/9018159683/DEV-1234` — the form ClickUp uses once Custom Task IDs are on — opened ClickUp on whatever screen it was last showing, because Junction read the workspace ID as the task. Short shared links (`app.clickup.com/t/86cxk2m1q`) were unaffected, so it looked random.
+- Fixed: A link to a song in Apple Music opens that song instead of its album. Junction dropped the part of the address that names the track.
+- Fixed: GitHub's own pages no longer open in GitHub Desktop. `github.com/settings/…`, `/orgs/…`, `/features/…`, `/sponsors/…`, `/topics/…` and `/users/…` look like `owner/repo`, so with the GitHub Desktop deep link on they asked it to open a repository that doesn't exist. They go to your browser now.
+- Fixed: Linear's marketing, docs and blog pages no longer open in the Linear app. Only workspace links (issues, projects, teams, views, your inbox) deep link now; `linear.app/pricing` and `linear.app/docs/…` open in the browser where they belong.
+- Fixed: Microsoft Teams links on the new `teams.cloud.microsoft` and `teams.live.com` addresses open the Teams app. Only the old `teams.microsoft.com` was recognized.
+- Fixed: Telegram links to a single post open at that post rather than at the bottom of the channel.
+- Fixed: Todoist task links open in the app whether or not the address starts with `app.`. Only `app.todoist.com` was recognized.
+- Fixed: Discord links on the old `discordapp.com` address open in the Discord app.
+- Fixed: A ClickUp doc link with a trailing slash opens the doc instead of falling back to the browser.
 
 ## 0.8.0 — 2026-08-01
 

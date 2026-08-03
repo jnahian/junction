@@ -66,7 +66,7 @@
       "id": "teams",
       "name": "Microsoft Teams",
       "patterns": [
-        "^https?://teams\\.microsoft\\.com/(l/.*)$"
+        "^https?://(?:teams\\.microsoft\\.com|teams\\.cloud\\.microsoft|teams\\.live\\.com)/(l/.*)$"
       ],
       "template": "msteams:/$1",
       "scheme": "msteams",
@@ -76,7 +76,7 @@
       "id": "discord",
       "name": "Discord",
       "patterns": [
-        "^https?://(?:www\\.|ptb\\.|canary\\.)?discord\\.com/(channels/.*)$"
+        "^https?://(?:www\\.|ptb\\.|canary\\.)?discord(?:app)?\\.com/(channels/.*)$"
       ],
       "template": "discord://-/$1",
       "scheme": "discord",
@@ -86,7 +86,7 @@
       "id": "linear",
       "name": "Linear",
       "patterns": [
-        "^https?://linear\\.app/(.*)$"
+        "^https?://linear\\.app/([^/?#]+/(?:issue|team|project|view|document|initiative|inbox|my-issues|settings|roadmap|cycle|label|search|triage|active|backlog)(?:[/?#].*)?)$"
       ],
       "template": "linear://linear.app/$1",
       "scheme": "linear",
@@ -116,7 +116,7 @@
       "id": "clickup-doc",
       "name": "ClickUp (docs)",
       "patterns": [
-        "^https?://app\\.clickup\\.com/(\\d+/v/dc/[^?#]+)"
+        "^https?://app\\.clickup\\.com/(\\d+/v/dc/[^?#]+?)/?(?:[?#]|$)"
       ],
       "template": "clickup://$1",
       "scheme": "clickup",
@@ -126,7 +126,7 @@
       "id": "github-desktop",
       "name": "GitHub Desktop (open repository)",
       "patterns": [
-        "^(https://github\\.com/[^/?#]+/[^/?#]+?)(?:\\.git)?/?(?:[?#].*)?$"
+        "^(https://github\\.com/(?!(?:settings|features|orgs|organizations|users|account|apps|marketplace|sponsors|topics|collections|codespaces|enterprises|stars|explore|search|new|login|join|signup|notifications|dashboard|pulls|issues|discussions|security|about)/)[^/?#]+/[^/?#]+?)(?:\\.git)?/?(?:[?#].*)?$"
       ],
       "template": "x-github-client://openRepo/$1",
       "scheme": "x-github-client",
@@ -136,9 +136,10 @@
       "id": "telegram",
       "name": "Telegram",
       "patterns": [
-        "^https?://t\\.me/([^/?#+][^/?#]*)$"
+        "^https?://t\\.me/([^/?#+][^/?#]*)$",
+        "^https?://t\\.me/([^/?#+][^/?#]*)/(\\d+)/?(?:[?#]|$)"
       ],
-      "template": "tg://resolve?domain=$1",
+      "template": "tg://resolve?domain=$1&post=$2",
       "scheme": "tg",
       "bundleID": "ru.keepcoder.Telegram"
     },
@@ -157,9 +158,9 @@
       "id": "apple-music",
       "name": "Apple Music",
       "patterns": [
-        "^https?://music\\.apple\\.com/([^?#]*)"
+        "^https?://music\\.apple\\.com/([^?#]*)(?:\\?(?:[^#]*&)?i=(\\d+))?"
       ],
-      "template": "music://music.apple.com/$1",
+      "template": "music://music.apple.com/$1?i=$2",
       "scheme": "music",
       "bundleID": "com.apple.Music"
     },
@@ -188,7 +189,7 @@
       "name": "Todoist",
       "patterns": [
         "^https?://(?:app\\.)?todoist\\.com/showTask\\?(?:[^#]*&)?id=(\\d+)",
-        "^https?://app\\.todoist\\.com/app/task/(?:.*-)?([A-Za-z0-9]+)$"
+        "^https?://(?:app\\.)?todoist\\.com/app/task/(?:.*-)?([A-Za-z0-9]+)/?$"
       ],
       "template": "todoist://task?id=$1",
       "scheme": "todoist",
