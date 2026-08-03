@@ -106,9 +106,9 @@
       "id": "clickup",
       "name": "ClickUp",
       "patterns": [
-        "^https?://app\\.clickup\\.com/t/([^/?#]+)"
+        "^https?://app\\.clickup\\.com/(t/[^?#]+?)/?(?:[?#]|$)"
       ],
-      "template": "clickup://t/$1",
+      "template": "clickup://$1",
       "scheme": "clickup",
       "bundleID": "com.clickup.desktop-app"
     },
