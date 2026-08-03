@@ -162,6 +162,31 @@ final class RewriterTests: XCTestCase {
         XCTAssertEqual(out?.absoluteString, "clickup://t/86cxk2m1q")
     }
 
+    /// The address bar (and "Copy link" with custom task IDs on) scopes a task to its
+    /// workspace. Capturing only the first segment would deep-link to the workspace ID —
+    /// a valid-looking URL that opens ClickUp on the wrong screen.
+    func testClickUpWorkspaceScopedTask() {
+        let r = store.rewriter(id: "clickup")!
+        XCTAssertEqual(
+            r.rewrite(URL(string: "https://app.clickup.com/t/9018159683/DEV-1234")!)?.absoluteString,
+            "clickup://t/9018159683/DEV-1234"
+        )
+        // Sub-paths of a task ride along too.
+        XCTAssertEqual(
+            r.rewrite(URL(string: "https://app.clickup.com/t/86cxk2m1q/comment/123")!)?.absoluteString,
+            "clickup://t/86cxk2m1q/comment/123"
+        )
+        // Query, fragment and a trailing slash are still dropped.
+        XCTAssertEqual(
+            r.rewrite(URL(string: "https://app.clickup.com/t/86cxk2m1q/?block=abc")!)?.absoluteString,
+            "clickup://t/86cxk2m1q"
+        )
+        // No task at all → no rewrite, so the link falls back to the browser.
+        XCTAssertNil(r.rewrite(URL(string: "https://app.clickup.com/t/")!))
+        // Doc links belong to the `clickup-doc` rewriter, not this one.
+        XCTAssertNil(r.rewrite(URL(string: "https://app.clickup.com/9018159683/v/dc/8crccj3-10918")!))
+    }
+
     func testGitHubDesktopRepoRootOnly() {
         let r = store.rewriter(id: "github-desktop")!
         let out = r.rewrite(URL(string: "https://github.com/jnahian/junction")!)
