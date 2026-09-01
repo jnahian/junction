@@ -7,12 +7,14 @@ import SwiftUI
 /// Floating, keyboard-first browser picker (F7): appears at the cursor,
 /// `1–9` open, arrows+Return navigate, `Esc` = close, `⌘C` = copy.
 @MainActor
-final class PickerPanelController {
+final class PickerPanelController: NSObject, NSWindowDelegate {
     private let state: AppState
     private var panel: NSPanel?
+    private var hasBecomeKey = false
 
     init(state: AppState) {
         self.state = state
+        super.init()
     }
 
     /// Flattened choices: every browser, plus one entry per Chromium profile.
@@ -86,6 +88,7 @@ final class PickerPanelController {
             defer: false
         )
         panel.contentViewController = hosting
+        panel.delegate = self
         panel.isOpaque = false
         panel.backgroundColor = .clear
         panel.hasShadow = true
@@ -106,6 +109,7 @@ final class PickerPanelController {
         panel.setFrameOrigin(origin)
 
         self.panel = panel
+        hasBecomeKey = false
         panel.makeKeyAndOrderFront(nil)
         NSApp.activate(ignoringOtherApps: true)
     }
@@ -125,8 +129,23 @@ final class PickerPanelController {
     }
 
     func dismiss() {
-        panel?.close()
-        panel = nil
+        guard let panel else { return }
+        // Clear both first: closing the key window resigns key, which calls back in here.
+        panel.delegate = nil
+        self.panel = nil
+        panel.close()
+    }
+
+    func windowDidBecomeKey(_ notification: Notification) {
+        hasBecomeKey = true
+    }
+
+    /// Clicking away abandons the link the same way Esc does — close, open nothing.
+    /// Only once the panel has actually been key: showing it activates the app, and a
+    /// resign in that churn would dismiss the picker before anyone saw it, losing the link.
+    func windowDidResignKey(_ notification: Notification) {
+        guard hasBecomeKey else { return }
+        dismiss()
     }
 }
 

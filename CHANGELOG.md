@@ -10,6 +10,10 @@ shape matters:
 - Every bullet starts with `Added:`, `Changed:`, or `Fixed:` — that marker drives
   the filter pills on the changelog page.
 
+## Unreleased
+
+- Fixed: The picker closes when you click away from it. It stayed floating on top of every app until you picked a browser or pressed Esc, so a link you'd changed your mind about left a panel you had to go back and dismiss.
+
 ## 0.8.1 — 2026-08-03
 
 - Fixed: ClickUp task links copied from your browser's address bar now open the right task in the ClickUp app. A link like `app.clickup.com/t/9018159683/DEV-1234` — the form ClickUp uses once Custom Task IDs are on — opened ClickUp on whatever screen it was last showing, because Junction read the workspace ID as the task. Short shared links (`app.clickup.com/t/86cxk2m1q`) were unaffected, so it looked random.
