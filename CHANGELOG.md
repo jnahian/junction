@@ -10,7 +10,7 @@ shape matters:
 - Every bullet starts with `Added:`, `Changed:`, or `Fixed:` — that marker drives
   the filter pills on the changelog page.
 
-## Unreleased
+## 0.8.2 — 2026-09-02
 
 - Fixed: The picker closes when you click away from it. It stayed floating on top of every app until you picked a browser or pressed Esc, so a link you'd changed your mind about left a panel you had to go back and dismiss.
 
