@@ -100,7 +100,7 @@ external assets and the HTML only references them.
   also asserts the newest shipped changelog entry matches the version in
   `Info.plist`, which catches a release that forgot its notes
 
-## Fonts
+## Fonts and caching
 
 Space Grotesk and JetBrains Mono are self-hosted, imported in `Base.astro` from
 `@fontsource-variable/*`. They used to come from `fonts.googleapis.com`, which put
@@ -115,6 +115,16 @@ filenames. One variable file per family covers every weight the site uses, and
 `styles/*.css` name `"Space Grotesk Variable"` first because that is the family the
 fontsource packages register — rename it and the text silently falls back to
 system-ui.
+
+`vercel.json` gives every route except `/_astro/` a `Cache-Control` of
+`public, max-age=0, must-revalidate, s-maxage=31536000`. The `s-maxage` makes edge
+retention explicit and long-lived instead of leaving it to Vercel's internal
+default; it does not pre-warm a cold POP, so the first visitor in a new region
+still pays a MISS. Vercel keys its CDN cache per deployment, so a long `s-maxage`
+cannot serve yesterday's build. The browser-facing `max-age` stays `0` on purpose —
+pages bake in the version number and changelog at build time, so clients must
+revalidate after a release. `/_astro/` is excluded because Vercel already serves
+those hashed assets as `immutable`, and this header would be a downgrade.
 
 ## App icons
 
