@@ -100,6 +100,22 @@ external assets and the HTML only references them.
   also asserts the newest shipped changelog entry matches the version in
   `Info.plist`, which catches a release that forgot its notes
 
+## Fonts
+
+Space Grotesk and JetBrains Mono are self-hosted, imported in `Base.astro` from
+`@fontsource-variable/*`. They used to come from `fonts.googleapis.com`, which put
+a render-blocking stylesheet on a third-party origin at the front of the critical
+path — DNS, TLS and a fetch against a host the browser had no connection to yet.
+Self-hosted, that origin is gone: the `@font-face` rules ship inside `Base.css` and
+the woff2 files come over the connection that already served the HTML, hashed and
+`immutable`. The chain is still HTML → `Base.css` → woff2, since `Base.css` is not
+inlined; flattening it further would need a `rel=preload` on the hashed font
+filenames. One variable file per family covers every weight the site uses, and
+`unicode-range` means a reader only downloads the latin subset. The stacks in
+`styles/*.css` name `"Space Grotesk Variable"` first because that is the family the
+fontsource packages register — rename it and the text silently falls back to
+system-ui.
+
 ## App icons
 
 `public/icons/*.svg` are the real brand marks, from [thesvg.org](https://thesvg.org)

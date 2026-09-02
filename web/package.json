@@ -9,6 +9,8 @@
     "test": "node src/lib/repo.test.mjs && node src/lib/match.test.mjs && node src/lib/highlight.test.mjs"
   },
   "dependencies": {
+    "@fontsource-variable/jetbrains-mono": "^5.3.0",
+    "@fontsource-variable/space-grotesk": "^5.3.0",
     "astro": "^7.0.9"
   }
 }
