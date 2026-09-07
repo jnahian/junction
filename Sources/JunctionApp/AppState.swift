@@ -113,10 +113,19 @@ final class AppState: ObservableObject {
     }
 
     func openInFallback(_ url: URL) {
+        openInFallback(urls: [url])
+    }
+
+    /// One native request for the whole batch — issuing them per link races a cold-starting
+    /// browser the same way the picker used to.
+    func openInFallback(urls: [URL]) {
+        guard !urls.isEmpty else { return }
         let outcome = Dispatcher(fallbackApp: config.fallback.app)
-            .dispatch(.fallback(app: config.fallback.app, url: url))
+            .openInBrowser(bundleID: config.fallback.app, profile: nil, urls: urls)
         // Picker-as-fallback: the dispatcher can't show UI, so it hands back here.
-        if case .needsPicker(let url) = outcome { pickerPresenter?(url) }
+        if case .needsPicker = outcome {
+            for url in urls { pickerPresenter?(url) }
+        }
     }
 
     func open(

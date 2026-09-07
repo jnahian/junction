@@ -26,7 +26,6 @@ final class PickerPanelController: NSObject, NSWindowDelegate {
         }
     }
 
-    private let state: AppState?
     private let choicesProvider: () -> [Choice]
     private let openEffect: ([URL], Choice, @escaping @MainActor (BrowserBatchOutcome) -> Void) -> Void
     private let copyEffect: (String) -> Void
@@ -40,10 +39,13 @@ final class PickerPanelController: NSObject, NSWindowDelegate {
     private(set) var session: Session?
     private var hasBecomeKey = false
     private var finishingSessionID: UUID?
+    /// A batch surfaced by finishOpening has never been on screen. The browser we just
+    /// launched activates a beat later and takes key; treating that as click-away would
+    /// discard links nobody has seen. Only a real user event lifts the protection.
+    private var unseenSessionID: UUID?
     private var pendingURLs: [URL] = []
 
     init(state: AppState) {
-        self.state = state
         self.choicesProvider = { [weak state] in
             guard let state else { return [] }
             state.refreshBrowsers()
@@ -74,7 +76,7 @@ final class PickerPanelController: NSObject, NSWindowDelegate {
                 NSPasteboard.general.setString(urls.map(\.absoluteString).joined(separator: "\n"), forType: .string)
                 state.showCopiedConfirmation(count: urls.count)
             } else {
-                for url in urls { state.openInFallback(url) }
+                state.openInFallback(urls: urls)
             }
         }
         self.createRuleEffect = { [weak state] url in
@@ -103,7 +105,6 @@ final class PickerPanelController: NSObject, NSWindowDelegate {
         presentSession: ((Session, [Choice]) -> Void)? = nil,
         visibleFrame: ((NSPoint) -> NSRect?)? = nil
     ) {
-        self.state = nil
         self.choicesProvider = choices
         self.openEffect = open
         self.copyEffect = copy
@@ -137,10 +138,9 @@ final class PickerPanelController: NSObject, NSWindowDelegate {
         show(urls: [url])
     }
 
-    private func show(urls: [URL]) {
+    private func show(urls: [URL], unseen: Bool = false) {
         if let session {
             session.append(urls)
-            resizePanel(for: session.id)
             return
         }
 
@@ -152,6 +152,9 @@ final class PickerPanelController: NSObject, NSWindowDelegate {
 
         let session = Session(urls: urls)
         self.session = session
+        // Before presenting: key notifications post synchronously from makeKeyAndOrderFront,
+        // so a resign arriving inside present() must already see the protection.
+        if unseen { unseenSessionID = session.id }
         if presentsPanel { present(session: session, choices: choices) }
     }
 
@@ -184,7 +187,8 @@ final class PickerPanelController: NSObject, NSWindowDelegate {
             onContentSizeChange: { [weak self, weak session] in
                 guard let session else { return }
                 self?.resizePanel(for: session.id)
-            }
+            },
+            onUserInteraction: { [weak self] in self?.noteUserInteraction() }
         )
 
         let hosting = NSHostingController(rootView: view)
@@ -195,6 +199,7 @@ final class PickerPanelController: NSObject, NSWindowDelegate {
             backing: .buffered,
             defer: false
         )
+        panel.onUserInteraction = { [weak self] in self?.noteUserInteraction() }
         panel.contentViewController = hosting
         panel.delegate = self
         panel.isOpaque = false
@@ -257,6 +262,7 @@ final class PickerPanelController: NSObject, NSWindowDelegate {
         self.session = nil
         self.panel = nil
         hasBecomeKey = false
+        unseenSessionID = nil
         panel?.delegate = nil
         panel?.close()
     }
@@ -292,7 +298,8 @@ final class PickerPanelController: NSObject, NSWindowDelegate {
             remaining = pendingURLs
         }
         pendingURLs.removeAll()
-        if !remaining.isEmpty { show(urls: remaining) }
+        guard !remaining.isEmpty else { return }
+        show(urls: remaining, unseen: true)
     }
 
     func copy(sessionID: UUID) {
@@ -328,18 +335,31 @@ final class PickerPanelController: NSObject, NSWindowDelegate {
                 return
             }
 
-            let oldFrame = panel.frame
-            let center = NSPoint(x: oldFrame.midX, y: oldFrame.midY)
+            let center = NSPoint(x: panel.frame.midX, y: panel.frame.midY)
             let screenFrame = self.visibleFrameProvider(center) ?? panel.screen?.visibleFrame
             if let screenFrame { hosting.rootView.maximumHeight = max(0, screenFrame.height - 16) }
-            hosting.view.layoutSubtreeIfNeeded()
-            let fittingSize = hosting.view.fittingSize
-            guard fittingSize.width > 0, fittingSize.height > 0 else { return }
-            let origin = NSPoint(x: oldFrame.minX, y: oldFrame.maxY - fittingSize.height)
-            let frame = screenFrame.map {
-                Self.constrainedFrame(size: fittingSize, origin: origin, visibleFrame: $0)
-            } ?? NSRect(origin: origin, size: fittingSize)
-            panel.setFrame(frame, display: true)
+
+            // Measure on the next turn: fittingSize read in this one can still reflect the
+            // previous maximumHeight, sizing the panel for the screen it just left.
+            DispatchQueue.main.async { [weak self, weak panel] in
+                guard let self,
+                      self.session?.id == sessionID,
+                      let panel,
+                      panel === self.panel,
+                      let hosting = panel.contentViewController as? NSHostingController<PickerView> else {
+                    return
+                }
+
+                hosting.view.layoutSubtreeIfNeeded()
+                let fittingSize = hosting.view.fittingSize
+                guard fittingSize.width > 0, fittingSize.height > 0 else { return }
+                let oldFrame = panel.frame
+                let origin = NSPoint(x: oldFrame.minX, y: oldFrame.maxY - fittingSize.height)
+                let frame = screenFrame.map {
+                    Self.constrainedFrame(size: fittingSize, origin: origin, visibleFrame: $0)
+                } ?? NSRect(origin: origin, size: fittingSize)
+                panel.setFrame(frame, display: true)
+            }
         }
     }
 
@@ -373,9 +393,19 @@ final class PickerPanelController: NSObject, NSWindowDelegate {
               let notifiedPanel = notification.object as? NSWindow,
               notifiedPanel === activePanel,
               hasBecomeKey else { return }
+        // Deliberately not lifted by hover: the panel opens at the cursor, so incidental
+        // mouse drift would clear the flag in the same moment the browser takes key.
+        if let session, session.id == unseenSessionID { return }
         dismiss()
     }
 
+    /// A key press or a click on the panel proves the user has seen it; click-away
+    /// abandons it from here on, as it has since 0.8.2.
+    func noteUserInteraction() {
+        unseenSessionID = nil
+    }
+
+    #if DEBUG
     /// Test seam for the delegate's identity and focus gate. Production panels are installed
     /// by show(for:) and always use the same identity check above.
     func installPanelForTesting(_ panel: NSPanel) {
@@ -383,11 +413,24 @@ final class PickerPanelController: NSObject, NSWindowDelegate {
         panel.delegate = self
         hasBecomeKey = false
     }
+    #endif
 }
 
 /// NSPanel that can become key even though the app is an accessory.
 final class KeyablePanel: NSPanel {
+    /// Reports the click that proves a user is looking at the panel. A mouse-down cannot
+    /// come from a browser activating, so unlike hover it is safe to trust immediately.
+    var onUserInteraction: (() -> Void)?
+
     override var canBecomeKey: Bool { true }
+
+    override func sendEvent(_ event: NSEvent) {
+        switch event.type {
+        case .leftMouseDown, .rightMouseDown, .otherMouseDown: onUserInteraction?()
+        default: break
+        }
+        super.sendEvent(event)
+    }
 }
 
 private struct PickerView: View {
@@ -399,9 +442,24 @@ private struct PickerView: View {
     let onCancel: () -> Void
     let onCreateRule: () -> Void
     let onContentSizeChange: () -> Void
+    let onUserInteraction: () -> Void
 
     @State private var selection = 0
     @State private var keyboardScrollTarget: Int?
+    // Row heights drive the panel's fittingSize, so they must track the user's text size.
+    // A fixed 34pt clips every row once Larger Text is on.
+    @ScaledMetric(relativeTo: .body) private var browserRowHeight: CGFloat = 32
+    @ScaledMetric(relativeTo: .caption) private var linkRowHeight: CGFloat = 13
+
+    private var linkListHeight: CGFloat {
+        let rows = CGFloat(session.urls.count)
+        return min(120, rows * linkRowHeight + max(0, rows - 1) * 4)
+    }
+
+    private var browserListHeight: CGFloat {
+        let rows = CGFloat(choices.count)
+        return rows * browserRowHeight + max(0, rows - 1) * 2
+    }
 
     var body: some View {
         VStack(alignment: .leading, spacing: Metrics.controlSpacing) {
@@ -417,19 +475,26 @@ private struct PickerView: View {
                     .font(.headline)
                     .padding(.horizontal, 6)
 
-                ScrollView {
-                    LazyVStack(alignment: .leading, spacing: 4) {
-                        ForEach(Array(session.urls.enumerated()), id: \.offset) { _, url in
-                            Text(url.absoluteString)
-                                .font(.caption)
-                                .lineLimit(1)
-                                .truncationMode(.middle)
-                                .foregroundStyle(.secondary)
+                ScrollViewReader { linkProxy in
+                    ScrollView {
+                        LazyVStack(alignment: .leading, spacing: 4) {
+                            ForEach(Array(session.urls.enumerated()), id: \.offset) { index, url in
+                                Text(url.absoluteString)
+                                    .font(.caption)
+                                    .lineLimit(1)
+                                    .truncationMode(.middle)
+                                    .foregroundStyle(.secondary)
+                                    .id(index)
+                            }
                         }
+                        .padding(.horizontal, 6)
                     }
-                    .padding(.horizontal, 6)
+                    .onChange(of: session.urls.count) { count in
+                        // The link that just arrived is the one the user wants confirmed.
+                        DispatchQueue.main.async { linkProxy.scrollTo(count - 1, anchor: .bottom) }
+                    }
                 }
-                .frame(height: min(120, CGFloat(session.urls.count) * 17 - 4))
+                .frame(height: linkListHeight)
                 .layoutPriority(1)
             }
 
@@ -470,12 +535,9 @@ private struct PickerView: View {
                         }
                     }
                 }
-                .frame(idealHeight: CGFloat(choices.count) * 34 - 2, maxHeight: CGFloat(choices.count) * 34 - 2)
+                .frame(idealHeight: browserListHeight, maxHeight: browserListHeight)
                 .onChange(of: keyboardScrollTarget) { target in
                     if let target { proxy.scrollTo(target, anchor: .center) }
-                }
-                .onChange(of: session.urls.count) { _ in
-                    DispatchQueue.main.async { proxy.scrollTo(selection, anchor: .center) }
                 }
             }
 
@@ -516,7 +578,8 @@ private struct PickerView: View {
             onPickIndex: { onPick(choices[$0]) },
             onMoveSelection: { keyboardScrollTarget = $0 },
             onCopy: onCopy,
-            onCancel: onCancel
+            onCancel: onCancel,
+            onUserInteraction: onUserInteraction
         ))
         .onChange(of: session.urls.count) { _ in
             onContentSizeChange()
@@ -532,6 +595,7 @@ private struct KeyCatcher: NSViewRepresentable {
     let onMoveSelection: (Int) -> Void
     let onCopy: () -> Void
     let onCancel: () -> Void
+    let onUserInteraction: () -> Void
 
     func makeNSView(context: Context) -> KeyView {
         let v = KeyView()
@@ -556,6 +620,7 @@ private struct KeyCatcher: NSViewRepresentable {
 
         override func keyDown(with event: NSEvent) {
             guard let parent else { return super.keyDown(with: event) }
+            parent.onUserInteraction()
             if event.modifierFlags.contains(.command),
                event.charactersIgnoringModifiers?.lowercased() == "c" {
                 parent.onCopy()

@@ -12,7 +12,7 @@ shape matters:
 
 ## Unreleased
 
-- Fixed: Links sent to the browser picker while it is open now stay together in one list. Choose a browser to open them all, or copy the full list, instead of losing earlier links. Long browser lists scroll to keep the picker on-screen.
+- Fixed: Links sent to the browser picker while it is open now stay together in one list. Choose a browser to open them all, or copy the full list, instead of losing earlier links. Long browser lists scroll to keep the picker on-screen. Links that arrive while your chosen browser is still starting up now wait in a picker that stays put until you answer it, instead of disappearing when the browser comes forward.
 
 ## 0.8.2 — 2026-09-02
 

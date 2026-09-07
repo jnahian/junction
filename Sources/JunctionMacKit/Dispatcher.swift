@@ -44,7 +44,8 @@ public struct Dispatcher {
         var openApplication: (URL, NSWorkspace.OpenConfiguration, (@Sendable (BrowserBatchOutcome) -> Void)?) -> Void
         var openDefault: (URL) -> Void
 
-        static var live: Self {
+        // `let`: nothing here depends on instance state, and a Dispatcher is built per link.
+        static let live: Self = {
             Self(
                 applicationURL: { NSWorkspace.shared.urlForApplication(withBundleIdentifier: $0) },
                 family: { BrowserDiscovery.family(forBundleID: $0) },
@@ -63,7 +64,7 @@ public struct Dispatcher {
                 },
                 openDefault: { NSWorkspace.shared.open($0) }
             )
-        }
+        }()
     }
 
     public init(fallbackApp: String) {

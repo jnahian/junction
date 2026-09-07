@@ -291,5 +291,110 @@ final class PickerPanelControllerTests: XCTestCase {
         XCTAssertNil(controller.session)
     }
 
+    /// The browser we just launched activates a beat after NSWorkspace reports success,
+    /// stealing key from the panel that surfaced the links queued during the launch.
+    func testUnseenRetryBatchSurvivesFocusLossFromTheLaunchedBrowser() throws {
+        let browserChoice = choice()
+        var completion: (@MainActor (BrowserBatchOutcome) -> Void)?
+        let controller = PickerPanelController(
+            choices: { [browserChoice] },
+            open: { _, _, callback in completion = callback },
+            copy: { _ in }
+        )
+        controller.show(for: firstURL)
+        controller.pick(browserChoice, sessionID: try XCTUnwrap(controller.session?.id))
+        controller.show(for: secondURL)
+        completion?(.opened)
+        XCTAssertEqual(controller.session?.urls, [secondURL])
+
+        let panel = panel()
+        controller.installPanelForTesting(panel)
+        controller.windowDidBecomeKey(Notification(name: NSWindow.didBecomeKeyNotification, object: panel))
+        controller.windowDidResignKey(Notification(name: NSWindow.didResignKeyNotification, object: panel))
+
+        XCTAssertEqual(controller.session?.urls, [secondURL])
+    }
+
+    /// Once the user has actually touched the panel, click-away abandons it as always.
+    func testRetryBatchIsAbandonedByFocusLossAfterAUserEvent() throws {
+        let browserChoice = choice()
+        var completion: (@MainActor (BrowserBatchOutcome) -> Void)?
+        let controller = PickerPanelController(
+            choices: { [browserChoice] },
+            open: { _, _, callback in completion = callback },
+            copy: { _ in }
+        )
+        controller.show(for: firstURL)
+        controller.pick(browserChoice, sessionID: try XCTUnwrap(controller.session?.id))
+        controller.show(for: secondURL)
+        completion?(.opened)
+
+        let panel = panel()
+        controller.installPanelForTesting(panel)
+        controller.windowDidBecomeKey(Notification(name: NSWindow.didBecomeKeyNotification, object: panel))
+        controller.noteUserInteraction()
+        controller.windowDidResignKey(Notification(name: NSWindow.didResignKeyNotification, object: panel))
+
+        XCTAssertNil(controller.session)
+    }
+
+    /// A click on the panel lifts the protection too, so an unseen batch the user has
+    /// looked at still closes on click-away rather than floating (regression risk: 0.8.2).
+    func testClickingTheUnseenPanelRestoresClickAwayDismissal() throws {
+        let browserChoice = choice()
+        var completion: (@MainActor (BrowserBatchOutcome) -> Void)?
+        let controller = PickerPanelController(
+            choices: { [browserChoice] },
+            open: { _, _, callback in completion = callback },
+            copy: { _ in }
+        )
+        controller.show(for: firstURL)
+        controller.pick(browserChoice, sessionID: try XCTUnwrap(controller.session?.id))
+        controller.show(for: secondURL)
+        completion?(.opened)
+
+        let panel = KeyablePanel(
+            contentRect: NSRect(x: 0, y: 0, width: 100, height: 100),
+            styleMask: [.borderless, .nonactivatingPanel], backing: .buffered, defer: false
+        )
+        panel.onUserInteraction = { controller.noteUserInteraction() }
+        controller.installPanelForTesting(panel)
+        controller.windowDidBecomeKey(Notification(name: NSWindow.didBecomeKeyNotification, object: panel))
+
+        let click = try XCTUnwrap(NSEvent.mouseEvent(
+            with: .leftMouseDown, location: NSPoint(x: 10, y: 10), modifierFlags: [], timestamp: 0,
+            windowNumber: panel.windowNumber, context: nil, eventNumber: 0, clickCount: 1, pressure: 1
+        ))
+        panel.sendEvent(click)
+        controller.windowDidResignKey(Notification(name: NSWindow.didResignKeyNotification, object: panel))
+
+        XCTAssertNil(controller.session)
+    }
+
+    /// Protection is scoped to the unseen batch: a picker the user opened themselves
+    /// afterwards must still close on click-away.
+    func testProtectionDoesNotLeakToTheNextSession() throws {
+        let browserChoice = choice()
+        var completion: (@MainActor (BrowserBatchOutcome) -> Void)?
+        let controller = PickerPanelController(
+            choices: { [browserChoice] },
+            open: { _, _, callback in completion = callback },
+            copy: { _ in }
+        )
+        controller.show(for: firstURL)
+        controller.pick(browserChoice, sessionID: try XCTUnwrap(controller.session?.id))
+        controller.show(for: secondURL)
+        completion?(.opened)
+        controller.cancel(sessionID: try XCTUnwrap(controller.session?.id))
+
+        controller.show(for: retryURL)
+        let panel = panel()
+        controller.installPanelForTesting(panel)
+        controller.windowDidBecomeKey(Notification(name: NSWindow.didBecomeKeyNotification, object: panel))
+        controller.windowDidResignKey(Notification(name: NSWindow.didResignKeyNotification, object: panel))
+
+        XCTAssertNil(controller.session)
+    }
+
 }
 #endif
