@@ -56,5 +56,12 @@ let package = Package(
             name: "JunctionCoreTests",
             dependencies: ["JunctionCore"]
         ),
+        .testTarget(
+            name: "JunctionAppTests",
+            dependencies: [
+                .target(name: "JunctionApp", condition: .when(platforms: [.macOS]))
+            ],
+            path: "Tests/JunctionAppTests"
+        ),
     ]
 )

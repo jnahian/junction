@@ -1,5 +1,6 @@
 #if canImport(AppKit)
 import AppKit
+import Combine
 import Foundation
 import JunctionMacKit
 import SwiftUI
@@ -8,12 +9,105 @@ import SwiftUI
 /// `1–9` open, arrows+Return navigate, `Esc` = close, `⌘C` = copy.
 @MainActor
 final class PickerPanelController: NSObject, NSWindowDelegate {
-    private let state: AppState
+    /// The links currently represented by the visible picker. A session survives
+    /// additional open events so the panel does not race itself away.
+    @MainActor
+    final class Session: ObservableObject, Identifiable {
+        let id: UUID
+        @Published private(set) var urls: [URL]
+
+        init(id: UUID = UUID(), urls: [URL]) {
+            self.id = id
+            self.urls = urls
+        }
+
+        func append(_ newURLs: [URL]) {
+            urls.append(contentsOf: newURLs)
+        }
+    }
+
+    private let state: AppState?
+    private let choicesProvider: () -> [Choice]
+    private let openEffect: (URL, Choice) -> Void
+    private let copyEffect: (String) -> Void
+    private let copiedConfirmation: () -> Void
+    private let noChoicesEffect: ([URL]) -> Void
+    private let createRuleEffect: (URL) -> Void
+    private let presentsPanel: Bool
+    private let injectedPresentation: ((Session, [Choice]) -> Void)?
     private var panel: NSPanel?
+    private(set) var session: Session?
     private var hasBecomeKey = false
+    private var finishingSessionID: UUID?
+    private var pendingURLs: [URL] = []
 
     init(state: AppState) {
         self.state = state
+        self.choicesProvider = { [weak state] in
+            guard let state else { return [] }
+            state.refreshBrowsers()
+
+            // Rows the user hid in Settings → Browsers (key: bundleID or bundleID/profileDir).
+            // If hiding emptied the whole list, ignore the hidden set — an unusable picker is worse.
+            let hidden = Set(state.config.pickerHidden)
+            var choices = Self.buildChoices(from: state.browsers, skipping: hidden)
+            if choices.isEmpty { choices = Self.buildChoices(from: state.browsers, skipping: []) }
+            return choices
+        }
+        self.openEffect = { [weak state] url, choice in
+            state?.open(url: url, in: choice.browser, profile: choice.profile)
+        }
+        self.copyEffect = { links in
+            NSPasteboard.general.clearContents()
+            NSPasteboard.general.setString(links, forType: .string)
+        }
+        self.copiedConfirmation = { [weak state] in state?.showCopiedConfirmation() }
+        self.noChoicesEffect = { [weak state] urls in
+            guard let state else { return }
+            // No browsers detected at all. With a browser fallback, degrade there; with the
+            // picker fallback there is nothing to open (recursing here would loop), so keep
+            // the whole batch on the clipboard instead of dropping it.
+            if state.config.fallback.isPicker {
+                NSPasteboard.general.clearContents()
+                NSPasteboard.general.setString(urls.map(\.absoluteString).joined(separator: "\n"), forType: .string)
+                state.showCopiedConfirmation()
+            } else {
+                for url in urls { state.openInFallback(url) }
+            }
+        }
+        self.createRuleEffect = { [weak state] url in
+            state?.settingsPresenter?()
+            NotificationCenter.default.post(
+                name: .junctionPrefillRule, object: nil,
+                userInfo: ["url": url]
+            )
+        }
+        self.presentsPanel = true
+        self.injectedPresentation = nil
+        super.init()
+    }
+
+    /// Dependency seams keep the session and action behavior testable without launching a
+    /// browser, touching the clipboard, or loading the user's config file.
+    init(
+        choices: @escaping () -> [Choice],
+        open: @escaping (URL, Choice) -> Void,
+        copy: @escaping (String) -> Void,
+        copiedConfirmation: @escaping () -> Void = {},
+        noChoices: @escaping ([URL]) -> Void = { _ in },
+        createRule: @escaping (URL) -> Void = { _ in },
+        presentsPanel: Bool = false,
+        presentSession: ((Session, [Choice]) -> Void)? = nil
+    ) {
+        self.state = nil
+        self.choicesProvider = choices
+        self.openEffect = open
+        self.copyEffect = copy
+        self.copiedConfirmation = copiedConfirmation
+        self.noChoicesEffect = noChoices
+        self.createRuleEffect = createRule
+        self.presentsPanel = presentsPanel
+        self.injectedPresentation = presentSession
         super.init()
     }
 
@@ -29,53 +123,64 @@ final class PickerPanelController: NSObject, NSWindowDelegate {
     }
 
     func show(for url: URL) {
-        dismiss()
-        state.refreshBrowsers()
+        if finishingSessionID != nil {
+            // Retry requests must stay together until the current batch has finished.
+            // In particular, an empty browser list must copy the whole retry batch once.
+            pendingURLs.append(url)
+            return
+        }
+        show(urls: [url])
+    }
 
-        // Rows the user hid in Settings → Browsers (key: bundleID or bundleID/profileDir).
-        // If hiding emptied the whole list, ignore the hidden set — an unusable picker is worse.
-        let hidden = Set(state.config.pickerHidden)
-        var choices = buildChoices(skipping: hidden)
-        if choices.isEmpty { choices = buildChoices(skipping: []) }
+    private func show(urls: [URL]) {
+        if let session {
+            session.append(urls)
+            resizePanel(for: session.id)
+            return
+        }
+
+        let choices = choicesProvider()
         guard !choices.isEmpty else {
-            // No browsers detected at all. With a browser fallback, degrade there; with the
-            // picker fallback there is nothing to open (recursing here would loop), so keep
-            // the link on the clipboard instead of dropping it.
-            if state.config.fallback.isPicker {
-                NSPasteboard.general.clearContents()
-                NSPasteboard.general.setString(url.absoluteString, forType: .string)
-                state.showCopiedConfirmation()
-            } else {
-                state.openInFallback(url)
-            }
+            noChoicesEffect(urls)
+            return
+        }
+
+        let session = Session(urls: urls)
+        self.session = session
+        if presentsPanel { present(session: session, choices: choices) }
+    }
+
+    private func present(session: Session, choices: [Choice]) {
+        guard self.session?.id == session.id, panel == nil else { return }
+        if let injectedPresentation {
+            injectedPresentation(session, choices)
             return
         }
 
         let view = PickerView(
-            url: url,
+            session: session,
             choices: choices,
-            onPick: { [weak self] choice in
-                self?.state.open(url: url, in: choice.browser, profile: choice.profile)
-                self?.dismiss()
+            onPick: { [weak self, weak session] choice in
+                guard let session else { return }
+                self?.pick(choice, sessionID: session.id)
             },
-            onCopy: { [weak self] in
-                NSPasteboard.general.clearContents()
-                NSPasteboard.general.setString(url.absoluteString, forType: .string)
-                self?.dismiss()
-                self?.state.showCopiedConfirmation()
+            onCopy: { [weak self, weak session] in
+                guard let session else { return }
+                self?.copy(sessionID: session.id)
             },
             // Esc abandons the link on purpose — closing without opening anything is
             // the user's choice, not a lost link.
-            onCancel: { [weak self] in
-                self?.dismiss()
+            onCancel: { [weak self, weak session] in
+                guard let session else { return }
+                self?.cancel(sessionID: session.id)
             },
-            onCreateRule: { [weak self] in
-                self?.dismiss()
-                self?.state.settingsPresenter?()
-                NotificationCenter.default.post(
-                    name: .junctionPrefillRule, object: nil,
-                    userInfo: ["url": url]
-                )
+            onCreateRule: { [weak self, weak session] in
+                guard let session else { return }
+                self?.createRule(sessionID: session.id)
+            },
+            onContentSizeChange: { [weak self, weak session] in
+                guard let session else { return }
+                self?.resizePanel(for: session.id)
             }
         )
 
@@ -114,9 +219,9 @@ final class PickerPanelController: NSObject, NSWindowDelegate {
         NSApp.activate(ignoringOtherApps: true)
     }
 
-    private func buildChoices(skipping hidden: Set<String>) -> [Choice] {
+    private static func buildChoices(from browsers: [Browser], skipping hidden: Set<String>) -> [Choice] {
         var choices: [Choice] = []
-        for browser in state.browsers {
+        for browser in browsers {
             if !hidden.contains(browser.bundleID) {
                 choices.append(Choice(browser: browser, profile: nil))
             }
@@ -129,14 +234,103 @@ final class PickerPanelController: NSObject, NSWindowDelegate {
     }
 
     func dismiss() {
-        guard let panel else { return }
+        guard let session else {
+            panel?.delegate = nil
+            panel?.close()
+            panel = nil
+            hasBecomeKey = false
+            return
+        }
+        cancel(sessionID: session.id)
+    }
+
+    private func closePanel(for sessionID: UUID) {
+        guard let session, session.id == sessionID else { return }
+        let panel = self.panel
+
         // Clear both first: closing the key window resigns key, which calls back in here.
-        panel.delegate = nil
+        self.session = nil
         self.panel = nil
-        panel.close()
+        hasBecomeKey = false
+        panel?.delegate = nil
+        panel?.close()
+    }
+
+    func cancel(sessionID: UUID) {
+        guard session?.id == sessionID else { return }
+        closePanel(for: sessionID)
+    }
+
+    func pick(_ choice: Choice, sessionID: UUID) {
+        guard finishingSessionID == nil,
+              let session,
+              session.id == sessionID else { return }
+
+        // Keep the whole batch before any open can synchronously ask for a replacement picker.
+        let urls = session.urls
+        finishingSessionID = sessionID
+        closePanel(for: sessionID)
+        for url in urls {
+            openEffect(url, choice)
+        }
+        finishingSessionID = nil
+        let retries = pendingURLs
+        pendingURLs.removeAll()
+        if !retries.isEmpty { show(urls: retries) }
+    }
+
+    func copy(sessionID: UUID) {
+        guard finishingSessionID == nil,
+              let session,
+              session.id == sessionID else { return }
+
+        let urls = session.urls
+        closePanel(for: sessionID)
+        copyEffect(urls.map(\.absoluteString).joined(separator: "\n"))
+        copiedConfirmation()
+    }
+
+    func createRule(sessionID: UUID) {
+        guard finishingSessionID == nil,
+              let session,
+              session.id == sessionID,
+              session.urls.count == 1,
+              let url = session.urls.first else { return }
+
+        closePanel(for: sessionID)
+        createRuleEffect(url)
+    }
+
+    private func resizePanel(for sessionID: UUID) {
+        guard session?.id == sessionID, let panel else { return }
+        DispatchQueue.main.async { [weak self, weak panel] in
+            guard let self,
+                  self.session?.id == sessionID,
+                  let panel,
+                  panel === self.panel,
+                  let hosting = panel.contentViewController as? NSHostingController<PickerView> else {
+                return
+            }
+
+            hosting.view.layoutSubtreeIfNeeded()
+            let fittingSize = hosting.view.fittingSize
+            guard fittingSize.width > 0, fittingSize.height > 0 else { return }
+
+            let oldFrame = panel.frame
+            let newSize = NSSize(width: max(oldFrame.width, fittingSize.width), height: fittingSize.height)
+            var origin = NSPoint(x: oldFrame.minX, y: oldFrame.maxY - newSize.height)
+            if let screen = NSScreen.screens.first(where: { $0.frame.intersects(oldFrame) }) {
+                origin.x = max(screen.visibleFrame.minX + 8, min(origin.x, screen.visibleFrame.maxX - newSize.width - 8))
+                origin.y = max(screen.visibleFrame.minY + 8, min(origin.y, screen.visibleFrame.maxY - newSize.height - 8))
+            }
+            panel.setFrame(NSRect(origin: origin, size: newSize), display: true)
+        }
     }
 
     func windowDidBecomeKey(_ notification: Notification) {
+        guard let activePanel = panel,
+              let notifiedPanel = notification.object as? NSWindow,
+              notifiedPanel === activePanel else { return }
         hasBecomeKey = true
     }
 
@@ -144,8 +338,19 @@ final class PickerPanelController: NSObject, NSWindowDelegate {
     /// Only once the panel has actually been key: showing it activates the app, and a
     /// resign in that churn would dismiss the picker before anyone saw it, losing the link.
     func windowDidResignKey(_ notification: Notification) {
-        guard hasBecomeKey else { return }
+        guard let activePanel = panel,
+              let notifiedPanel = notification.object as? NSWindow,
+              notifiedPanel === activePanel,
+              hasBecomeKey else { return }
         dismiss()
+    }
+
+    /// Test seam for the delegate's identity and focus gate. Production panels are installed
+    /// by show(for:) and always use the same identity check above.
+    func installPanelForTesting(_ panel: NSPanel) {
+        self.panel = panel
+        panel.delegate = self
+        hasBecomeKey = false
     }
 }
 
@@ -155,23 +360,44 @@ final class KeyablePanel: NSPanel {
 }
 
 private struct PickerView: View {
-    let url: URL
+    @ObservedObject var session: PickerPanelController.Session
     let choices: [PickerPanelController.Choice]
     let onPick: (PickerPanelController.Choice) -> Void
     let onCopy: () -> Void
     let onCancel: () -> Void
     let onCreateRule: () -> Void
+    let onContentSizeChange: () -> Void
 
     @State private var selection = 0
 
     var body: some View {
         VStack(alignment: .leading, spacing: Metrics.controlSpacing) {
-            Text(url.absoluteString)
-                .font(.caption)
-                .lineLimit(1)
-                .truncationMode(.middle)
-                .foregroundStyle(.secondary)
-                .padding(.horizontal, 6)
+            if session.urls.count == 1, let url = session.urls.first {
+                Text(url.absoluteString)
+                    .font(.caption)
+                    .lineLimit(1)
+                    .truncationMode(.middle)
+                    .foregroundStyle(.secondary)
+                    .padding(.horizontal, 6)
+            } else {
+                Text("\(session.urls.count) Links")
+                    .font(.headline)
+                    .padding(.horizontal, 6)
+
+                ScrollView {
+                    LazyVStack(alignment: .leading, spacing: 4) {
+                        ForEach(Array(session.urls.enumerated()), id: \.offset) { _, url in
+                            Text(url.absoluteString)
+                                .font(.caption)
+                                .lineLimit(1)
+                                .truncationMode(.middle)
+                                .foregroundStyle(.secondary)
+                        }
+                    }
+                    .padding(.horizontal, 6)
+                }
+                .frame(maxHeight: 120)
+            }
 
             VStack(spacing: 2) {
                 ForEach(Array(choices.enumerated()), id: \.element.id) { index, choice in
@@ -213,7 +439,11 @@ private struct PickerView: View {
                 Button("Create Rule for This Link…", action: onCreateRule)
                     .buttonStyle(.link)
                     .font(.caption)
-                Button("Copy Link", action: onCopy)
+                    .disabled(session.urls.count != 1)
+                    .help(session.urls.count == 1
+                        ? "Create a rule for this link"
+                        : "Create Rule is available for one link at a time")
+                Button(session.urls.count == 1 ? "Copy Link" : "Copy \(session.urls.count) Links", action: onCopy)
                     .buttonStyle(.link)
                     .font(.caption)
                 Spacer()
@@ -238,6 +468,9 @@ private struct PickerView: View {
             onCopy: onCopy,
             onCancel: onCancel
         ))
+        .onChange(of: session.urls.count) { _ in
+            onContentSizeChange()
+        }
     }
 }
 

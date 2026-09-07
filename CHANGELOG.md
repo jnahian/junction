@@ -10,6 +10,10 @@ shape matters:
 - Every bullet starts with `Added:`, `Changed:`, or `Fixed:` — that marker drives
   the filter pills on the changelog page.
 
+## Unreleased
+
+- Fixed: Links arriving while the browser picker is open now stay together in one list. Choose a browser to open them all, or copy the full list, instead of losing earlier links.
+
 ## 0.8.2 — 2026-09-02
 
 - Fixed: The picker closes when you click away from it. It stayed floating on top of every app until you picked a browser or pressed Esc, so a link you'd changed your mind about left a panel you had to go back and dismiss.

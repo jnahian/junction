@@ -112,7 +112,7 @@
     },
     {
       "action": "{ \"prompt\": true }",
-      "body": "Show the picker and let you choose at click time. The picker can also be your fallback for <i>every</i> unmatched link: <code>\"fallback\": { \"app\": \"picker\" }</code>."
+      "body": "Show the picker and let you choose at click time. Links arriving while it is open collect in one list; choose a browser to open them all, or copy them on separate lines. Esc or clicking away cancels the whole list. The picker can also be your fallback for <i>every</i> unmatched link: <code>\"fallback\": { \"app\": \"picker\" }</code>."
     },
     {
       "action": "{ \"clipboard\": true }",
