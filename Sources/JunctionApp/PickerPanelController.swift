@@ -28,14 +28,15 @@ final class PickerPanelController: NSObject, NSWindowDelegate {
 
     private let state: AppState?
     private let choicesProvider: () -> [Choice]
-    private let openEffect: (URL, Choice) -> Void
+    private let openEffect: ([URL], Choice, @escaping @MainActor (BrowserBatchOutcome) -> Void) -> Void
     private let copyEffect: (String) -> Void
-    private let copiedConfirmation: () -> Void
+    private let copiedConfirmation: (Int) -> Void
     private let noChoicesEffect: ([URL]) -> Void
     private let createRuleEffect: (URL) -> Void
     private let presentsPanel: Bool
     private let injectedPresentation: ((Session, [Choice]) -> Void)?
-    private var panel: NSPanel?
+    private let visibleFrameProvider: (NSPoint) -> NSRect?
+    private(set) var panel: NSPanel?
     private(set) var session: Session?
     private var hasBecomeKey = false
     private var finishingSessionID: UUID?
@@ -54,14 +55,15 @@ final class PickerPanelController: NSObject, NSWindowDelegate {
             if choices.isEmpty { choices = Self.buildChoices(from: state.browsers, skipping: []) }
             return choices
         }
-        self.openEffect = { [weak state] url, choice in
-            state?.open(url: url, in: choice.browser, profile: choice.profile)
+        self.openEffect = { [weak state] urls, choice, completion in
+            guard let state else { completion(.needsPicker); return }
+            state.open(urls: urls, in: choice.browser, profile: choice.profile, completion: completion)
         }
         self.copyEffect = { links in
             NSPasteboard.general.clearContents()
             NSPasteboard.general.setString(links, forType: .string)
         }
-        self.copiedConfirmation = { [weak state] in state?.showCopiedConfirmation() }
+        self.copiedConfirmation = { [weak state] count in state?.showCopiedConfirmation(count: count) }
         self.noChoicesEffect = { [weak state] urls in
             guard let state else { return }
             // No browsers detected at all. With a browser fallback, degrade there; with the
@@ -70,7 +72,7 @@ final class PickerPanelController: NSObject, NSWindowDelegate {
             if state.config.fallback.isPicker {
                 NSPasteboard.general.clearContents()
                 NSPasteboard.general.setString(urls.map(\.absoluteString).joined(separator: "\n"), forType: .string)
-                state.showCopiedConfirmation()
+                state.showCopiedConfirmation(count: urls.count)
             } else {
                 for url in urls { state.openInFallback(url) }
             }
@@ -84,6 +86,7 @@ final class PickerPanelController: NSObject, NSWindowDelegate {
         }
         self.presentsPanel = true
         self.injectedPresentation = nil
+        self.visibleFrameProvider = Self.visibleFrame
         super.init()
     }
 
@@ -91,13 +94,14 @@ final class PickerPanelController: NSObject, NSWindowDelegate {
     /// browser, touching the clipboard, or loading the user's config file.
     init(
         choices: @escaping () -> [Choice],
-        open: @escaping (URL, Choice) -> Void,
+        open: @escaping ([URL], Choice, @escaping @MainActor (BrowserBatchOutcome) -> Void) -> Void,
         copy: @escaping (String) -> Void,
-        copiedConfirmation: @escaping () -> Void = {},
+        copiedConfirmation: @escaping (Int) -> Void = { _ in },
         noChoices: @escaping ([URL]) -> Void = { _ in },
         createRule: @escaping (URL) -> Void = { _ in },
         presentsPanel: Bool = false,
-        presentSession: ((Session, [Choice]) -> Void)? = nil
+        presentSession: ((Session, [Choice]) -> Void)? = nil,
+        visibleFrame: ((NSPoint) -> NSRect?)? = nil
     ) {
         self.state = nil
         self.choicesProvider = choices
@@ -108,6 +112,7 @@ final class PickerPanelController: NSObject, NSWindowDelegate {
         self.createRuleEffect = createRule
         self.presentsPanel = presentsPanel
         self.injectedPresentation = presentSession
+        self.visibleFrameProvider = visibleFrame ?? Self.visibleFrame
         super.init()
     }
 
@@ -152,13 +157,11 @@ final class PickerPanelController: NSObject, NSWindowDelegate {
 
     private func present(session: Session, choices: [Choice]) {
         guard self.session?.id == session.id, panel == nil else { return }
-        if let injectedPresentation {
-            injectedPresentation(session, choices)
-            return
-        }
-
+        let mouse = NSEvent.mouseLocation
+        let screenFrame = visibleFrameProvider(mouse)
         let view = PickerView(
             session: session,
+            maximumHeight: screenFrame.map { max(0, $0.height - 16) } ?? 800,
             choices: choices,
             onPick: { [weak self, weak session] choice in
                 guard let session else { return }
@@ -203,20 +206,22 @@ final class PickerPanelController: NSObject, NSWindowDelegate {
         panel.isReleasedWhenClosed = false
         panel.setContentSize(hosting.view.fittingSize)
 
-        // Appear at the cursor.
-        let mouse = NSEvent.mouseLocation
+        // Appear at the cursor, keeping every edge within the usable screen.
         let size = panel.frame.size
-        var origin = NSPoint(x: mouse.x - size.width / 2, y: mouse.y - size.height - 8)
-        if let screen = NSScreen.screens.first(where: { NSMouseInRect(mouse, $0.frame, false) }) {
-            origin.x = max(screen.visibleFrame.minX + 8, min(origin.x, screen.visibleFrame.maxX - size.width - 8))
-            origin.y = max(screen.visibleFrame.minY + 8, min(origin.y, screen.visibleFrame.maxY - size.height - 8))
-        }
-        panel.setFrameOrigin(origin)
+        let origin = NSPoint(x: mouse.x - size.width / 2, y: mouse.y - size.height - 8)
+        let frame = screenFrame.map { Self.constrainedFrame(size: size, origin: origin, visibleFrame: $0) }
+            ?? NSRect(origin: origin, size: size)
+        panel.setFrame(frame, display: false)
 
         self.panel = panel
         hasBecomeKey = false
-        panel.makeKeyAndOrderFront(nil)
-        NSApp.activate(ignoringOtherApps: true)
+        if let injectedPresentation {
+            // A presentation hook can inspect the real hosted panel without activating it.
+            injectedPresentation(session, choices)
+        } else {
+            panel.makeKeyAndOrderFront(nil)
+            NSApp.activate(ignoringOtherApps: true)
+        }
     }
 
     private static func buildChoices(from browsers: [Browser], skipping hidden: Set<String>) -> [Choice] {
@@ -266,17 +271,28 @@ final class PickerPanelController: NSObject, NSWindowDelegate {
               let session,
               session.id == sessionID else { return }
 
-        // Keep the whole batch before any open can synchronously ask for a replacement picker.
         let urls = session.urls
         finishingSessionID = sessionID
         closePanel(for: sessionID)
-        for url in urls {
-            openEffect(url, choice)
+        // Resolve and open the batch once. A successful first launch must not steal focus
+        // from a retry panel created for a later URL in the same batch.
+        openEffect(urls, choice) { [weak self] outcome in
+            self?.finishOpening(sessionID: sessionID, urls: urls, outcome: outcome)
         }
+    }
+
+    private func finishOpening(sessionID: UUID, urls: [URL], outcome: BrowserBatchOutcome) {
+        guard finishingSessionID == sessionID else { return }
         finishingSessionID = nil
-        let retries = pendingURLs
+        let remaining: [URL]
+        switch outcome {
+        case .needsPicker, .failed:
+            remaining = urls + pendingURLs
+        case .opened, .degradedToFallback:
+            remaining = pendingURLs
+        }
         pendingURLs.removeAll()
-        if !retries.isEmpty { show(urls: retries) }
+        if !remaining.isEmpty { show(urls: remaining) }
     }
 
     func copy(sessionID: UUID) {
@@ -287,7 +303,7 @@ final class PickerPanelController: NSObject, NSWindowDelegate {
         let urls = session.urls
         closePanel(for: sessionID)
         copyEffect(urls.map(\.absoluteString).joined(separator: "\n"))
-        copiedConfirmation()
+        copiedConfirmation(urls.count)
     }
 
     func createRule(sessionID: UUID) {
@@ -312,19 +328,34 @@ final class PickerPanelController: NSObject, NSWindowDelegate {
                 return
             }
 
+            let oldFrame = panel.frame
+            let center = NSPoint(x: oldFrame.midX, y: oldFrame.midY)
+            let screenFrame = self.visibleFrameProvider(center) ?? panel.screen?.visibleFrame
+            if let screenFrame { hosting.rootView.maximumHeight = max(0, screenFrame.height - 16) }
             hosting.view.layoutSubtreeIfNeeded()
             let fittingSize = hosting.view.fittingSize
             guard fittingSize.width > 0, fittingSize.height > 0 else { return }
-
-            let oldFrame = panel.frame
-            let newSize = NSSize(width: max(oldFrame.width, fittingSize.width), height: fittingSize.height)
-            var origin = NSPoint(x: oldFrame.minX, y: oldFrame.maxY - newSize.height)
-            if let screen = NSScreen.screens.first(where: { $0.frame.intersects(oldFrame) }) {
-                origin.x = max(screen.visibleFrame.minX + 8, min(origin.x, screen.visibleFrame.maxX - newSize.width - 8))
-                origin.y = max(screen.visibleFrame.minY + 8, min(origin.y, screen.visibleFrame.maxY - newSize.height - 8))
-            }
-            panel.setFrame(NSRect(origin: origin, size: newSize), display: true)
+            let origin = NSPoint(x: oldFrame.minX, y: oldFrame.maxY - fittingSize.height)
+            let frame = screenFrame.map {
+                Self.constrainedFrame(size: fittingSize, origin: origin, visibleFrame: $0)
+            } ?? NSRect(origin: origin, size: fittingSize)
+            panel.setFrame(frame, display: true)
         }
+    }
+
+    private static func visibleFrame(at point: NSPoint) -> NSRect? {
+        NSScreen.screens.first { NSMouseInRect(point, $0.frame, false) }?.visibleFrame
+    }
+
+    static func constrainedFrame(size: NSSize, origin: NSPoint, visibleFrame: NSRect) -> NSRect {
+        let bounds = visibleFrame.insetBy(dx: 8, dy: 8)
+        let size = NSSize(width: min(size.width, bounds.width), height: min(size.height, bounds.height))
+        return NSRect(
+            x: max(bounds.minX, min(origin.x, bounds.maxX - size.width)),
+            y: max(bounds.minY, min(origin.y, bounds.maxY - size.height)),
+            width: size.width,
+            height: size.height
+        )
     }
 
     func windowDidBecomeKey(_ notification: Notification) {
@@ -361,6 +392,7 @@ final class KeyablePanel: NSPanel {
 
 private struct PickerView: View {
     @ObservedObject var session: PickerPanelController.Session
+    var maximumHeight: CGFloat
     let choices: [PickerPanelController.Choice]
     let onPick: (PickerPanelController.Choice) -> Void
     let onCopy: () -> Void
@@ -369,6 +401,7 @@ private struct PickerView: View {
     let onContentSizeChange: () -> Void
 
     @State private var selection = 0
+    @State private var keyboardScrollTarget: Int?
 
     var body: some View {
         VStack(alignment: .leading, spacing: Metrics.controlSpacing) {
@@ -396,40 +429,53 @@ private struct PickerView: View {
                     }
                     .padding(.horizontal, 6)
                 }
-                .frame(maxHeight: 120)
+                .frame(height: min(120, CGFloat(session.urls.count) * 17 - 4))
+                .layoutPriority(1)
             }
 
-            VStack(spacing: 2) {
-                ForEach(Array(choices.enumerated()), id: \.element.id) { index, choice in
-                    let selected = index == selection
-                    Button {
-                        onPick(choice)
-                    } label: {
-                        HStack(spacing: 10) {
-                            Image(nsImage: choice.icon)
-                                .resizable()
-                                .frame(width: 22, height: 22)
-                            Text(choice.title).lineLimit(1)
-                            Spacer(minLength: 12)
-                            if index < 9 {
-                                Text("\(index + 1)")
-                                    .font(.caption.monospacedDigit())
-                                    .foregroundStyle(selected ? Color.white.opacity(0.8) : Color.secondary)
+            ScrollViewReader { proxy in
+                ScrollView {
+                    VStack(spacing: 2) {
+                        ForEach(Array(choices.enumerated()), id: \.element.id) { index, choice in
+                            let selected = index == selection
+                            Button {
+                                onPick(choice)
+                            } label: {
+                                HStack(spacing: 10) {
+                                    Image(nsImage: choice.icon)
+                                        .resizable()
+                                        .frame(width: 22, height: 22)
+                                    Text(choice.title).lineLimit(1)
+                                    Spacer(minLength: 12)
+                                    if index < 9 {
+                                        Text("\(index + 1)")
+                                            .font(.caption.monospacedDigit())
+                                            .foregroundStyle(selected ? Color.white.opacity(0.8) : Color.secondary)
+                                    }
+                                }
+                                .padding(.vertical, 5)
+                                .padding(.horizontal, 10)
+                                .contentShape(RoundedRectangle(cornerRadius: Metrics.rowCornerRadius, style: .continuous))
+                                .background(
+                                    RoundedRectangle(cornerRadius: Metrics.rowCornerRadius, style: .continuous)
+                                        .fill(selected ? Color(nsColor: .selectedContentBackgroundColor) : .clear)
+                                )
+                                .foregroundStyle(selected ? Color.white : Color.primary)
+                            }
+                            .buttonStyle(.plain)
+                            .id(index)
+                            .onHover { hovering in
+                                if hovering { selection = index }
                             }
                         }
-                        .padding(.vertical, 5)
-                        .padding(.horizontal, 10)
-                        .contentShape(RoundedRectangle(cornerRadius: Metrics.rowCornerRadius, style: .continuous))
-                        .background(
-                            RoundedRectangle(cornerRadius: Metrics.rowCornerRadius, style: .continuous)
-                                .fill(selected ? Color(nsColor: .selectedContentBackgroundColor) : .clear)
-                        )
-                        .foregroundStyle(selected ? Color.white : Color.primary)
                     }
-                    .buttonStyle(.plain)
-                    .onHover { hovering in
-                        if hovering { selection = index }
-                    }
+                }
+                .frame(idealHeight: CGFloat(choices.count) * 34 - 2, maxHeight: CGFloat(choices.count) * 34 - 2)
+                .onChange(of: keyboardScrollTarget) { target in
+                    if let target { proxy.scrollTo(target, anchor: .center) }
+                }
+                .onChange(of: session.urls.count) { _ in
+                    DispatchQueue.main.async { proxy.scrollTo(selection, anchor: .center) }
                 }
             }
 
@@ -452,9 +498,12 @@ private struct PickerView: View {
                     .foregroundStyle(.tertiary)
             }
             .padding(.horizontal, 6)
+            .fixedSize(horizontal: false, vertical: true)
+            .layoutPriority(1)
         }
         .padding(Metrics.panelPadding)
         .frame(width: 340)
+        .frame(maxHeight: maximumHeight)
         .background(VisualEffectView(material: .hudWindow))
         .clipShape(RoundedRectangle(cornerRadius: Metrics.panelCornerRadius, style: .continuous))
         .overlay(
@@ -465,6 +514,7 @@ private struct PickerView: View {
             count: choices.count,
             selection: $selection,
             onPickIndex: { onPick(choices[$0]) },
+            onMoveSelection: { keyboardScrollTarget = $0 },
             onCopy: onCopy,
             onCancel: onCancel
         ))
@@ -479,6 +529,7 @@ private struct KeyCatcher: NSViewRepresentable {
     let count: Int
     @Binding var selection: Int
     let onPickIndex: (Int) -> Void
+    let onMoveSelection: (Int) -> Void
     let onCopy: () -> Void
     let onCancel: () -> Void
 
@@ -517,8 +568,10 @@ private struct KeyCatcher: NSViewRepresentable {
                 parent.onPickIndex(parent.selection)
             case 125: // down
                 parent.selection = min(parent.selection + 1, parent.count - 1)
+                parent.onMoveSelection(parent.selection)
             case 126: // up
                 parent.selection = max(parent.selection - 1, 0)
+                parent.onMoveSelection(parent.selection)
             default:
                 if let chars = event.charactersIgnoringModifiers,
                    let digit = Int(chars), digit >= 1, digit <= min(9, parent.count) {

@@ -119,11 +119,18 @@ final class AppState: ObservableObject {
         if case .needsPicker(let url) = outcome { pickerPresenter?(url) }
     }
 
-    func open(url: URL, in browser: Browser, profile: BrowserProfile?) {
-        let outcome = Dispatcher(fallbackApp: config.fallback.app)
-            .openInBrowser(bundleID: browser.bundleID, profile: profile?.directory, url: url)
-        // The picked browser vanished mid-pick and the fallback is the picker: re-ask.
-        if case .needsPicker(let url) = outcome { pickerPresenter?(url) }
+    func open(
+        urls: [URL],
+        in browser: Browser,
+        profile: BrowserProfile?,
+        completion: @escaping @MainActor (BrowserBatchOutcome) -> Void
+    ) {
+        Dispatcher(fallbackApp: config.fallback.app)
+            .openInBrowser(bundleID: browser.bundleID, profile: profile?.directory, urls: urls) { outcome in
+                // NSWorkspace completes on a concurrent queue. The picker owns retries
+                // and finalizes the whole batch on the main actor.
+                Task { @MainActor in completion(outcome) }
+            }
     }
 
     private func describe(_ trace: RoutingTrace) -> String {
@@ -151,8 +158,8 @@ final class AppState: ObservableObject {
 
     /// Transient "Link copied" HUD near the cursor — a clipboard action otherwise
     /// looks like nothing happened.
-    func showCopiedConfirmation() {
-        let label = NSTextField(labelWithString: "Link copied")
+    func showCopiedConfirmation(count: Int = 1) {
+        let label = NSTextField(labelWithString: count == 1 ? "Link copied" : "\(count) links copied")
         label.font = .systemFont(ofSize: 13, weight: .medium)
         label.sizeToFit()
 

@@ -13,12 +13,67 @@ public enum DispatchOutcome: Sendable {
     case failed(String)
 }
 
+/// Result for one native browser request containing an ordered batch of links.
+public enum BrowserBatchOutcome: Sendable {
+    case opened
+    case needsPicker
+    case failed(String)
+    case degradedToFallback(reason: String)
+
+    fileprivate func singleURL(_ url: URL) -> DispatchOutcome {
+        switch self {
+        case .opened: return .opened
+        case .needsPicker: return .needsPicker(url)
+        case .failed(let message): return .failed(message)
+        case .degradedToFallback(let reason): return .degradedToFallback(reason: reason)
+        }
+    }
+}
+
 /// Executes routing decisions via NSWorkspace. Shared by the app and `junction open`.
 public struct Dispatcher {
     public var fallbackApp: String
+    private let environment: Environment
+
+    /// Resolve once and launch once per batch. Tests replace only these OS boundaries.
+    struct Environment {
+        var applicationURL: (String) -> URL?
+        var family: (String) -> BrowserFamily
+        var firefoxProfileExists: (String, String) -> Bool
+        var openURLs: ([URL], URL, NSWorkspace.OpenConfiguration, (@Sendable (BrowserBatchOutcome) -> Void)?) -> Void
+        var openApplication: (URL, NSWorkspace.OpenConfiguration, (@Sendable (BrowserBatchOutcome) -> Void)?) -> Void
+        var openDefault: (URL) -> Void
+
+        static var live: Self {
+            Self(
+                applicationURL: { NSWorkspace.shared.urlForApplication(withBundleIdentifier: $0) },
+                family: { BrowserDiscovery.family(forBundleID: $0) },
+                firefoxProfileExists: { bundleID, profile in
+                    FirefoxProfiles.profiles(for: bundleID).contains { $0.directory == profile }
+                },
+                openURLs: { urls, appURL, configuration, completion in
+                    NSWorkspace.shared.open(urls, withApplicationAt: appURL, configuration: configuration) { _, error in
+                        completion?(error.map { .failed($0.localizedDescription) } ?? .opened)
+                    }
+                },
+                openApplication: { appURL, configuration, completion in
+                    NSWorkspace.shared.openApplication(at: appURL, configuration: configuration) { _, error in
+                        completion?(error.map { .failed($0.localizedDescription) } ?? .opened)
+                    }
+                },
+                openDefault: { NSWorkspace.shared.open($0) }
+            )
+        }
+    }
 
     public init(fallbackApp: String) {
         self.fallbackApp = fallbackApp
+        self.environment = .live
+    }
+
+    init(fallbackApp: String, environment: Environment) {
+        self.fallbackApp = fallbackApp
+        self.environment = environment
     }
 
     @discardableResult
@@ -61,89 +116,88 @@ public struct Dispatcher {
         url: URL,
         completion: (@Sendable (DispatchOutcome) -> Void)? = nil
     ) -> DispatchOutcome {
-        guard let appURL = NSWorkspace.shared.urlForApplication(withBundleIdentifier: bundleID) else {
-            // Picker fallback: never try to "open" the sentinel — the last-resort
-            // NSWorkspace.open below would hand the link back to Junction (the default
-            // browser) and loop. Every fallback dispatch funnels through here, so this
-            // one check covers .fallback decisions and all degrade paths.
+        let batchCompletion: (@Sendable (BrowserBatchOutcome) -> Void)?
+        if let completion {
+            batchCompletion = { outcome in completion(outcome.singleURL(url)) }
+        } else {
+            batchCompletion = nil
+        }
+        return openInBrowser(bundleID: bundleID, profile: profile, urls: [url], completion: batchCompletion)
+            .singleURL(url)
+    }
+
+    /// Immediate results retain the single-link API's behavior. For a native launch,
+    /// completion reports the eventual result and may run on a concurrent queue.
+    @discardableResult
+    public func openInBrowser(
+        bundleID: String,
+        profile: String?,
+        urls: [URL],
+        completion: (@Sendable (BrowserBatchOutcome) -> Void)? = nil
+    ) -> BrowserBatchOutcome {
+        guard !urls.isEmpty else {
+            completion?(.opened)
+            return .opened
+        }
+        guard let appURL = environment.applicationURL(bundleID) else {
+            // Never hand the picker sentinel to the system default (possibly Junction).
             if fallbackApp == Fallback.picker {
-                completion?(.needsPicker(url))
-                return .needsPicker(url)
+                completion?(.needsPicker)
+                return .needsPicker
             }
-            // Target browser missing (e.g. dotfiles synced to a Mac without it) → fallback.
-            if bundleID != fallbackApp,
-               let fallbackURL = NSWorkspace.shared.urlForApplication(withBundleIdentifier: fallbackApp) {
-                open(url: url, appURL: fallbackURL, bundleID: fallbackApp, profile: nil, completion: completion)
+            if bundleID != fallbackApp, let fallbackURL = environment.applicationURL(fallbackApp) {
+                open(urls: urls, appURL: fallbackURL, bundleID: fallbackApp, profile: nil, completion: completion)
                 return .degradedToFallback(reason: "\(bundleID) is not installed")
             }
-            // Last resort: system default handler.
-            NSWorkspace.shared.open(url)
-            completion?(.degradedToFallback(reason: "\(bundleID) is not installed"))
-            return .degradedToFallback(reason: "\(bundleID) is not installed")
+            // Preserve the legacy last resort when neither named browser exists.
+            for url in urls { environment.openDefault(url) }
+            let outcome = BrowserBatchOutcome.degradedToFallback(reason: "\(bundleID) is not installed")
+            completion?(outcome)
+            return outcome
         }
 
-        // A renamed or deleted Firefox profile can't be caught by Firefox: `-P unknown` doesn't
-        // error, it hands the URL to whatever instance happens to be running. Catch it here so
-        // the link lands somewhere predictable instead of a silently wrong profile.
+        // Resolve a deleted Firefox profile once, so the entire batch goes to one destination.
         if let profile,
-           BrowserDiscovery.family(forBundleID: bundleID) == .firefox,
-           !FirefoxProfiles.profiles(for: bundleID).contains(where: { $0.directory == profile }) {
+           environment.family(bundleID) == .firefox,
+           !environment.firefoxProfileExists(bundleID, profile) {
             let reason = "Firefox profile \"\(profile)\" no longer exists"
-            if bundleID != fallbackApp,
-               let fallbackURL = NSWorkspace.shared.urlForApplication(withBundleIdentifier: fallbackApp) {
-                open(url: url, appURL: fallbackURL, bundleID: fallbackApp, profile: nil, completion: completion)
+            if bundleID != fallbackApp, let fallbackURL = environment.applicationURL(fallbackApp) {
+                open(urls: urls, appURL: fallbackURL, bundleID: fallbackApp, profile: nil, completion: completion)
             } else {
-                open(url: url, appURL: appURL, bundleID: bundleID, profile: nil, completion: completion)
+                open(urls: urls, appURL: appURL, bundleID: bundleID, profile: nil, completion: completion)
             }
             return .degradedToFallback(reason: reason)
         }
 
-        open(url: url, appURL: appURL, bundleID: bundleID, profile: profile, completion: completion)
+        open(urls: urls, appURL: appURL, bundleID: bundleID, profile: profile, completion: completion)
         return .opened
     }
 
-    /// The launch flag that selects a profile, per browser family.
-    /// Chromium: `--profile-directory=<dir>`. Firefox: `-P <name>` (verified on Firefox 152 —
-    /// it starts a second instance when another profile is live, and forwards when that same
-    /// profile is already running, so no `-no-remote` is needed).
-    private func profileArguments(bundleID: String, profile: String, url: URL) -> [String]? {
-        switch BrowserDiscovery.family(forBundleID: bundleID) {
-        case .chromium: return ["--profile-directory=\(profile)", url.absoluteString]
-        case .firefox: return ["-P", profile, url.absoluteString]
-        case .other: return nil
-        }
-    }
-
     private func open(
-        url: URL,
+        urls: [URL],
         appURL: URL,
         bundleID: String,
         profile: String?,
-        completion: (@Sendable (DispatchOutcome) -> Void)?
+        completion: (@Sendable (BrowserBatchOutcome) -> Void)?
     ) {
         let configuration = NSWorkspace.OpenConfiguration()
         configuration.activates = true
-        if let profile, let arguments = profileArguments(bundleID: bundleID, profile: profile, url: url) {
-            // arguments are only honored for a *new* process, so force one. Both families'
-            // singleton IPC hands the URL to the right running instance and the spawned
-            // process exits. Works whether or not the browser is open.
-            configuration.arguments = arguments
+        var profileArguments: [String]?
+        if let profile {
+            switch environment.family(bundleID) {
+            case .chromium: profileArguments = ["--profile-directory=\(profile)"]
+            case .firefox: profileArguments = ["-P", profile]
+            case .other: break
+            }
+        }
+        if let profileArguments {
+            // Profile switches require a new process. Launch once with all URLs, rather
+            // than racing multiple processes through the browser's singleton forwarding.
+            configuration.arguments = profileArguments + urls.map(\.absoluteString)
             configuration.createsNewApplicationInstance = true
-            NSWorkspace.shared.openApplication(at: appURL, configuration: configuration) { _, error in
-                if let error {
-                    completion?(.failed(error.localizedDescription))
-                } else {
-                    completion?(.opened)
-                }
-            }
+            environment.openApplication(appURL, configuration, completion)
         } else {
-            NSWorkspace.shared.open([url], withApplicationAt: appURL, configuration: configuration) { _, error in
-                if let error {
-                    completion?(.failed(error.localizedDescription))
-                } else {
-                    completion?(.opened)
-                }
-            }
+            environment.openURLs(urls, appURL, configuration, completion)
         }
     }
 }

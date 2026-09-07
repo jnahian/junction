@@ -36,7 +36,7 @@ final class PickerPanelControllerTests: XCTestCase {
         var presentations: [PickerPanelController.Session] = []
         let controller = PickerPanelController(
             choices: { [browserChoice] },
-            open: { _, _ in },
+            open: { _, _, completion in completion(.opened) },
             copy: { _ in },
             presentsPanel: true,
             presentSession: { session, _ in presentations.append(session) }
@@ -53,10 +53,10 @@ final class PickerPanelControllerTests: XCTestCase {
 
     func testPickOpensEveryURLInOrderAndKeepsDuplicates() throws {
         let browserChoice = choice()
-        var opened: [URL] = []
+        var opened: [[URL]] = []
         let controller = PickerPanelController(
             choices: { [browserChoice] },
-            open: { url, _ in opened.append(url) },
+            open: { urls, _, completion in opened.append(urls); completion(.opened) },
             copy: { _ in }
         )
 
@@ -66,17 +66,19 @@ final class PickerPanelControllerTests: XCTestCase {
         let sessionID = try XCTUnwrap(controller.session?.id)
         controller.pick(browserChoice, sessionID: sessionID)
 
-        XCTAssertEqual(opened, [firstURL, secondURL, firstURL])
+        XCTAssertEqual(opened, [[firstURL, secondURL, firstURL]])
         XCTAssertNil(controller.session)
     }
 
     func testCopyUsesEveryURLSeparatedByNewlines() throws {
         let browserChoice = choice()
         var copied: [String] = []
+        var copiedCounts: [Int] = []
         let controller = PickerPanelController(
             choices: { [browserChoice] },
-            open: { _, _ in },
-            copy: { copied.append($0) }
+            open: { _, _, completion in completion(.opened) },
+            copy: { copied.append($0) },
+            copiedConfirmation: { copiedCounts.append($0) }
         )
 
         controller.show(for: firstURL)
@@ -85,6 +87,7 @@ final class PickerPanelControllerTests: XCTestCase {
         controller.copy(sessionID: sessionID)
 
         XCTAssertEqual(copied, ["\(firstURL.absoluteString)\n\(secondURL.absoluteString)"])
+        XCTAssertEqual(copiedCounts, [2])
         XCTAssertNil(controller.session)
     }
 
@@ -92,7 +95,7 @@ final class PickerPanelControllerTests: XCTestCase {
         let browserChoice = choice()
         let controller = PickerPanelController(
             choices: { [browserChoice] },
-            open: { _, _ in },
+            open: { _, _, completion in completion(.opened) },
             copy: { _ in }
         )
 
@@ -108,7 +111,7 @@ final class PickerPanelControllerTests: XCTestCase {
         let browserChoice = choice()
         let controller = PickerPanelController(
             choices: { [browserChoice] },
-            open: { _, _ in },
+            open: { _, _, completion in completion(.opened) },
             copy: { _ in }
         )
         controller.show(for: firstURL)
@@ -125,7 +128,7 @@ final class PickerPanelControllerTests: XCTestCase {
         let browserChoice = choice()
         let controller = PickerPanelController(
             choices: { [browserChoice] },
-            open: { _, _ in },
+            open: { _, _, completion in completion(.opened) },
             copy: { _ in }
         )
         controller.show(for: firstURL)
@@ -142,8 +145,8 @@ final class PickerPanelControllerTests: XCTestCase {
         let browserChoice = choice()
         let controller = PickerPanelController(
             choices: { [browserChoice] },
-            open: { _, _ in },
-            copy: { _ in }
+            open: { _, _, _ in XCTFail("A stale choice must not open anything") },
+            copy: { _ in XCTFail("A stale copy must not change the clipboard") }
         )
         controller.show(for: firstURL)
         let staleSessionID = try XCTUnwrap(controller.session?.id)
@@ -153,42 +156,82 @@ final class PickerPanelControllerTests: XCTestCase {
 
         controller.show(for: secondURL)
         let replacementID = try XCTUnwrap(controller.session?.id)
-        controller.cancel(sessionID: staleSessionID)
-        controller.windowDidResignKey(Notification(name: NSWindow.didResignKeyNotification, object: stalePanel))
+        let replacementPanel = panel()
+        controller.installPanelForTesting(replacementPanel)
+        controller.windowDidBecomeKey(Notification(name: NSWindow.didBecomeKeyNotification, object: replacementPanel))
 
+        controller.cancel(sessionID: staleSessionID)
+        controller.pick(browserChoice, sessionID: staleSessionID)
+        controller.copy(sessionID: staleSessionID)
+        controller.windowDidResignKey(Notification(name: NSWindow.didResignKeyNotification, object: stalePanel))
         XCTAssertEqual(controller.session?.id, replacementID)
+
+        controller.windowDidResignKey(Notification(name: NSWindow.didResignKeyNotification, object: replacementPanel))
+        XCTAssertNil(controller.session, "Focus loss from the current keyed panel must still dismiss it")
     }
 
-    func testSynchronousRetrySurvivesAndPresentsAfterWholeSnapshotDispatch() throws {
+    func testRetryWaitsForBatchCompletionAndKeepsNewArrivals() throws {
         let browserChoice = choice()
-        var opened: [URL] = []
+        var opened: [[URL]] = []
         var presentedIDs: [UUID] = []
-        var controller: PickerPanelController!
-        controller = PickerPanelController(
+        var completion: (@MainActor (BrowserBatchOutcome) -> Void)?
+        let controller = PickerPanelController(
             choices: { [browserChoice] },
-            open: { url, _ in
-                opened.append(url)
-                if opened.count == 1 {
-                    controller.show(for: self.retryURL)
-                    XCTAssertNil(controller.session)
-                    XCTAssertEqual(presentedIDs.count, 1)
-                }
-            },
+            open: { urls, _, callback in opened.append(urls); completion = callback },
             copy: { _ in },
             presentsPanel: true,
             presentSession: { session, _ in presentedIDs.append(session.id) }
         )
-
         controller.show(for: firstURL)
         controller.show(for: secondURL)
         let originalID = try XCTUnwrap(controller.session?.id)
         controller.pick(browserChoice, sessionID: originalID)
+        controller.show(for: retryURL)
+        XCTAssertNil(controller.session)
+        XCTAssertEqual(presentedIDs.count, 1, "No retry window may appear while the native request is pending")
 
-        XCTAssertEqual(opened, [firstURL, secondURL])
+        completion?(.needsPicker)
+        XCTAssertEqual(opened, [[firstURL, secondURL]])
         XCTAssertEqual(presentedIDs.count, 2)
         XCTAssertNotEqual(controller.session?.id, originalID)
+        XCTAssertEqual(controller.session?.urls, [firstURL, secondURL, retryURL])
+        completion?(.needsPicker)
+        XCTAssertEqual(presentedIDs.count, 2, "Duplicate completion must not duplicate the batch")
+    }
+
+    func testSuccessfulBatchRevealsOnlyNewArrivals() throws {
+        let browserChoice = choice()
+        var completion: (@MainActor (BrowserBatchOutcome) -> Void)?
+        let controller = PickerPanelController(
+            choices: { [browserChoice] },
+            open: { _, _, callback in completion = callback },
+            copy: { _ in }
+        )
+        controller.show(for: firstURL)
+        controller.show(for: secondURL)
+        controller.pick(browserChoice, sessionID: try XCTUnwrap(controller.session?.id))
+        controller.show(for: retryURL)
+        completion?(.opened)
         XCTAssertEqual(controller.session?.urls, [retryURL])
-        XCTAssertEqual(presentedIDs.last, controller.session?.id)
+        completion?(.failed("late duplicate"))
+        XCTAssertEqual(controller.session?.urls, [retryURL])
+    }
+
+    func testDelayedFailureRestoresTheEntireBatch() throws {
+        let browserChoice = choice()
+        var completion: (@MainActor (BrowserBatchOutcome) -> Void)?
+        let controller = PickerPanelController(
+            choices: { [browserChoice] },
+            open: { _, _, callback in completion = callback },
+            copy: { _ in }
+        )
+        controller.show(for: firstURL)
+        controller.show(for: secondURL)
+        controller.show(for: firstURL)
+        controller.pick(browserChoice, sessionID: try XCTUnwrap(controller.session?.id))
+        XCTAssertNil(controller.session)
+        completion?(.failed("Test launch failure"))
+        XCTAssertEqual(controller.session?.urls, [firstURL, secondURL, firstURL])
     }
 
     func testCreateRuleConsumesOnlyASingleLink() throws {
@@ -196,7 +239,7 @@ final class PickerPanelControllerTests: XCTestCase {
         var ruleURLs: [URL] = []
         let controller = PickerPanelController(
             choices: { [browserChoice] },
-            open: { _, _ in },
+            open: { _, _, completion in completion(.opened) },
             copy: { _ in },
             createRule: { ruleURLs.append($0) }
         )
@@ -219,7 +262,7 @@ final class PickerPanelControllerTests: XCTestCase {
         var fallbackURLs: [URL] = []
         let controller = PickerPanelController(
             choices: { [] },
-            open: { _, _ in XCTFail("No choice should be opened") },
+            open: { _, _, _ in XCTFail("No choice should be opened") },
             copy: { _ in },
             noChoices: { fallbackURLs.append(contentsOf: $0) }
         )
@@ -233,10 +276,9 @@ final class PickerPanelControllerTests: XCTestCase {
         let browserChoice = choice()
         var browsersRemain = true
         var fallbackBatches: [[URL]] = []
-        var controller: PickerPanelController!
-        controller = PickerPanelController(
+        let controller = PickerPanelController(
             choices: { browsersRemain ? [browserChoice] : [] },
-            open: { url, _ in controller.show(for: url) },
+            open: { _, _, completion in completion(.needsPicker) },
             copy: { _ in },
             noChoices: { fallbackBatches.append($0) }
         )
@@ -247,7 +289,6 @@ final class PickerPanelControllerTests: XCTestCase {
         controller.pick(browserChoice, sessionID: originalID)
         XCTAssertEqual(fallbackBatches, [[firstURL, secondURL]])
         XCTAssertNil(controller.session)
-        controller = nil
     }
 
 }

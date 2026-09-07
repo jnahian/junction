@@ -16,7 +16,7 @@ macOS allows exactly one default browser. If you juggle work and personal Chrome
 4. Actions: open in a browser, open in a specific **browser profile** (Chromium or Firefox), rewrite to a **native app deep link** (17 built in, including Zoom, Spotify, Slack, Figma, Notion, Teams, Discord, Linear, Telegram, WhatsApp, Apple Music), show a **picker**, or copy to clipboard.
 5. Anything unmatched goes to your fallback — a browser, or the picker if you'd rather be asked every time. A link is never lost.
 
-Hold **⌥ Option** while clicking any link to force the picker. Links arriving while it is open collect in one list; choosing a browser opens all of them, and Copy Links copies them on separate lines. Esc or clicking away cancels the whole list.
+Hold **⌥ Option** while clicking any link to force the picker. Links sent to the picker while it is open collect in one list; choosing a browser opens all of them, and Copy Links copies them on separate lines. Esc or clicking away cancels the whole list.
 
 ## Config file
 
