@@ -10,9 +10,11 @@ shape matters:
 - Every bullet starts with `Added:`, `Changed:`, or `Fixed:` — that marker drives
   the filter pills on the changelog page.
 
-## Unreleased
+## 0.8.3 — 2026-09-07
 
-- Fixed: Links sent to the browser picker while it is open now stay together in one list. Choose a browser to open them all, or copy the full list, instead of losing earlier links. Long browser lists scroll to keep the picker on-screen. Links that arrive while your chosen browser is still starting up now wait in a picker that stays put until you answer it, instead of disappearing when the browser comes forward.
+- Fixed: Links sent to the browser picker while it is open now stay together in one list. Each new link used to replace the last, so clicking three links in a row left you choosing a browser for only the third. Pick a browser to open the whole list at once, or copy it with one link per line.
+- Fixed: A link that arrives while your chosen browser is still starting up no longer disappears. The picker that surfaced it was being dismissed by the browser coming forward, taking the link with it — it now waits until you answer it.
+- Fixed: The picker stays on screen when the browser list is long, scrolling the list instead of growing past the top of the display.
 
 ## 0.8.2 — 2026-09-02
 
