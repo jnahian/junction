@@ -9,7 +9,26 @@ import "@fontsource-variable/jetbrains-mono";
 
 // `topbar` is the page-specific part: the section chip, the brand link, and any
 // extra nav. Every page gets the same menu bar and the same version pill.
-const { title, topbar } = Astro.props;
+const { title, topbar, description = site.tagline } = Astro.props;
+
+// /docs and /docs/ both serve the same page; point search engines at one of them.
+const canonical = new URL(Astro.url.pathname.replace(/\/$/, "") || "/", Astro.site).href;
+const image = new URL("/logo.png", Astro.site).href;
+const jsonLd = {
+  "@context": "https://schema.org",
+  "@type": "SoftwareApplication",
+  name: site.name,
+  description: site.tagline,
+  url: Astro.site.href,
+  applicationCategory: "UtilitiesApplication",
+  operatingSystem: "macOS",
+  softwareVersion: version().replace(/^v/, ""),
+  license: site.license,
+  downloadUrl: site.latestRelease,
+  image,
+  offers: { "@type": "Offer", price: "0", priceCurrency: "USD" },
+  author: { "@type": "Person", name: site.author.handle, url: site.author.site },
+};
 
 const links = [
   { label: "Docs", href: "/docs" },
@@ -24,6 +43,16 @@ const links = [
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>{title}</title>
+<meta name="description" content={description}>
+<link rel="canonical" href={canonical}>
+<meta property="og:type" content="website">
+<meta property="og:site_name" content={site.name}>
+<meta property="og:title" content={title}>
+<meta property="og:description" content={description}>
+<meta property="og:url" content={canonical}>
+<meta property="og:image" content={image}>
+<meta name="twitter:card" content="summary">
+<script type="application/ld+json" set:html={JSON.stringify(jsonLd)} />
 <link rel="icon" href="/favicon.ico" sizes="any">
 <link rel="icon" type="image/png" sizes="32x32" href="/favicon-32x32.png">
 <link rel="icon" type="image/png" sizes="16x16" href="/favicon-16x16.png">
