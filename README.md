@@ -4,6 +4,8 @@
 
 Open source (MIT) · GUI **and** a version-controllable JSON config file · CLI included · zero telemetry.
 
+Website and docs: [junction.jnahian.me](https://junction.jnahian.me)
+
 ## Why
 
 macOS allows exactly one default browser. If you juggle work and personal Chrome profiles, want Zoom links in the Zoom app instead of a tab, or want Terminal links in a different browser than Mail links, you need a router in between. Choosy is paid, Velja is closed source, Finicky has no GUI. Junction is the open-source option with a first-class GUI *and* a human-readable config file you can check into your dotfiles.

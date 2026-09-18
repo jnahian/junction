@@ -2,6 +2,8 @@
 # including AI/LLM crawlers, which are allowed explicitly below.
 # A machine-readable site summary lives at /llms.txt.
 
+Sitemap: https://junction.jnahian.me/sitemap.xml
+
 User-agent: *
 Allow: /
 
