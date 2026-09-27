@@ -104,7 +104,7 @@
     },
     {
       "action": "{ \"app\": \"com.google.Chrome\", \"profile\": \"Profile 1\" }",
-      "body": "Open in a specific browser profile — a Chromium profile <i>directory</i> (<code>Default</code>, <code>Profile 1</code>) or a Firefox profile <i>name</i> (what <code>firefox -P</code> takes, listed in <b>Settings → Browsers</b>)."
+      "body": "Open in a specific browser profile — a Chromium profile <i>directory</i> (<code>Default</code>, <code>Profile 1</code>) or a Firefox profile <i>name</i> (what <code>firefox -P</code> takes, listed in <b>Settings → Browsers</b>). Listing profiles needs <b>Full Disk Access</b>; without it, a Chromium profile still works if you type its directory into the config file, but a Firefox profile rule falls back to your fallback browser."
     },
     {
       "action": "{ \"deepLink\": \"zoom\" }",
