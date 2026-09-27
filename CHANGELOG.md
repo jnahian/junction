@@ -12,6 +12,7 @@ shape matters:
 
 ## Unreleased
 
+- Added: The browser picker can lay out as a horizontal row instead of a vertical list, show icons without names, and use a larger or smaller icon size. Set it under Settings → Browsers → Picker appearance. In the row layout, ←/→ move between choices and ↑/↓ jump a row. The picker names the highlighted choice above the icons, so profiles of the same browser stay distinguishable.
 - Fixed: When macOS blocks Junction from reading your browsers' profile lists, Junction now says so instead of showing no profiles. Settings → Browsers, the rule editor and the welcome tour explain that Junction needs Full Disk Access, with a button that opens the right page in System Settings and a Check Again button for after you turn it on.
 - Changed: Google Chrome for Testing, the automation build that Playwright and Puppeteer install, no longer shows up as a browser in rules, the picker, or Settings → Browsers.
 

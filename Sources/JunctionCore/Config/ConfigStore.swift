@@ -136,7 +136,9 @@ public final class ConfigStore {
     static func describeDecodingError(_ error: Error) -> String {
         if let d = error as? DecodingError {
             switch d {
-            case .dataCorrupted(let ctx): return ctx.debugDescription
+            case .dataCorrupted(let ctx):
+                // A bad enum value lands here; without the path the user can't find it.
+                return ctx.codingPath.isEmpty ? ctx.debugDescription : "\(ctx.debugDescription) at \(path(ctx))"
             case .keyNotFound(let key, let ctx):
                 return "missing key \"\(key.stringValue)\" at \(path(ctx))"
             case .typeMismatch(_, let ctx): return "\(ctx.debugDescription) at \(path(ctx))"
