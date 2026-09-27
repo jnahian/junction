@@ -74,6 +74,27 @@ public enum BrowserDiscovery {
         }
     }
 
+    /// True when macOS privacy protection stops Junction reading an installed browser's
+    /// profile list. Profile reads fail quietly to "no profiles", so this is what tells
+    /// "this browser has none" apart from "Junction needs Full Disk Access". No prompt
+    /// exists for it: the read is refused outright until the user grants access.
+    public static func isProfileAccessBlocked(_ browsers: [Browser]) -> Bool {
+        browsers.contains { browser in
+            let file: URL?
+            switch browser.family {
+            case .chromium: file = ChromiumProfiles.localStateFile(for: browser.bundleID)
+            case .firefox: file = FirefoxProfiles.profilesFile(for: browser.bundleID)
+            case .other: file = nil
+            }
+            guard let file else { return false }
+            // Privacy protection refuses with EPERM; a missing file (browser installed,
+            // never launched) is ENOENT and not a denial.
+            let fd = open(file.path, O_RDONLY)
+            guard fd < 0 else { close(fd); return false }
+            return errno == EPERM
+        }
+    }
+
     public static func appURL(forBundleID bundleID: String) -> URL? {
         NSWorkspace.shared.urlForApplication(withBundleIdentifier: bundleID)
     }
@@ -93,13 +114,17 @@ public enum FirefoxProfiles {
         "org.mozilla.firefox": "Firefox",
     ]
 
-    public static func profiles(for bundleID: String) -> [BrowserProfile] {
-        guard let dir = dataDirectories[bundleID] else { return [] }
-        let ini = FileManager.default.homeDirectoryForCurrentUser
+    static func profilesFile(for bundleID: String) -> URL? {
+        guard let dir = dataDirectories[bundleID] else { return nil }
+        return FileManager.default.homeDirectoryForCurrentUser
             .appendingPathComponent("Library/Application Support")
             .appendingPathComponent(dir)
             .appendingPathComponent("profiles.ini")
-        guard let text = try? String(contentsOf: ini, encoding: .utf8) else { return [] }
+    }
+
+    public static func profiles(for bundleID: String) -> [BrowserProfile] {
+        guard let ini = profilesFile(for: bundleID),
+              let text = try? String(contentsOf: ini, encoding: .utf8) else { return [] }
         // `-P` takes the profile *name*, so that's the token a rule stores.
         return FirefoxProfilesINI.parse(text).map {
             BrowserProfile(directory: $0.name, displayName: $0.name)
@@ -123,13 +148,17 @@ public enum ChromiumProfiles {
         "org.chromium.Chromium": "Chromium",
     ]
 
-    public static func profiles(for bundleID: String) -> [BrowserProfile] {
-        guard let dir = dataDirectories[bundleID] else { return [] }
-        let localState = FileManager.default.homeDirectoryForCurrentUser
+    static func localStateFile(for bundleID: String) -> URL? {
+        guard let dir = dataDirectories[bundleID] else { return nil }
+        return FileManager.default.homeDirectoryForCurrentUser
             .appendingPathComponent("Library/Application Support")
             .appendingPathComponent(dir)
             .appendingPathComponent("Local State")
-        guard let data = try? Data(contentsOf: localState),
+    }
+
+    public static func profiles(for bundleID: String) -> [BrowserProfile] {
+        guard let localState = localStateFile(for: bundleID),
+              let data = try? Data(contentsOf: localState),
               let json = try? JSONSerialization.jsonObject(with: data) as? [String: Any],
               let profile = json["profile"] as? [String: Any],
               let infoCache = profile["info_cache"] as? [String: Any] else {

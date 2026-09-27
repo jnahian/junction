@@ -9,6 +9,29 @@ import SwiftUI
 
 // MARK: - Browsers (F9)
 
+/// Shown when macOS blocks reading browser profiles. Full Disk Access has no permission
+/// prompt, so the best Junction can do is open the right pane and re-check on request.
+struct FullDiskAccessNotice: View {
+    @ObservedObject var state: AppState
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: 8) {
+            Label("Browser profiles need Full Disk Access", systemImage: "lock.shield")
+                .font(.headline)
+            Text("macOS blocks Junction from reading your browsers' profile lists. Turn on Junction under Full Disk Access, then check again. Junction only reads each browser's list of profile names.")
+                .font(.caption)
+                .foregroundStyle(.secondary)
+                .fixedSize(horizontal: false, vertical: true)
+            HStack {
+                Button("Open System Settings…") {
+                    NSWorkspace.shared.open(URL(string: "x-apple.systempreferences:com.apple.preference.security?Privacy_AllFiles")!)
+                }
+                Button("Check Again") { state.refreshBrowsers() }
+            }
+        }
+    }
+}
+
 struct BrowsersPane: View {
     @ObservedObject var state: AppState
 
@@ -27,6 +50,9 @@ struct BrowsersPane: View {
                         Text(state.config.fallback.app).tag(state.config.fallback.app)
                     }
                 }
+            }
+            if state.profileAccessBlocked {
+                Section { FullDiskAccessNotice(state: state) }
             }
             Section {
                 ForEach(state.browsers) { browser in

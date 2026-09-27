@@ -248,6 +248,10 @@ private struct OnboardingView: View {
                 : "Move Junction to /Applications to enable launch at login.")
                 .font(.caption)
                 .foregroundStyle(.secondary)
+            if state.profileAccessBlocked {
+                Divider()
+                FullDiskAccessNotice(state: state)
+            }
         }
     }
 

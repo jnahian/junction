@@ -150,6 +150,10 @@ struct RuleEditor: View {
                             Text("Choose…").tag("")
                             ForEach(state.browsers) { b in Text(b.name).tag(b.bundleID) }
                         }
+                        if let browser = selectedBrowser, browser.family != .other,
+                           browser.profiles.isEmpty, state.profileAccessBlocked {
+                            FullDiskAccessNotice(state: state)
+                        }
                         if let browser = selectedBrowser, !browser.profiles.isEmpty {
                             Picker("Profile", selection: $actionProfile) {
                                 Text("Default window").tag("")

@@ -22,6 +22,8 @@ final class AppState: ObservableObject {
     @Published private(set) var configError: ConfigError?
     @Published var routingPaused = false
     @Published private(set) var browsers: [Browser] = []
+    /// macOS refused to let Junction read a browser's profile list (needs Full Disk Access).
+    @Published private(set) var profileAccessBlocked = false
     @Published private(set) var isDefaultBrowser = false
 
     /// Injected by AppDelegate so state doesn't own window controllers.
@@ -222,6 +224,7 @@ final class AppState: ObservableObject {
 
     func refreshBrowsers() {
         browsers = BrowserDiscovery.installedBrowsers()
+        profileAccessBlocked = BrowserDiscovery.isProfileAccessBlocked(browsers)
     }
 
     func refreshDefaultBrowserStatus() {

@@ -169,6 +169,10 @@
       "body": "Almost always precedence: a broader rule above is catching the link first. Run <code>junction test &lt;url&gt;</code> — it prints the matching rule and the decision without opening anything."
     },
     {
+      "title": "No browser profiles to choose from",
+      "body": "macOS may block Junction from reading your browsers' profile lists, and it never asks first. Turn on Junction under <b>System Settings → Privacy &amp; Security → Full Disk Access</b>, then click <b>Check Again</b> or <b>Refresh</b> in <b>Settings → Browsers</b>. Junction only reads each browser's list of profile names."
+    },
+    {
       "title": "A rule opens the fallback instead of its app",
       "body": "Junction degrades to the fallback rather than opening the wrong thing — a deleted browser profile, an app that isn't installed, or an unknown rewriter all land there. The menu-bar icon flags an invalid config, and the last-good rules stay live until you fix it."
     },
