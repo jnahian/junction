@@ -58,6 +58,8 @@ Rules live in `~/.config/junction/config.json` (respects `$XDG_CONFIG_HOME`). Ed
 
 `fallback.app` is a browser bundle ID, or the special value `"picker"` to be asked with the picker on every unmatched link.
 
+`picker` sets how the picker looks, and every field is optional: `"layout"` is `"vertical"` (the default list) or `"horizontal"` (a row that wraps), `"labels"` is `"name"` or `"none"` for icons only, and `"iconSize"` is 16–64 points (default 22). For example, `"picker": { "layout": "horizontal", "labels": "none", "iconSize": 40 }`. **Settings → Browsers → Picker appearance** edits the same values.
+
 Pattern semantics: matched against `host/path`, scheme ignored unless written. `*` stays within a segment, `**` (or a trailing `*`) crosses segments, `*.example.com` includes the apex domain, bare `example.com` matches all subpaths. Host is case-insensitive, path case-sensitive, query ignored (use `regex` when the query matters).
 
 ## CLI
