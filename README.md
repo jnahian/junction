@@ -54,7 +54,7 @@ Rules live in `~/.config/junction/config.json` (respects `$XDG_CONFIG_HOME`). Ed
 }
 ```
 
-`profile` is a Chromium profile *directory* (`Default`, `Profile 1`) or a Firefox profile *name* (the one `firefox -P` takes, listed in **Settings → Browsers**). If a rule names a profile that no longer exists, the link degrades to your fallback browser rather than opening in the wrong one.
+`profile` is a Chromium profile *directory* (`Default`, `Profile 1`) or a Firefox profile *name* (the one `firefox -P` takes, listed in **Settings → Browsers**). Listing profiles needs **Full Disk Access**; without it, a Chromium profile still works if you type its directory into the config file, but a Firefox profile rule falls back to your fallback browser. If a rule names a profile that no longer exists, the link degrades to your fallback browser rather than opening in the wrong one.
 
 `fallback.app` is a browser bundle ID, or the special value `"picker"` to be asked with the picker on every unmatched link.
 
@@ -109,7 +109,7 @@ ln -sf "/Applications/Junction.app/Contents/Helpers/junction" /usr/local/bin/jun
 
 ### First launch
 
-Junction is a menu-bar app — no Dock icon, no window. It opens a short setup: choose what happens to unmatched links (ask with the picker, or a fallback browser), set Junction as your **default browser** (the one step it can't work without, since that's how it sees every clicked link), and optionally automate your first links with starter suggestions. After that it lives in the menu bar; click the icon for recent links, settings, and updates.
+Junction is a menu-bar app — no Dock icon, no window. It opens a short setup: choose what happens to unmatched links (ask with the picker, or a fallback browser), set Junction as your **default browser** (the one step it can't work without, since that's how it sees every clicked link), turn on **Full Disk Access** if you want to route to browser profiles (setup only asks when macOS is blocking it), and optionally automate your first links with starter suggestions. After that it lives in the menu bar; click the icon for recent links, settings, and updates.
 
 ### Updates
 
@@ -159,7 +159,7 @@ Rewriters are data, not code: [`Sources/JunctionCore/Resources/rewriters.json`](
 
 ## Privacy
 
-Zero telemetry, zero analytics. Junction makes exactly one kind of network request: the Sparkle update check against this repository's release feed. The links you route are never sent anywhere and never logged to disk; the recent-links list is in-memory, capped at 10, and cleared on quit.
+Zero telemetry, zero analytics. Junction makes exactly one kind of network request: the Sparkle update check against this repository's release feed. The links you route are never sent anywhere and never logged to disk; the recent-links list is in-memory, capped at 10, and cleared on quit. Full Disk Access is optional and only for browser profiles: Junction uses it to read each browser's list of profile names (Chromium's `Local State`, Firefox's `profiles.ini`) and nothing else.
 
 Being the default browser is a high-trust position. That's the argument for open source, for CI that builds and tests every commit, and for updates that only install if they carry a valid EdDSA signature from the maintainer's key.
 
