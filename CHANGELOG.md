@@ -10,7 +10,7 @@ shape matters:
 - Every bullet starts with `Added:`, `Changed:`, or `Fixed:` — that marker drives
   the filter pills on the changelog page.
 
-## Unreleased
+## 0.9.0 — 2026-09-27
 
 - Added: A Rules submenu in the menu bar lists your rules in match order. Click one to turn it off or on without opening Settings, or choose Edit Rules… to jump to the Rules pane.
 - Added: The browser picker can lay out as a horizontal row instead of a vertical list, show icons without names, and use a larger or smaller icon size. Set it under Settings → Browsers → Picker appearance. In the row layout, ←/→ move between choices and ↑/↓ jump a row. The picker names the highlighted choice above the icons, so profiles of the same browser stay distinguishable.
