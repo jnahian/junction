@@ -16,7 +16,9 @@ APP="$DIST/Junction.app"
 echo "▸ swift build -c release (universal)"
 swift build -c release --arch arm64 --arch x86_64
 
-BIN="$ROOT/.build/apple/Products/Release"
+# Ask SwiftPM: the universal output dir moved (.build/apple → .build/out) across toolchains,
+# and a hardcoded path silently packages whatever stale binary is left at the old one.
+BIN="$(swift build -c release --arch arm64 --arch x86_64 --show-bin-path)"
 
 echo "▸ assembling $APP"
 rm -rf "$APP"
