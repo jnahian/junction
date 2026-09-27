@@ -34,6 +34,11 @@ struct FullDiskAccessNotice: View {
 
 struct BrowsersPane: View {
     @ObservedObject var state: AppState
+    /// Slider value mid-drag. Committing every tick would save and reload the config each time.
+    @State private var iconSizeDraft: Double?
+    private var shownIconSize: Double {
+        iconSizeDraft ?? Double((state.config.picker ?? PickerAppearance()).iconSize)
+    }
 
     var body: some View {
         Form {
@@ -83,6 +88,35 @@ struct BrowsersPane: View {
                 Text("Checked entries appear in the picker. Hidden ones can still be a rule target or the fallback.")
                     .font(.caption).foregroundStyle(.secondary)
             }
+            Section("Picker appearance") {
+                Picker("Layout", selection: appearance(\.layout)) {
+                    Text("Vertical list").tag(PickerAppearance.Layout.vertical)
+                    Text("Horizontal row").tag(PickerAppearance.Layout.horizontal)
+                }
+                Picker("Show", selection: appearance(\.labels)) {
+                    Text("Icons and names").tag(PickerAppearance.Labels.name)
+                    Text("Icons only").tag(PickerAppearance.Labels.iconOnly)
+                }
+                LabeledContent("Icon size") {
+                    HStack {
+                        Slider(
+                            value: Binding(
+                                get: { shownIconSize },
+                                set: { iconSizeDraft = $0 }
+                            ),
+                            in: Double(PickerAppearance.iconSizeRange.lowerBound)...Double(PickerAppearance.iconSizeRange.upperBound),
+                            step: 2
+                        ) { editing in
+                            guard !editing, let draft = iconSizeDraft else { return }
+                            iconSizeDraft = nil
+                            appearance(\.iconSize).wrappedValue = Int(draft)
+                        }
+                        Text("\(Int(shownIconSize)) pt")
+                            .monospacedDigit()
+                            .frame(width: 44, alignment: .trailing)
+                    }
+                }
+            }
             Section {
                 Text("Chromium and Firefox profiles are detected automatically. Firefox containers are an extension feature with no launch-flag equivalent, so they are unsupported, as are Arc spaces (no public API).")
                     .font(.caption).foregroundStyle(.secondary)
@@ -90,6 +124,20 @@ struct BrowsersPane: View {
         }
         .formStyle(.grouped)
         .onAppear { state.refreshBrowsers() }
+    }
+
+    /// One field of `config.picker`; the first change writes the block into the file.
+    private func appearance<Value>(_ field: WritableKeyPath<PickerAppearance, Value>) -> Binding<Value> {
+        Binding(
+            get: { (state.config.picker ?? PickerAppearance())[keyPath: field] },
+            set: { value in
+                state.updateConfig { config in
+                    var picker = config.picker ?? PickerAppearance()
+                    picker[keyPath: field] = value
+                    config.picker = picker
+                }
+            }
+        )
     }
 
     /// Shown-in-picker toggle backed by `config.pickerHidden` (stored inverted).

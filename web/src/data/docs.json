@@ -126,7 +126,7 @@
     },
     {
       "label": "Settings",
-      "body": "fallback (a browser, or the ask-every-time picker), rules, browsers and profiles — including which appear in the picker — deep links, updates."
+      "body": "fallback (a browser, or the ask-every-time picker), rules, browsers and profiles — including which appear in the picker and how it looks (a vertical list or a horizontal row, with or without names, any icon size) — deep links, updates."
     },
     {
       "label": "Updates",

@@ -2,6 +2,7 @@
 import AppKit
 import Combine
 import Foundation
+import JunctionCore
 import JunctionMacKit
 import SwiftUI
 
@@ -27,6 +28,7 @@ final class PickerPanelController: NSObject, NSWindowDelegate {
     }
 
     private let choicesProvider: () -> [Choice]
+    private let appearanceProvider: () -> PickerAppearance
     private let openEffect: ([URL], Choice, @escaping @MainActor (BrowserBatchOutcome) -> Void) -> Void
     private let copyEffect: (String) -> Void
     private let copiedConfirmation: (Int) -> Void
@@ -57,6 +59,7 @@ final class PickerPanelController: NSObject, NSWindowDelegate {
             if choices.isEmpty { choices = Self.buildChoices(from: state.browsers, skipping: []) }
             return choices
         }
+        self.appearanceProvider = { [weak state] in state?.config.picker ?? PickerAppearance() }
         self.openEffect = { [weak state] urls, choice, completion in
             guard let state else { completion(.needsPicker); return }
             state.open(urls: urls, in: choice.browser, profile: choice.profile, completion: completion)
@@ -96,6 +99,7 @@ final class PickerPanelController: NSObject, NSWindowDelegate {
     /// browser, touching the clipboard, or loading the user's config file.
     init(
         choices: @escaping () -> [Choice],
+        appearance: PickerAppearance = PickerAppearance(),
         open: @escaping ([URL], Choice, @escaping @MainActor (BrowserBatchOutcome) -> Void) -> Void,
         copy: @escaping (String) -> Void,
         copiedConfirmation: @escaping (Int) -> Void = { _ in },
@@ -106,6 +110,7 @@ final class PickerPanelController: NSObject, NSWindowDelegate {
         visibleFrame: ((NSPoint) -> NSRect?)? = nil
     ) {
         self.choicesProvider = choices
+        self.appearanceProvider = { appearance }
         self.openEffect = open
         self.copyEffect = copy
         self.copiedConfirmation = copiedConfirmation
@@ -125,6 +130,8 @@ final class PickerPanelController: NSObject, NSWindowDelegate {
         var title: String {
             profile.map { "\(browser.name) (\($0.displayName))" } ?? browser.name
         }
+        /// Under a grid icon the icon already says which browser; the profile is the news.
+        var shortTitle: String { profile?.displayName ?? browser.name }
         var icon: NSImage { NSWorkspace.shared.icon(forFile: browser.appURL.path) }
     }
 
@@ -165,6 +172,8 @@ final class PickerPanelController: NSObject, NSWindowDelegate {
         let view = PickerView(
             session: session,
             maximumHeight: screenFrame.map { max(0, $0.height - 16) } ?? 800,
+            maximumWidth: screenFrame.map { max(0, $0.width - 16) } ?? 1200,
+            appearance: appearanceProvider(),
             choices: choices,
             onPick: { [weak self, weak session] choice in
                 guard let session else { return }
@@ -337,7 +346,10 @@ final class PickerPanelController: NSObject, NSWindowDelegate {
 
             let center = NSPoint(x: panel.frame.midX, y: panel.frame.midY)
             let screenFrame = self.visibleFrameProvider(center) ?? panel.screen?.visibleFrame
-            if let screenFrame { hosting.rootView.maximumHeight = max(0, screenFrame.height - 16) }
+            if let screenFrame {
+                hosting.rootView.maximumHeight = max(0, screenFrame.height - 16)
+                hosting.rootView.maximumWidth = max(0, screenFrame.width - 16)
+            }
 
             // Measure on the next turn: fittingSize read in this one can still reflect the
             // previous maximumHeight, sizing the panel for the screen it just left.
@@ -365,6 +377,19 @@ final class PickerPanelController: NSObject, NSWindowDelegate {
 
     private static func visibleFrame(at point: NSPoint) -> NSRect? {
         NSScreen.screens.first { NSMouseInRect(point, $0.frame, false) }?.visibleFrame
+    }
+
+    /// New selection for an arrow key, or nil when the key doesn't navigate this layout.
+    /// ↑/↓ move a whole row (one item in the vertical list); ←/→ only exist in a grid, so
+    /// in the list they keep falling through to the responder chain as they always have.
+    static func movedSelection(_ selection: Int, keyCode: UInt16, columns: Int, count: Int) -> Int? {
+        switch keyCode {
+        case 125: return selection + columns < count ? selection + columns : selection // down
+        case 126: return selection >= columns ? selection - columns : selection // up
+        case 123: return columns > 1 ? max(selection - 1, 0) : nil // left
+        case 124: return columns > 1 ? min(selection + 1, count - 1) : nil // right
+        default: return nil
+        }
     }
 
     static func constrainedFrame(size: NSSize, origin: NSPoint, visibleFrame: NSRect) -> NSRect {
@@ -436,6 +461,8 @@ final class KeyablePanel: NSPanel {
 private struct PickerView: View {
     @ObservedObject var session: PickerPanelController.Session
     var maximumHeight: CGFloat
+    var maximumWidth: CGFloat
+    let appearance: PickerAppearance
     let choices: [PickerPanelController.Choice]
     let onPick: (PickerPanelController.Choice) -> Void
     let onCopy: () -> Void
@@ -450,6 +477,35 @@ private struct PickerView: View {
     // A fixed 34pt clips every row once Larger Text is on.
     @ScaledMetric(relativeTo: .body) private var browserRowHeight: CGFloat = 32
     @ScaledMetric(relativeTo: .caption) private var linkRowHeight: CGFloat = 13
+    @ScaledMetric(relativeTo: .caption2) private var gridLabelHeight: CGFloat = 13
+
+    private static let minimumWidth: CGFloat = 340 // the footer's links need it
+    private static let gridSpacing: CGFloat = 4
+
+    private var iconSize: CGFloat { CGFloat(appearance.iconSize) }
+    private var isGrid: Bool { appearance.layout == .horizontal }
+    private var showsNames: Bool { appearance.labels == .name }
+    /// Icon-only rows and grid cells can't show which profile an icon is, so name the
+    /// selected one in a line that's always there (the panel height mustn't jump).
+    private var showsSelectedTitle: Bool { isGrid || !showsNames }
+
+    private var rowHeight: CGFloat { max(browserRowHeight, iconSize + 10) }
+    private var cellWidth: CGFloat { showsNames ? max(iconSize, 64) + 12 : iconSize + 16 }
+    private var cellHeight: CGFloat { iconSize + 12 + (showsNames ? gridLabelHeight + 4 : 0) }
+
+    /// Grid columns: as many as fit the screen, capped at 9 so the digit keys cover row one.
+    private var columns: Int {
+        guard isGrid else { return 1 }
+        let usable = maximumWidth - Metrics.panelPadding * 2 + Self.gridSpacing
+        let fit = Int(usable / (cellWidth + Self.gridSpacing))
+        return max(1, min(9, choices.count, fit))
+    }
+
+    private var panelWidth: CGFloat {
+        guard isGrid else { return Self.minimumWidth }
+        let cols = CGFloat(columns)
+        return max(Self.minimumWidth, cols * cellWidth + (cols - 1) * Self.gridSpacing + Metrics.panelPadding * 2)
+    }
 
     private var linkListHeight: CGFloat {
         let rows = CGFloat(session.urls.count)
@@ -457,8 +513,12 @@ private struct PickerView: View {
     }
 
     private var browserListHeight: CGFloat {
+        if isGrid {
+            let rows = CGFloat((choices.count + columns - 1) / columns)
+            return rows * cellHeight + max(0, rows - 1) * Self.gridSpacing
+        }
         let rows = CGFloat(choices.count)
-        return rows * browserRowHeight + max(0, rows - 1) * 2
+        return rows * rowHeight + max(0, rows - 1) * 2
     }
 
     var body: some View {
@@ -498,39 +558,29 @@ private struct PickerView: View {
                 .layoutPriority(1)
             }
 
+            if showsSelectedTitle {
+                Text(choices.indices.contains(selection) ? choices[selection].title : " ")
+                    .font(.caption)
+                    .lineLimit(1)
+                    .truncationMode(.middle)
+                    .padding(.horizontal, 6)
+            }
+
             ScrollViewReader { proxy in
                 ScrollView {
-                    VStack(spacing: 2) {
-                        ForEach(Array(choices.enumerated()), id: \.element.id) { index, choice in
-                            let selected = index == selection
-                            Button {
-                                onPick(choice)
-                            } label: {
-                                HStack(spacing: 10) {
-                                    Image(nsImage: choice.icon)
-                                        .resizable()
-                                        .frame(width: 22, height: 22)
-                                    Text(choice.title).lineLimit(1)
-                                    Spacer(minLength: 12)
-                                    if index < 9 {
-                                        Text("\(index + 1)")
-                                            .font(.caption.monospacedDigit())
-                                            .foregroundStyle(selected ? Color.white.opacity(0.8) : Color.secondary)
-                                    }
-                                }
-                                .padding(.vertical, 5)
-                                .padding(.horizontal, 10)
-                                .contentShape(RoundedRectangle(cornerRadius: Metrics.rowCornerRadius, style: .continuous))
-                                .background(
-                                    RoundedRectangle(cornerRadius: Metrics.rowCornerRadius, style: .continuous)
-                                        .fill(selected ? Color(nsColor: .selectedContentBackgroundColor) : .clear)
-                                )
-                                .foregroundStyle(selected ? Color.white : Color.primary)
+                    if isGrid {
+                        LazyVGrid(
+                            columns: Array(repeating: GridItem(.fixed(cellWidth), spacing: Self.gridSpacing), count: columns),
+                            spacing: Self.gridSpacing
+                        ) {
+                            ForEach(Array(choices.enumerated()), id: \.element.id) { index, choice in
+                                choiceButton(index: index, choice: choice) { gridCell(index: index, choice: choice) }
                             }
-                            .buttonStyle(.plain)
-                            .id(index)
-                            .onHover { hovering in
-                                if hovering { selection = index }
+                        }
+                    } else {
+                        VStack(spacing: 2) {
+                            ForEach(Array(choices.enumerated()), id: \.element.id) { index, choice in
+                                choiceButton(index: index, choice: choice) { listRow(index: index, choice: choice) }
                             }
                         }
                     }
@@ -564,7 +614,7 @@ private struct PickerView: View {
             .layoutPriority(1)
         }
         .padding(Metrics.panelPadding)
-        .frame(width: 340)
+        .frame(width: panelWidth)
         .frame(maxHeight: maximumHeight)
         .background(VisualEffectView(material: .hudWindow))
         .clipShape(RoundedRectangle(cornerRadius: Metrics.panelCornerRadius, style: .continuous))
@@ -574,6 +624,7 @@ private struct PickerView: View {
         )
         .background(KeyCatcher(
             count: choices.count,
+            columns: columns,
             selection: $selection,
             onPickIndex: { onPick(choices[$0]) },
             onMoveSelection: { keyboardScrollTarget = $0 },
@@ -585,11 +636,81 @@ private struct PickerView: View {
             onContentSizeChange()
         }
     }
+
+    private func choiceButton<Label: View>(
+        index: Int,
+        choice: PickerPanelController.Choice,
+        @ViewBuilder label: () -> Label
+    ) -> some View {
+        let selected = index == selection
+        return Button {
+            onPick(choice)
+        } label: {
+            label()
+                .contentShape(RoundedRectangle(cornerRadius: Metrics.rowCornerRadius, style: .continuous))
+                .background(
+                    RoundedRectangle(cornerRadius: Metrics.rowCornerRadius, style: .continuous)
+                        .fill(selected ? Color(nsColor: .selectedContentBackgroundColor) : .clear)
+                )
+                .foregroundStyle(selected ? Color.white : Color.primary)
+        }
+        .buttonStyle(.plain)
+        .help(choice.title)
+        .id(index)
+        .onHover { hovering in
+            if hovering { selection = index }
+        }
+    }
+
+    private func listRow(index: Int, choice: PickerPanelController.Choice) -> some View {
+        HStack(spacing: 10) {
+            Image(nsImage: choice.icon)
+                .resizable()
+                .frame(width: iconSize, height: iconSize)
+            if showsNames { Text(choice.title).lineLimit(1) }
+            Spacer(minLength: 12)
+            if index < 9 {
+                Text("\(index + 1)")
+                    .font(.caption.monospacedDigit())
+                    .foregroundStyle(index == selection ? Color.white.opacity(0.8) : Color.secondary)
+            }
+        }
+        .frame(height: rowHeight - 10)
+        .padding(.vertical, 5)
+        .padding(.horizontal, 10)
+    }
+
+    private func gridCell(index: Int, choice: PickerPanelController.Choice) -> some View {
+        VStack(spacing: 4) {
+            Image(nsImage: choice.icon)
+                .resizable()
+                .frame(width: iconSize, height: iconSize)
+                .overlay(alignment: .topTrailing) {
+                    if index < 9 {
+                        Text("\(index + 1)")
+                            .font(.caption2.monospacedDigit().bold())
+                            .padding(.horizontal, 4)
+                            .background(Capsule().fill(.regularMaterial))
+                            .foregroundStyle(.primary)
+                            .offset(x: 6, y: -6)
+                    }
+                }
+            if showsNames {
+                Text(choice.shortTitle)
+                    .font(.caption2)
+                    .lineLimit(1)
+                    .truncationMode(.middle)
+                    .frame(height: gridLabelHeight)
+            }
+        }
+        .frame(width: cellWidth, height: cellHeight)
+    }
 }
 
 /// Invisible NSView that owns first responder and translates key presses.
 private struct KeyCatcher: NSViewRepresentable {
     let count: Int
+    let columns: Int
     @Binding var selection: Int
     let onPickIndex: (Int) -> Void
     let onMoveSelection: (Int) -> Void
@@ -631,14 +752,13 @@ private struct KeyCatcher: NSViewRepresentable {
                 parent.onCancel()
             case 36, 76: // return / enter
                 parent.onPickIndex(parent.selection)
-            case 125: // down
-                parent.selection = min(parent.selection + 1, parent.count - 1)
-                parent.onMoveSelection(parent.selection)
-            case 126: // up
-                parent.selection = max(parent.selection - 1, 0)
-                parent.onMoveSelection(parent.selection)
             default:
-                if let chars = event.charactersIgnoringModifiers,
+                if let moved = PickerPanelController.movedSelection(
+                    parent.selection, keyCode: event.keyCode, columns: parent.columns, count: parent.count
+                ) {
+                    parent.selection = moved
+                    parent.onMoveSelection(moved)
+                } else if let chars = event.charactersIgnoringModifiers,
                    let digit = Int(chars), digit >= 1, digit <= min(9, parent.count) {
                     parent.onPickIndex(digit - 1)
                 } else {

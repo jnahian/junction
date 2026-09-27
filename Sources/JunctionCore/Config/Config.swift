@@ -22,6 +22,9 @@ public struct Config: Codable, Equatable, Sendable {
     /// `bundleID/profileDirectory` for a single profile. Hidden entries stay
     /// valid as fallback and rule targets — this only trims the picker list.
     public var pickerHidden: [String]
+    /// How the picker lays out its choices. Absent = the original vertical list with names,
+    /// and left absent on save so configs that never touched it don't grow a new block.
+    public var picker: PickerAppearance?
     public var rules: [Rule]
 
     public init(
@@ -33,6 +36,7 @@ public struct Config: Codable, Equatable, Sendable {
         customRewriters: [Rewriter] = [],
         slackTeams: [String: String] = [:],
         pickerHidden: [String] = [],
+        picker: PickerAppearance? = nil,
         rules: [Rule] = []
     ) {
         self.version = version
@@ -43,12 +47,13 @@ public struct Config: Codable, Equatable, Sendable {
         self.customRewriters = customRewriters
         self.slackTeams = slackTeams
         self.pickerHidden = pickerHidden
+        self.picker = picker
         self.rules = rules
     }
 
     enum CodingKeys: String, CodingKey {
         case version, fallback, stripTrackingParams, extraTrackingParams, enabledRewriters,
-             customRewriters, slackTeams, pickerHidden, rules
+             customRewriters, slackTeams, pickerHidden, picker, rules
     }
 
     public init(from decoder: Decoder) throws {
@@ -61,7 +66,52 @@ public struct Config: Codable, Equatable, Sendable {
         customRewriters = try c.decodeIfPresent([Rewriter].self, forKey: .customRewriters) ?? []
         slackTeams = try c.decodeIfPresent([String: String].self, forKey: .slackTeams) ?? [:]
         pickerHidden = try c.decodeIfPresent([String].self, forKey: .pickerHidden) ?? []
+        picker = try c.decodeIfPresent(PickerAppearance.self, forKey: .picker)
         rules = try c.decodeIfPresent([Rule].self, forKey: .rules) ?? []
+    }
+}
+
+/// Picker look (issue #13). Global only; every field is optional in the file.
+public struct PickerAppearance: Codable, Equatable, Sendable {
+    public enum Layout: String, Codable, CaseIterable, Sendable {
+        case vertical, horizontal
+    }
+    public enum Labels: String, Codable, CaseIterable, Sendable {
+        case name
+        /// Not `none`: on an optional that would silently compare against `Optional.none`.
+        case iconOnly = "none"
+    }
+
+    /// Past this the panel stops being a picker; below it icons are unreadable.
+    public static let iconSizeRange = 16...64
+
+    public var layout: Layout
+    public var labels: Labels
+    /// Icon edge in points, always within `iconSizeRange`.
+    public var iconSize: Int {
+        didSet { iconSize = Self.clamp(iconSize) }
+    }
+
+    public init(layout: Layout = .vertical, labels: Labels = .name, iconSize: Int = 22) {
+        self.layout = layout
+        self.labels = labels
+        self.iconSize = Self.clamp(iconSize)
+    }
+
+    enum CodingKeys: String, CodingKey { case layout, labels, iconSize }
+
+    public init(from decoder: Decoder) throws {
+        let c = try decoder.container(keyedBy: CodingKeys.self)
+        self.init(
+            layout: try c.decodeIfPresent(Layout.self, forKey: .layout) ?? .vertical,
+            labels: try c.decodeIfPresent(Labels.self, forKey: .labels) ?? .name,
+            // Clamped, not rejected: a wild size shouldn't take routing down with the config.
+            iconSize: try c.decodeIfPresent(Int.self, forKey: .iconSize) ?? 22
+        )
+    }
+
+    private static func clamp(_ size: Int) -> Int {
+        min(max(size, iconSizeRange.lowerBound), iconSizeRange.upperBound)
     }
 }
 

@@ -2,6 +2,7 @@
 import AppKit
 import XCTest
 @testable import JunctionApp
+import JunctionCore
 @testable import JunctionMacKit
 
 @MainActor
@@ -135,6 +136,53 @@ final class PickerPanelLayoutTests: XCTestCase {
         try await key(53, in: reopened)
         XCTAssertNil(controller.session)
         XCTAssertEqual(copied.count, 1)
+    }
+
+    func testArrowKeysFollowTheLayout() {
+        let move = PickerPanelController.movedSelection
+        // Vertical list: ↑/↓ step one row and stop at the ends; ←/→ aren't navigation.
+        XCTAssertEqual(move(0, 125, 1, 5), 1)
+        XCTAssertEqual(move(4, 125, 1, 5), 4)
+        XCTAssertEqual(move(0, 126, 1, 5), 0)
+        XCTAssertNil(move(2, 123, 1, 5))
+        XCTAssertNil(move(2, 124, 1, 5))
+        // Grid of 4 columns, 10 items: ←/→ step one, ↑/↓ jump a row.
+        XCTAssertEqual(move(1, 124, 4, 10), 2)
+        XCTAssertEqual(move(9, 124, 4, 10), 9)
+        XCTAssertEqual(move(0, 123, 4, 10), 0)
+        XCTAssertEqual(move(1, 125, 4, 10), 5)
+        XCTAssertEqual(move(7, 125, 4, 10), 7, "no row below column 3's last item")
+        XCTAssertEqual(move(5, 126, 4, 10), 1)
+        XCTAssertEqual(move(2, 126, 4, 10), 2)
+    }
+
+    /// Issue #13's overflow case: a single row of 17 large icons is wider than the screen.
+    func testHorizontalIconGridWrapsWithinANarrowScreen() async throws {
+        let narrow = NSRect(x: 0, y: 108, width: 800, height: 841)
+        let browserChoices = choices(17)
+        var opened: [String] = []
+        let controller = PickerPanelController(
+            choices: { browserChoices },
+            appearance: PickerAppearance(layout: .horizontal, labels: .iconOnly, iconSize: 64),
+            open: { _, choice, completion in opened.append(choice.browser.bundleID); completion(.opened) },
+            copy: { _ in }, presentsPanel: true, presentSession: { _, _ in },
+            visibleFrame: { _ in narrow }
+        )
+        defer { controller.dismiss() }
+        controller.show(for: first)
+        let panel = try XCTUnwrap(controller.panel)
+        try await waitUntil("the grid panel to be laid out inside the screen") {
+            panel.frame.height > 0 && narrow.insetBy(dx: 8, dy: 8).contains(panel.frame)
+        }
+        let content = try XCTUnwrap(panel.contentView)
+        XCTAssertLessThanOrEqual(content.fittingSize.width, panel.frame.width + 0.5, "nothing clipped sideways")
+
+        // → then ↓ moves one item and then a whole row, so Return opens item 1 + columns.
+        try await key(124, in: panel)
+        try await key(125, in: panel)
+        try await key(36, in: panel)
+        let columns = Int((800 - 16 - Metrics.panelPadding * 2 + 4) / (64 + 16 + 4)) // mirrors PickerView.columns
+        XCTAssertEqual(opened, [browserChoices[1 + min(9, columns)].browser.bundleID])
     }
 }
 #endif

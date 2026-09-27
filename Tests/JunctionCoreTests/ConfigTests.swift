@@ -216,4 +216,33 @@ final class ConfigStoreTests: XCTestCase {
         try Data(json.utf8).write(to: configURL)
         XCTAssertThrowsError(try ConfigStore.load(from: configURL))
     }
+
+    func testPickerAppearanceAbsentStaysAbsentOnSave() throws {
+        try Data(#"{ "fallback": { "app": "com.apple.Safari" } }"#.utf8).write(to: configURL)
+        let config = try ConfigStore.load(from: configURL)
+        XCTAssertNil(config.picker, "no block means the original vertical list with names")
+        try ConfigStore(fileURL: configURL).save(config)
+        let onDisk = try String(contentsOf: configURL, encoding: .utf8)
+        XCTAssertFalse(onDisk.contains("\"picker\""), "an untouched config must not grow a picker block")
+    }
+
+    func testPickerAppearanceRoundTripsAndClampsIconSize() throws {
+        let json = #"{ "picker": { "layout": "horizontal", "labels": "none", "iconSize": 400 } }"#
+        try Data(json.utf8).write(to: configURL)
+        let config = try ConfigStore.load(from: configURL)
+        XCTAssertEqual(config.picker, PickerAppearance(layout: .horizontal, labels: .iconOnly, iconSize: 64))
+        XCTAssertEqual(PickerAppearance(iconSize: 1).iconSize, 16)
+
+        try ConfigStore(fileURL: configURL).save(config)
+        let onDisk = try String(contentsOf: configURL, encoding: .utf8)
+        XCTAssertTrue(onDisk.contains(#""labels" : "none""#), "the file keeps the documented value")
+        XCTAssertEqual(try ConfigStore.load(from: configURL), config)
+    }
+
+    func testUnknownPickerLayoutNamesItsLocation() throws {
+        try Data(#"{ "picker": { "layout": "sideways" } }"#.utf8).write(to: configURL)
+        XCTAssertThrowsError(try ConfigStore.load(from: configURL)) { error in
+            XCTAssertTrue("\(error)".contains("picker.layout"), "got: \(error)")
+        }
+    }
 }
