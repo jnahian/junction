@@ -20,6 +20,12 @@ final class SettingsWindowController: NSObject {
             name: .junctionPrefillRule,
             object: nil
         )
+        NotificationCenter.default.addObserver(
+            self,
+            selector: #selector(jumpToRules),
+            name: .junctionShowRules,
+            object: nil
+        )
     }
 
     func show() {
