@@ -10,6 +10,10 @@ shape matters:
 - Every bullet starts with `Added:`, `Changed:`, or `Fixed:` — that marker drives
   the filter pills on the changelog page.
 
+## Unreleased
+
+- Changed: Google Chrome for Testing, the automation build that Playwright and Puppeteer install, no longer shows up as a browser in rules, the picker, or Settings → Browsers.
+
 ## 0.8.3 — 2026-09-07
 
 - Fixed: Links sent to the browser picker while it is open now stay together in one list. Each new link used to replace the last, so clicking three links in a row left you choosing a browser for only the third. Pick a browser to open the whole list at once, or copy it with one link per line.
