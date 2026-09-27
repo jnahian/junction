@@ -188,6 +188,30 @@ final class StatusItemController: NSObject, NSMenuDelegate {
         }
         recent.submenu = recentMenu
         menu.addItem(recent)
+
+        // Rules, in match order, each a checkmark toggle for `enabled`.
+        let rules = NSMenuItem(title: "Rules", action: nil, keyEquivalent: "")
+            .withSymbol("list.bullet")
+        let rulesMenu = NSMenu()
+        if state.config.rules.isEmpty {
+            let empty = NSMenuItem(title: "No rules yet", action: nil, keyEquivalent: "")
+            empty.isEnabled = false
+            rulesMenu.addItem(empty)
+        }
+        for (index, rule) in state.config.rules.enumerated() {
+            let item = NSMenuItem(title: rule.name, action: #selector(toggleRule(_:)), keyEquivalent: "")
+            item.target = self
+            item.state = rule.enabled ? .on : .off
+            item.representedObject = RuleRef(index: index, name: rule.name)
+            item.toolTip = rule.enabled ? "Click to turn this rule off" : "Click to turn this rule on"
+            rulesMenu.addItem(item)
+        }
+        rulesMenu.addItem(.separator())
+        let editRules = NSMenuItem(title: "Edit Rules…", action: #selector(showRules), keyEquivalent: "")
+        editRules.target = self
+        rulesMenu.addItem(editRules)
+        rules.submenu = rulesMenu
+        menu.addItem(rules)
         menu.addItem(.separator())
 
         let settings = NSMenuItem(title: "Settings…", action: #selector(openSettings), keyEquivalent: ",")
@@ -209,6 +233,24 @@ final class StatusItemController: NSObject, NSMenuDelegate {
     }
 
     @objc private func togglePause() { state.routingPaused.toggle() }
+
+    /// Position plus name: rule ids aren't persisted, and the file can change while the menu
+    /// is open, so only toggle if the rule at that position is still the one that was shown.
+    private struct RuleRef {
+        let index: Int
+        let name: String
+    }
+
+    @objc private func toggleRule(_ sender: NSMenuItem) {
+        guard let ref = sender.representedObject as? RuleRef,
+              state.config.rules.indices.contains(ref.index),
+              state.config.rules[ref.index].name == ref.name else { return }
+        state.updateConfig { $0.rules[ref.index].enabled.toggle() }
+    }
+
+    @objc private func showRules() {
+        NotificationCenter.default.post(name: .junctionShowRules, object: nil)
+    }
 
     /// LSUIElement apps aren't frontmost, so Sparkle's window opens behind everything.
     @objc private func checkForUpdates() {
@@ -246,5 +288,6 @@ final class StatusItemController: NSObject, NSMenuDelegate {
 
 extension Notification.Name {
     static let junctionPrefillRule = Notification.Name("junctionPrefillRule")
+    static let junctionShowRules = Notification.Name("junctionShowRules")
 }
 #endif
