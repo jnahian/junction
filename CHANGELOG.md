@@ -12,6 +12,7 @@ shape matters:
 
 ## Unreleased
 
+- Fixed: When macOS blocks Junction from reading your browsers' profile lists, Junction now says so instead of showing no profiles. Settings → Browsers, the rule editor and the welcome tour explain that Junction needs Full Disk Access, with a button that opens the right page in System Settings and a Check Again button for after you turn it on.
 - Changed: Google Chrome for Testing, the automation build that Playwright and Puppeteer install, no longer shows up as a browser in rules, the picker, or Settings → Browsers.
 
 ## 0.8.3 — 2026-09-07
