@@ -43,6 +43,8 @@ public enum BrowserDiscovery {
             guard let bundle = Bundle(url: appURL),
                   let bundleID = bundle.bundleIdentifier,
                   bundleID.lowercased() != "com.jnahian.junction",
+                  // Automation-only build (Playwright/Puppeteer), never a browser a user browses in.
+                  bundleID.lowercased() != "com.google.chrome.for.testing",
                   !seen.contains(bundleID) else { continue }
             seen.insert(bundleID)
             let name = (bundle.infoDictionary?["CFBundleDisplayName"] as? String)
