@@ -488,6 +488,9 @@ private struct PickerView: View {
     /// Icon-only rows and grid cells can't show which profile an icon is, so name the
     /// selected one in a line that's always there (the panel height mustn't jump).
     private var showsSelectedTitle: Bool { isGrid || !showsNames }
+    /// Vertical icons-only: the panel narrows to the icon column, so the footer's text
+    /// links become icon buttons (they'd otherwise hold it at 340pt of empty rows).
+    private var isCompact: Bool { !isGrid && !showsNames }
 
     private var rowHeight: CGFloat { max(browserRowHeight, iconSize + 10) }
     private var cellWidth: CGFloat { showsNames ? max(iconSize, 64) + 12 : iconSize + 16 }
@@ -502,6 +505,8 @@ private struct PickerView: View {
     }
 
     private var panelWidth: CGFloat {
+        // Row: horizontal padding + icon + spacing + minimum spacer + digit.
+        if isCompact { return max(120, iconSize + 52 + Metrics.panelPadding * 2) }
         guard isGrid else { return Self.minimumWidth }
         let cols = CGFloat(columns)
         return max(Self.minimumWidth, cols * cellWidth + (cols - 1) * Self.gridSpacing + Metrics.panelPadding * 2)
@@ -594,20 +599,35 @@ private struct PickerView: View {
             Divider()
 
             HStack {
-                Button("Create Rule for This Link…", action: onCreateRule)
-                    .buttonStyle(.link)
-                    .font(.caption)
-                    .disabled(session.urls.count != 1)
-                    .help(session.urls.count == 1
-                        ? "Create a rule for this link"
-                        : "Create Rule is available for one link at a time")
-                Button(session.urls.count == 1 ? "Copy Link" : "Copy \(session.urls.count) Links", action: onCopy)
-                    .buttonStyle(.link)
-                    .font(.caption)
-                Spacer()
-                Text("esc close · ⌘C copy")
-                    .font(.caption2)
-                    .foregroundStyle(.tertiary)
+                let createRuleHelp = session.urls.count == 1
+                    ? "Create a rule for this link"
+                    : "Create Rule is available for one link at a time"
+                let copyTitle = session.urls.count == 1 ? "Copy Link" : "Copy \(session.urls.count) Links"
+                if isCompact {
+                    Button(action: onCreateRule) { Image(systemName: "plus.square") }
+                        .buttonStyle(.borderless)
+                        .disabled(session.urls.count != 1)
+                        .help(createRuleHelp)
+                        .accessibilityLabel("Create Rule for This Link")
+                    Button(action: onCopy) { Image(systemName: "doc.on.doc") }
+                        .buttonStyle(.borderless)
+                        .help("\(copyTitle) (⌘C)")
+                        .accessibilityLabel(copyTitle)
+                    Spacer()
+                } else {
+                    Button("Create Rule for This Link…", action: onCreateRule)
+                        .buttonStyle(.link)
+                        .font(.caption)
+                        .disabled(session.urls.count != 1)
+                        .help(createRuleHelp)
+                    Button(copyTitle, action: onCopy)
+                        .buttonStyle(.link)
+                        .font(.caption)
+                    Spacer()
+                    Text("esc close · ⌘C copy")
+                        .font(.caption2)
+                        .foregroundStyle(.tertiary)
+                }
             }
             .padding(.horizontal, 6)
             .fixedSize(horizontal: false, vertical: true)
@@ -656,6 +676,7 @@ private struct PickerView: View {
         }
         .buttonStyle(.plain)
         .help(choice.title)
+        .accessibilityLabel(choice.title) // icon-only cells would otherwise read as "button"
         .id(index)
         .onHover { hovering in
             if hovering { selection = index }

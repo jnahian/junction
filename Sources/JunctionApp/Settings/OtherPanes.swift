@@ -36,6 +36,7 @@ struct BrowsersPane: View {
     @ObservedObject var state: AppState
     /// Slider value mid-drag. Committing every tick would save and reload the config each time.
     @State private var iconSizeDraft: Double?
+    @State private var draggingIconSize = false
     private var shownIconSize: Double {
         iconSizeDraft ?? Double((state.config.picker ?? PickerAppearance()).iconSize)
     }
@@ -102,11 +103,15 @@ struct BrowsersPane: View {
                         Slider(
                             value: Binding(
                                 get: { shownIconSize },
-                                set: { iconSizeDraft = $0 }
+                                // Keyboard and VoiceOver adjust without a drag, so they save directly.
+                                set: { value in
+                                    if draggingIconSize { iconSizeDraft = value } else { appearance(\.iconSize).wrappedValue = Int(value) }
+                                }
                             ),
                             in: Double(PickerAppearance.iconSizeRange.lowerBound)...Double(PickerAppearance.iconSizeRange.upperBound),
                             step: 2
                         ) { editing in
+                            draggingIconSize = editing
                             guard !editing, let draft = iconSizeDraft else { return }
                             iconSizeDraft = nil
                             appearance(\.iconSize).wrappedValue = Int(draft)

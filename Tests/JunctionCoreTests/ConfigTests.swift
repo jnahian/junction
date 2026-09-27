@@ -234,8 +234,9 @@ final class ConfigStoreTests: XCTestCase {
         XCTAssertEqual(PickerAppearance(iconSize: 1).iconSize, 16)
 
         try ConfigStore(fileURL: configURL).save(config)
-        let onDisk = try String(contentsOf: configURL, encoding: .utf8)
-        XCTAssertTrue(onDisk.contains(#""labels" : "none""#), "the file keeps the documented value")
+        let saved = try JSONSerialization.jsonObject(with: Data(contentsOf: configURL)) as? [String: Any]
+        let picker = saved?["picker"] as? [String: Any]
+        XCTAssertEqual(picker?["labels"] as? String, "none", "the file keeps the documented value")
         XCTAssertEqual(try ConfigStore.load(from: configURL), config)
     }
 
