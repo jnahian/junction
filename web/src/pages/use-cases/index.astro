@@ -1,0 +1,23 @@
+---
+import { getCollection } from "astro:content";
+import Base from "../../layouts/Base.astro";
+import "../../styles/docs.css";
+import "../../styles/use-cases.css";
+
+// every docs/use-cases/*.md, in the order its frontmatter asks for
+const pages = (await getCollection("useCases")).sort((a, b) => a.data.order - b.data.order);
+---
+
+<Base title="Junction — Use cases" description="What people route with Junction on macOS: browser profiles per client, Zoom and Slack links in their apps, dev links, and links you choose by hand." topbar={{ kind: "Use cases" }}>
+  <main class="content uc-page">
+    <div class="doc">
+      <h1>Use cases</h1>
+      <p class="lead">Junction is your default browser and sends each link to the right browser, profile, or app by your rules. Here's what that's good for, with the rules to copy.</p>
+    </div>
+    <ul class="uc-index">
+      {pages.map((page) => (
+        <li><a href={`/use-cases/${page.id}`}><h2>{page.data.title}</h2><p>{page.data.summary}</p></a></li>
+      ))}
+    </ul>
+  </main>
+</Base>

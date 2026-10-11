@@ -1,11 +1,16 @@
+import { getCollection } from "astro:content";
 import site from "../data/site.json";
 import { version, rewriters } from "../lib/repo.js";
 
 // llms.txt (llmstxt.org): a plain-text map of the site for LLMs. Generated at
 // build time like every other page, so the version and app list never drift
 // from the repo. Relative links resolve against wherever the site is served.
-export function GET() {
+export async function GET() {
   const { count, apps } = rewriters();
+  const useCases = (await getCollection("useCases"))
+    .sort((a, b) => a.data.order - b.data.order)
+    .map((page) => `- [${page.data.title}](/use-cases/${page.id}): ${page.data.summary}`)
+    .join("\n");
   const names = apps.map((a) => a.name).join(", ");
 
   const text = `# ${site.name}
@@ -26,6 +31,10 @@ instead of the browser: ${names}. Adding an app is a JSON-only contribution.
 
 - [Docs](/docs): rules, wildcard pattern semantics, actions, deep links, the CLI, and troubleshooting
 - [Changelog](/changelog): every release with Added/Changed/Fixed notes
+
+## Use cases
+
+${useCases}
 
 ## Source and distribution
 

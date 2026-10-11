@@ -9,7 +9,9 @@ import "@fontsource-variable/jetbrains-mono";
 
 // `topbar` is the page-specific part: the section chip, the brand link, and any
 // extra nav. Every page gets the same menu bar and the same version pill.
-const { title, topbar, description = site.tagline } = Astro.props;
+// `schema` is extra JSON-LD for the page itself (the use-case articles); every page
+// also describes the app.
+const { title, topbar, description = site.tagline, schema = [] } = Astro.props;
 
 // /docs and /docs/ both serve the same page; point search engines at one of them.
 const canonical = new URL(Astro.url.pathname.replace(/\/$/, "") || "/", Astro.site).href;
@@ -32,6 +34,7 @@ const jsonLd = {
 
 const links = [
   { label: "Docs", href: "/docs" },
+  { label: "Use cases", href: "/use-cases" },
   { label: "Changelog", href: "/changelog" },
   { label: "GitHub", href: site.github },
 ];
@@ -53,6 +56,7 @@ const links = [
 <meta property="og:image" content={image}>
 <meta name="twitter:card" content="summary">
 <script type="application/ld+json" set:html={JSON.stringify(jsonLd)} />
+{schema.map((ld) => <script type="application/ld+json" set:html={JSON.stringify(ld)} />)}
 <link rel="icon" href="/favicon.ico" sizes="any">
 <link rel="icon" type="image/png" sizes="32x32" href="/favicon-32x32.png">
 <link rel="icon" type="image/png" sizes="16x16" href="/favicon-16x16.png">

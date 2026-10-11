@@ -25,6 +25,7 @@ website go stale, so don't:
 | Version (`v0.5.1` in the topbar, the install button, the DMG link) | `App/Info.plist` → `CFBundleShortVersionString` |
 | Every release on `/changelog` | `CHANGELOG.md` |
 | The deep-link app list and the "17 rewriters" count | `Sources/JunctionCore/Resources/rewriters.json` |
+| Every page under `/use-cases` | `docs/use-cases/*.md` |
 
 So bumping the version in `Info.plist` updates the site. Adding a rewriter to
 `rewriters.json` updates the site. Neither needs a change here.
@@ -67,7 +68,7 @@ src/
   components/   MenuBar + TopBar (chrome) · one per section: landing/*, docs/*, changelog/*
   scripts/      client JS, one module per behavior
   styles/       chrome.css (shared) + one stylesheet per page
-  pages/        index · docs · changelog
+  pages/        index · docs · use-cases/ (index + [slug]) · changelog
 ```
 
 `Base.astro` renders the fake macOS menu bar and the topbar on **every** page, so
@@ -153,3 +154,35 @@ They aren't ours and aren't MIT-licensed with the rest of the repo.
 Add `src/pages/<name>.astro`, wrap it in `Base`, import a stylesheet. Links are
 plain `<a href="/…">`; external ones get `target="_blank"` automatically
 (`src/scripts/external-links.js`, loaded from the layout).
+
+## Use-case pages
+
+Each `docs/use-cases/<slug>.md` publishes to `/use-cases/<slug>`. The index,
+`sitemap.xml`, and `llms.txt` list a new file on their own; nothing else needs an edit.
+
+```md
+---
+title: Open Links in a Firefox Profile on Mac   # ≤ 48 chars, the search phrasing
+order: 2                                        # position on the /use-cases index
+summary: 145–160 chars — meta description, og, index card, llms.txt line
+related: [actions, rules]                       # /docs section ids for the footer
+---
+```
+
+(Keep real frontmatter free of `#` comments — the self-check reads it with a regex.)
+
+- One `#` H1, then `##` sections shaped question → direct answer → context → proof.
+  The last section is `## Get Junction`.
+- Proof is a rule, a config snippet, or real `junction test` output. Fence it as
+  ` ```json rule `, ` ```json config `, or ` ```text junction test ` — the word after
+  the language becomes the code block's title bar, and JSON gets the docs colors.
+- Link other use cases by relative `.md` path (`other-page.md#heading`); they're
+  rewritten at build. Each page links to 2+ pages and is linked from at least one.
+- Only claim what `/docs` documents. Junction is free, MIT, macOS 13+, Apple
+  silicon and Intel.
+- TechArticle + BreadcrumbList JSON-LD come from the frontmatter; never write it.
+
+The collection schema (`src/content.config.js`) fails the build on bad
+frontmatter; `src/lib/usecases.test.mjs` (`npm test`) checks headings, links,
+inbound links, and that every JSON sample parses. The Markdown plugin is
+`src/lib/markdown.js`, run by Astro's Sätteri processor.

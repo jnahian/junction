@@ -6,9 +6,10 @@
     "dev": "astro dev",
     "build": "astro build",
     "preview": "astro preview",
-    "test": "node src/lib/repo.test.mjs && node src/lib/match.test.mjs && node src/lib/highlight.test.mjs"
+    "test": "node src/lib/repo.test.mjs && node src/lib/match.test.mjs && node src/lib/highlight.test.mjs && node src/lib/usecases.test.mjs"
   },
   "dependencies": {
+    "@astrojs/markdown-satteri": "0.3.4",
     "@fontsource-variable/jetbrains-mono": "^5.3.0",
     "@fontsource-variable/space-grotesk": "^5.3.0",
     "astro": "^7.0.9"

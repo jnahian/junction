@@ -1,0 +1,61 @@
+---
+import { getCollection, render } from "astro:content";
+import Base from "../../layouts/Base.astro";
+import docs from "../../data/docs.json";
+import site from "../../data/site.json";
+import { checkUseCases } from "../../lib/usecases.js";
+import "../../styles/docs.css";
+import "../../styles/use-cases.css";
+
+export async function getStaticPaths() {
+  checkUseCases(); // links, headings, JSON samples — a broken page fails the build
+  const pages = await getCollection("useCases");
+  return pages.map((page) => ({ params: { slug: page.id }, props: { page } }));
+}
+
+const { page } = Astro.props;
+const { title, summary, related } = page.data;
+const { Content } = await render(page);
+
+// footer labels come from the docs sidebar, so they read the same as there
+const docLinks = Object.fromEntries(docs.nav.flatMap((g) => g.links).map((l) => [l.href.slice(1), l.label]));
+
+const url = new URL(`/use-cases/${page.id}`, Astro.site).href;
+const schema = [
+  {
+    "@context": "https://schema.org",
+    "@type": "TechArticle",
+    headline: title,
+    description: summary,
+    url,
+    about: { "@type": "SoftwareApplication", name: site.name, operatingSystem: "macOS" },
+    author: { "@type": "Person", name: site.author.handle, url: site.author.site },
+  },
+  {
+    "@context": "https://schema.org",
+    "@type": "BreadcrumbList",
+    itemListElement: [
+      { "@type": "ListItem", position: 1, name: site.name, item: new URL("/", Astro.site).href },
+      { "@type": "ListItem", position: 2, name: "Use cases", item: new URL("/use-cases", Astro.site).href },
+      { "@type": "ListItem", position: 3, name: title, item: url },
+    ],
+  },
+];
+---
+
+<Base title={`${title} — ${site.name}`} description={summary} topbar={{ kind: "Use cases" }} schema={schema}>
+  <main class="content uc-page">
+    <nav class="crumbs" aria-label="Breadcrumb"><a href="/use-cases">Use cases</a> /</nav>
+    <article class="doc">
+      <Content />
+    </article>
+    <footer class="uc-foot">
+      <h5>Related docs</h5>
+      <ul>{related.map((id) => <li><a href={`/docs#${id}`}>{docLinks[id]}</a></li>)}</ul>
+    </footer>
+  </main>
+</Base>
+
+<script>
+  import "../../scripts/code-copy.js";
+</script>
