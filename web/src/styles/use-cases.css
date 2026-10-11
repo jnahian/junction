@@ -22,7 +22,7 @@
 .doc th{text-align:left;font-family:var(--mono);font-size:11px;letter-spacing:.1em;text-transform:uppercase;color:var(--faint);padding:10px 14px;border-bottom:1px solid var(--line-strong)}
 .doc td{padding:11px 14px;border-bottom:1px solid var(--line);color:var(--body-fg);vertical-align:top}
 .doc tr:last-child td{border-bottom:none}
-.doc li > code, .doc td > code{white-space:nowrap}
+.doc td > code{white-space:nowrap} /* tables scroll; list items must wrap */
 
 .uc-foot{max-width:760px;margin-top:56px;padding-top:22px;border-top:1px solid var(--line)}
 .uc-foot h5{font-family:var(--mono);font-size:11px;letter-spacing:.14em;text-transform:uppercase;color:var(--faint);margin-bottom:10px}
