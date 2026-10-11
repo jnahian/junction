@@ -55,11 +55,16 @@ title: Open Links in a Firefox Profile on Mac
 order: 11
 summary: One sentence, 145–160 characters, standalone — it's the meta description, the index card, and the llms.txt line.
 related: [actions, rules]
+icons: [firefox]
 ---
 ```
 
 - `title` ≤ 48 chars, the query as people type it, primary keyword first.
 - `order` must be unique — next free number unless it belongs higher.
+- `icons` is 1–3 names for the index card: a brand mark from
+  `web/public/icons/*.svg` for the apps the page is about, or a line glyph from
+  `web/src/icons/*.svg` for a topic (`shield-check`, `wrench`). A new glyph
+  comes from `https://unpkg.com/lucide-static@0.460.0/icons/<name>.svg`.
 - `related` takes ids from `docs.json` → `nav` (`overview`, `install`,
   `quickstart`, `config`, `rules`, `actions`, `deeplinks`, `menubar`, `cli`,
   `troubleshooting`, `privacy`).
@@ -102,7 +107,40 @@ Paste what it prints. Only paste a deep-link trace whose `action:` reads
 `deep link (…)`. If it says `fallback`, the app isn't installed on this Mac and
 the trace proves nothing — show the rule and link `/docs#deeplinks` instead.
 
-## 5. Link it in
+## 5. Screenshots, where the app's UI is the answer
+
+Add one when a section tells the reader to use a Settings pane, a menu, a dialog,
+or the picker. Skip it for anything a rule or a `junction test` trace already
+shows. Files go in `docs/assets/screenshots/<slug>/NN-name.png` and are linked
+as `![alt that describes what's on screen](../assets/screenshots/<slug>/NN-name.png)`;
+the build turns them into WebP.
+
+**Never capture the maintainer's own Junction.** Screenshots get published, and
+the real app shows real rules, browser profile names, and recent links. Instead:
+
+1. Write a demo config in a scratch dir (`<dir>/junction/config.json`) with
+   made-up rules. Put every real browser profile in `pickerHidden`
+   (`com.google.Chrome/<directory>`, `org.mozilla.firefox/<name>`), plus any
+   non-browser apps that register for https.
+2. Ask before quitting the user's Junction, since links can't route its way
+   while it's down. Then: `osascript -e 'tell application id "com.jnahian.junction" to quit'`.
+   Two copies running at once confuse System Events, so the real one has to stop.
+3. Launch the demo copy: `XDG_CONFIG_HOME=<dir> dist/Junction.app/Contents/MacOS/Junction &`
+   (build it with `Scripts/bundle-app.sh` if `dist/` is stale).
+4. Drive it with System Events (`click menu bar item 1 of menu bar 2`, toolbar
+   buttons by name). Compile the helper with
+   `swiftc capture.swift -o capture`. Then `capture windows <pid>` gives window ids
+   for `screencapture -x -o -l <id> out.png`, and `capture geturl <pid> <url>`
+   opens the picker in the demo copy only.
+5. **Never capture Settings → Browsers.** It lists real profile names.
+6. `kill` the demo copy and `open -a /Applications/Junction.app`. Confirm it's running.
+
+Look at every image before using it, and crop anything personal (menu-bar
+extras, terminal text behind a menu). Captures are 2×; pad narrow ones to
+1400px wide with transparent space (sharp's `extend`), so every shot renders at
+the same scale as a Settings window.
+
+## 6. Link it in
 
 - Link **out** to at least 2 pages: other use cases by relative path
   (`firefox-profile-links.md`, `links-from-apps.md#heading-slug`) or `/docs#id`.
@@ -111,7 +149,7 @@ the trace proves nothing — show the rule and link `/docs#deeplinks` instead.
 
 The index, sitemap, and `llms.txt` pick the page up by themselves — don't edit them.
 
-## 6. Verify
+## 7. Verify
 
 ```sh
 python3 .claude/skills/write-use-case/verify.py   # every rule validates, every trace matches the CLI
@@ -122,7 +160,7 @@ The build fails on any broken rule from the README contract, so a passing build
 is required, not optional. Look at the page in `npm run preview` at phone width
 if you added a table or a long rule.
 
-## 7. Report
+## 8. Report
 
 Name the page or section, its title and slug, which page now links to it, and
 any claim you left out because `/docs` doesn't cover it.
