@@ -20,6 +20,10 @@ List what exists: `grep -h '^title:\|^order:' docs/use-cases/*.md`.
 - Otherwise **add an H2 section** to the closest page and skip the frontmatter in
   step 3.
 
+The index grid is 3 cards across on desktop and 2 on tablets, so a page count
+that's a multiple of 6 leaves no half-empty last row. If a new page breaks that,
+say so in the report and suggest what would fill the row — don't pad with thin pages.
+
 ## 2. Check every claim before writing it
 
 The rule is: **claim only what `/docs` documents.** Sources, in order:
@@ -45,6 +49,9 @@ Two semantics that are easy to get wrong:
 If a page promises "every link from X", the rule must sit **first** in the list
 (first match wins). Say so on the page.
 
+Screenshots can show UI that `/docs` doesn't mention (**Pause Routing**, **Create
+Rule from This Link…**). That's fine in an image — just don't describe it in the text.
+
 ## 3. Write the page
 
 Frontmatter — keep it free of `#` comments and of `: ` inside values (YAML):
@@ -60,7 +67,8 @@ icons: [firefox]
 ```
 
 - `title` ≤ 48 chars, the query as people type it, primary keyword first.
-- `order` must be unique — next free number unless it belongs higher.
+- `order` must be unique. To place a page beside related ones, renumber the rest
+  so the sequence stays 1…N with no gaps (a short script over `^order: \d+$`).
 - `icons` is 1–3 names for the index card: a brand mark from
   `web/public/icons/*.svg` for the apps the page is about, or a line glyph from
   `web/src/icons/*.svg` for a topic (`shield-check`, `wrench`). A new glyph
@@ -93,6 +101,9 @@ Proof blocks — the word after the language is the code block's title bar:
 
 Use ` ```json config ` for top-level keys. One top-level key per line, the rest
 inline, as above.
+
+Keep table cells plain Markdown — no `<br>` or other HTML. When a cell needs two
+lines, rephrase it ("X, then Y") or split the row.
 
 ## 4. Generate traces — never type them
 
@@ -140,6 +151,28 @@ extras, terminal text behind a menu). Captures are 2×; pad narrow ones to
 1400px wide with transparent space (sharp's `extend`), so every shot renders at
 the same scale as a Settings window.
 
+What worked, and what didn't:
+
+- **Menus:** capture the one menu window you need with `-l`, never a screen
+  region — a region picks up other menu-bar icons and whatever is behind the menu.
+  The demo copy's main menu also shows a "Not the Default Browser" warning, so
+  capture submenus (like **Rules**) rather than the main menu.
+- **The picker** lists every app that registers for https (ChatGPT, download
+  managers, Opera). Hide those in `pickerHidden` too, by exact bundle ID —
+  `mdls -raw -name kMDItemCFBundleIdentifier /Applications/<App>.app`.
+- **Below the fold:** SwiftUI rows off-screen aren't in the accessibility tree.
+  Set the pane's `AXScrollBar` value to `1.0` before looking for a button.
+- **Text fields in a sheet:** collect every `AXTextField`/`AXTextArea` from
+  `entire contents` of the sheet, then `set focused` and `keystroke` each value.
+- **Sheets:** `-l` on a sheet window also captures the dimmed parent window. Crop
+  to the sheet: its bounds minus the parent's origin, ×2.
+- **zsh** doesn't word-split `$var`, so a list of bundle IDs in one variable
+  arrives as a single string. Loop over them, or pass them as an array.
+- **Reuse before recapturing:** a page can link another page's screenshot
+  (`../assets/screenshots/<other-slug>/01-name.png`).
+- **Downtime:** quitting, capturing four or five shots, and relaunching took about
+  5 minutes. Tell the user that up front, not "2–3 minutes".
+
 ## 6. Link it in
 
 - Link **out** to at least 2 pages: other use cases by relative path
@@ -148,8 +181,10 @@ the same scale as a Settings window.
   The index doesn't count.
 
 The index, sitemap, `llms.txt`, and the `/use-cases/<slug>.md` source copy pick
-the page up by themselves — don't edit them. That `.md` copy is the file as you
-wrote it, so keep the Markdown readable on its own.
+the page up by themselves — don't edit them. That `.md` copy (and the page's
+**Copy Markdown** button) serves the file as you wrote it, with only screenshot
+paths swapped for built images — so link screenshots by relative path, and keep
+the Markdown readable on its own.
 
 ## 7. Verify
 
@@ -159,10 +194,14 @@ cd web && npm test && npm run build               # frontmatter, headings, links
 ```
 
 The build fails on any broken rule from the README contract, so a passing build
-is required, not optional. Look at the page in `npm run preview` at phone width
-if you added a table or a long rule.
+is required, not optional. Then, in `npm run preview`:
+
+- the page at phone width, if you added a table, a long rule, or a screenshot;
+- `/use-cases/<slug>.md` loads, and its screenshot links point at `/_astro/…png`;
+- the index's last row, if the page count changed.
 
 ## 8. Report
 
-Name the page or section, its title and slug, which page now links to it, and
-any claim you left out because `/docs` doesn't cover it.
+Name the page or section, its title and slug, which page now links to it, any
+claim you left out because `/docs` doesn't cover it, and whether the index grid
+is still full.
