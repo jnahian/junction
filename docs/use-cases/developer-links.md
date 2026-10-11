@@ -1,8 +1,9 @@
 ---
 title: Open localhost Links in a Separate Browser
-order: 11
+order: 12
 summary: Send localhost, preview deployments, and terminal links to your dev browser, and open repos in GitHub Desktop and VS Code. Junction routes dev links by rule.
 related: [rules, cli, deeplinks]
+icons: [terminal, vscode, github-desktop]
 ---
 
 # Keep localhost and dev links in your dev browser

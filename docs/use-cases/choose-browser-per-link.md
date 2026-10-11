@@ -1,13 +1,16 @@
 ---
 title: Choose Which Browser Opens Each Link on Mac
-order: 12
+order: 13
 summary: Pick a browser or profile each time you click a link, for every link or only some. Junction's picker asks at click time, and holding Option skips your rules.
 related: [actions, config, quickstart]
+icons: [mouse-pointer-click]
 ---
 
 # Choose a browser every time you click a link
 
 Junction is a free, open-source macOS app that becomes your default browser and routes each link by your rules. Its picker asks where a link should open — for every link, for the links your rules don't cover, or only when you hold ⌥ Option.
+
+![Junction's picker for a bit.ly link: Firefox, Google Chrome, Microsoft Edge, and Safari, numbered 1 to 4](../assets/screenshots/choose-browser-per-link/01-picker.png)
 
 ## How do I choose a browser each time I click a link?
 
@@ -47,7 +50,7 @@ Yes. Give a rule the `prompt` action and the links it matches always ask. Short 
 
 ## What happens when several links arrive at once?
 
-They collect in one picker. Links sent to the picker while it's open join one list:
+They collect in one picker — more in [opening several links at once](open-several-links.md). Links sent to the picker while it's open join one list:
 
 - **Choose a browser** to open them all there.
 - **Copy** them, one per line.
@@ -68,6 +71,8 @@ Go to **Settings → Browsers → Picker appearance**. You can lay the picker ou
   "picker": { "layout": "horizontal", "labels": "none", "iconSize": 40 }
 }
 ```
+
+![The same picker as a horizontal row of icons without names](../assets/screenshots/choose-browser-per-link/02-picker-row.png)
 
 In the horizontal layout, ←/→ move between choices and ↑/↓ jump a row. **Settings → Browsers** also sets which browsers and profiles appear in the picker.
 

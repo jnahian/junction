@@ -1,8 +1,9 @@
 ---
 title: Why Links Open in the Wrong Browser on Mac
-order: 16
+order: 18
 summary: Find out why a link opened in the wrong browser or profile, and fix it. Junction's junction test command shows which rule caught a link, and why it did.
 related: [troubleshooting, cli, rules]
+icons: [wrench]
 ---
 
 # Fix links that open in the wrong browser
@@ -39,7 +40,11 @@ action:      open in com.google.Chrome
 url:         https://mail.google.com/mail/u/0/
 ```
 
-The fix is to move the specific rule — Gmail here — above the broad one. In Settings, drag it up the Rules list; in the config file, move it earlier in `rules`. More on order in [a default browser per website](default-browser-per-website.md#which-rule-wins-when-two-rules-match).
+The fix is to move the specific rule — Gmail here — above the broad one. In Settings, drag it up the Rules list; in the config file, move it earlier in `rules`.
+
+![Settings → Rules lists rules in match order; drag a rule to move it](../assets/screenshots/default-browser-per-website/01-rules-pane.png)
+
+More on order in [a default browser per website](default-browser-per-website.md#which-rule-wins-when-two-rules-match).
 
 ## How do I test a rule that matches the app I clicked in?
 

@@ -1,8 +1,9 @@
 ---
 title: Open Links in a Specific Chrome Profile on Mac
-order: 2
+order: 3
 summary: Send work links to your work Chrome profile and everything else to your personal one, automatically. Junction picks the profile by the link, account, or app.
 related: [actions, rules, menubar]
+icons: [chrome]
 ---
 
 # Open every link in the right Chrome profile on your Mac

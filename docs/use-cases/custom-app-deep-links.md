@@ -1,8 +1,9 @@
 ---
 title: Open Any Website's Links in Its Mac App
-order: 10
+order: 11
 summary: Teach Junction a new app. Add its URL scheme, a pattern for its web links, and a template, and those links open in the Mac app instead of a browser tab.
 related: [deeplinks, actions, troubleshooting]
+icons: [puzzle]
 ---
 
 # Open a website's links in its Mac app, even if Junction doesn't know it yet
@@ -21,6 +22,8 @@ First check whether Junction already knows the app: **Settings → Deep Links** 
 | Template | The app link, with `$1`, `$2` for the captures | `tracker://$1` |
 
 The dialog has a test field: paste a real link and check the app link it produces before you save.
+
+![The Add App… dialog filled in for Tracker, with the test field turning a tracker.example.com link into tracker://issue/42](../assets/screenshots/custom-app-deep-links/01-add-app.png)
 
 ## How do I find an app's URL scheme?
 

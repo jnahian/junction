@@ -1,8 +1,9 @@
 ---
 title: Open Microsoft 365 Links in the Right Account
-order: 4
+order: 5
 summary: Send SharePoint, OneDrive, and Outlook links to the Edge profile signed in to your work account, and personal Microsoft links somewhere else, with Junction.
 related: [actions, rules, deeplinks]
+icons: [edge, teams]
 ---
 
 # Open Microsoft 365 links in your work account, every time

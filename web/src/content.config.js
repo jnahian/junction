@@ -1,10 +1,14 @@
 import { defineCollection } from "astro:content";
 import { glob } from "astro/loaders";
 import { z } from "astro/zod";
+import { readdirSync } from "node:fs";
 import docs from "./data/docs.json";
 
 // /docs anchors a page may list in `related` — whatever the docs sidebar links to
 const docIds = docs.nav.flatMap((g) => g.links).map((l) => l.href).filter((h) => h.startsWith("#")).map((h) => h.slice(1));
+
+// index-card icons: a brand mark in public/icons, or a line glyph in src/icons
+const iconNames = ["public/icons", "src/icons"].flatMap((dir) => readdirSync(dir)).map((f) => f.replace(/\.svg$/, ""));
 
 // The use-case pages live outside web/ (docs/use-cases/*.md), like CHANGELOG.md.
 // The spec's limits are enforced here, so a page that breaks one fails the build.
@@ -15,6 +19,7 @@ const useCases = defineCollection({
     order: z.number().int(),
     summary: z.string().min(145).max(160),
     related: z.array(z.enum(docIds)).min(1),
+    icons: z.array(z.enum(iconNames)).min(1).max(3),
   }),
 });
 

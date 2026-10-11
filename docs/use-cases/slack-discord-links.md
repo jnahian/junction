@@ -1,8 +1,9 @@
 ---
 title: Open Slack Links in the Slack App on Mac
-order: 7
+order: 8
 summary: Make Slack message links jump to the message in the Slack app, and Discord and Telegram links open in theirs. Junction converts chat links into app links.
 related: [deeplinks, config, rules]
+icons: [slack, discord, telegram]
 ---
 
 # Open Slack, Discord, and Telegram links in their apps
@@ -35,6 +36,8 @@ Slack's app links need a team ID, and Slack permalinks don't carry one. Junction
   "slackTeams": { "acme": "T01ABCDEF" }
 }
 ```
+
+![The Slack workspaces section of Settings → Deep Links, where you type a workspace or paste a Slack link](../assets/screenshots/slack-discord-links/01-slack-workspaces.png)
 
 A link from a workspace that isn't mapped opens in the browser, rather than on the wrong screen in the app.
 

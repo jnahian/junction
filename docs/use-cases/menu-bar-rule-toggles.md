@@ -1,13 +1,16 @@
 ---
 title: Turn Link Rules On and Off From the Menu Bar
-order: 13
+order: 15
 summary: Switch a link rule off for the weekend or on for a screen share without opening Settings. Junction lists every rule in its menu bar menu, each one a click away.
 related: [menubar, rules, privacy]
+icons: [toggle-right]
 ---
 
 # Switch link rules on and off from the menu bar
 
 Junction is a free, open-source macOS app that becomes your default browser and routes each link by your rules. It lives in the menu bar — no windows, no Dock icon — and its menu lists every rule, so you can turn one off or on with a single click.
+
+![Junction's Rules menu: five rules checked on, the demo-mode rule off, and Edit Rules… at the bottom](../assets/screenshots/menu-bar-rule-toggles/01-rules-menu.png)
 
 ## How do I turn a rule off without opening Settings?
 

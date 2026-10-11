@@ -1,8 +1,9 @@
 ---
 title: Sync Browser Routing Rules Across Macs
-order: 14
+order: 16
 summary: Keep your link rules in one plain JSON file you can commit to dotfiles, sync between Macs, and share with a team. Junction reloads and checks it on every edit.
 related: [config, cli, rules]
+icons: [refresh-cw]
 ---
 
 # Sync your link rules across Macs with one config file

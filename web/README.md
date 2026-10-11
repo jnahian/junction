@@ -147,7 +147,12 @@ Two gotchas, already handled, that will bite again if you add icons:
 - Check any new icon against the dark background before shipping it.
 
 These are third-party trademarks, used to identify the apps Junction routes to.
-They aren't ours and aren't MIT-licensed with the rest of the repo.
+They aren't ours and aren't MIT-licensed with the rest of the repo. The use-case
+index also shows `safari.svg` and `edge.svg` from the same source.
+
+`src/icons/*.svg` are [Lucide](https://lucide.dev) line glyphs (ISC license) for
+use-case topics that have no brand — privacy, sync, troubleshooting. They're
+inlined rather than linked, so `stroke="currentColor"` picks up the page color.
 
 ## Adding a page
 
@@ -166,6 +171,7 @@ title: Open Links in a Firefox Profile on Mac   # ≤ 48 chars, the search phras
 order: 2                                        # position on the /use-cases index
 summary: 145–160 chars — meta description, og, index card, llms.txt line
 related: [actions, rules]                       # /docs section ids for the footer
+icons: [firefox]                                # 1–3 index-card icons: public/icons/*.svg (brand) or src/icons/*.svg (line glyph)
 ---
 ```
 
@@ -178,6 +184,10 @@ related: [actions, rules]                       # /docs section ids for the foot
   the language becomes the code block's title bar, and JSON gets the docs colors.
 - Link other use cases by relative `.md` path (`other-page.md#heading`); they're
   rewritten at build. Each page links to 2+ pages and is linked from at least one.
+- Screenshots live in `docs/assets/screenshots/<slug>/NN-name.png`, captured from a
+  demo copy of the app, never the maintainer's own (the `write-use-case` skill has
+  the recipe). They're 2× captures padded to 1400px wide, so they all render at
+  one scale; the build converts them to WebP.
 - Only claim what `/docs` documents. Junction is free, MIT, macOS 13+, Apple
   silicon and Intel.
 - TechArticle + BreadcrumbList JSON-LD come from the frontmatter; never write it.

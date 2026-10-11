@@ -33,7 +33,14 @@
 .uc-index{list-style:none;display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:16px;margin-top:30px}
 .uc-index a{display:block;height:100%;padding:20px;border:1px solid var(--line);border-radius:14px;background:rgba(17,27,43,.45);text-decoration:none;transition:border-color .15s}
 .uc-index a:hover{border-color:var(--brand)}
+.uc-icons{display:flex;gap:8px;margin-bottom:14px}
+.uc-icons > *{display:grid;place-items:center;width:38px;height:38px;border:1px solid var(--line-strong);border-radius:10px;background:rgba(6,11,20,.6)}
+.uc-icons img{width:38px;height:38px;padding:8px}
+.uc-icons .glyph svg{width:20px;height:20px;color:var(--brand)}
 .uc-index h2{font-family:var(--display);font-weight:600;font-size:17px;color:var(--text);margin-bottom:6px}
 .uc-index p{font-size:14px;line-height:1.6;color:var(--body-fg)}
 @media (max-width:900px){ .uc-index{grid-template-columns:repeat(2,minmax(0,1fr))} }
 @media (max-width:620px){ .uc-index{grid-template-columns:minmax(0,1fr)} }
+
+/* screenshots: captured at 2x, so cap them to the column rather than their pixel width */
+.doc img{display:block;max-width:100%;height:auto;margin:22px auto}

@@ -1,8 +1,9 @@
 ---
 title: Open Links in a Firefox Profile on Mac
-order: 3
+order: 4
 summary: Keep each client's logins and cookies apart by opening their links in their own Firefox profile. Junction picks the profile from the link, with one rule each.
 related: [actions, rules, troubleshooting]
+icons: [firefox]
 ---
 
 # Open each client's links in their own Firefox profile

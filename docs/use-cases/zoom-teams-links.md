@@ -1,8 +1,9 @@
 ---
 title: Open Zoom and Teams Links in the App on Mac
-order: 6
+order: 7
 summary: Join Zoom and Microsoft Teams meetings straight in their desktop apps, with no leftover browser tab. Junction turns meeting links into native app links.
 related: [deeplinks, actions, rules]
+icons: [zoom, teams]
 ---
 
 # Join Zoom and Teams meetings in the app, not the browser
@@ -44,6 +45,8 @@ Turn on **Microsoft Teams** in **Settings → Deep Links**, or add a rule for Te
 ## Should I use a rule or the Deep Links setting?
 
 Use the setting for the plain case. Use a rule when only some links should open in the app.
+
+![Settings → Deep Links: a switch per app, with apps that aren't installed marked](../assets/screenshots/zoom-teams-links/01-deep-links-pane.png)
 
 | | Settings → Deep Links | `deepLink` rule |
 | --- | --- | --- |

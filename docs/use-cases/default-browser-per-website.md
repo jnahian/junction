@@ -3,11 +3,14 @@ title: Set a Default Browser Per Website on Mac
 order: 1
 summary: Use Safari for some sites, Chrome for others, and Firefox for the rest. Junction becomes your Mac's default browser and opens each site in the one you choose.
 related: [rules, quickstart, cli]
+icons: [safari, chrome, firefox]
 ---
 
 # Use a different browser for different websites on your Mac
 
 Junction is a free, open-source macOS app that becomes your default browser and routes each link by your rules. macOS lets you pick only one default browser; with Junction in that slot, every website can have its own — and any site without a rule goes to the browser you pick as the fallback.
+
+![Junction's Settings → Rules pane: six rules in match order, each with its patterns and the browser, profile, or app it opens](../assets/screenshots/default-browser-per-website/01-rules-pane.png)
 
 ## Can I set a different default browser for some websites?
 
@@ -39,7 +42,7 @@ Rules name a browser by its bundle ID:
 | Microsoft Edge | `com.microsoft.edgemac` |
 | Brave | `com.brave.Browser` |
 
-A rule can also pick a browser *profile* — see [Chrome profiles](chrome-profile-links.md) and [Firefox profiles](firefox-profile-links.md).
+A rule can also pick a browser *profile* — see [Chrome profiles](chrome-profile-links.md) and [Firefox profiles](firefox-profile-links.md). To split work from personal browsing this way, see [keeping work and personal separate](work-personal-browsing.md).
 
 ## How do I make Junction my default browser?
 
