@@ -13,7 +13,10 @@
   .uc-layout .sidebar{padding-left:16px;margin-left:0}
   .uc-layout .content{padding-right:20px}
 }
-.crumbs{font-family:var(--mono);font-size:12px;color:var(--faint);margin-bottom:14px}
+.uc-head{max-width:760px;display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:14px}
+.uc-md{display:flex;gap:6px}
+.uc-md a.copy-btn{text-decoration:none}
+.crumbs{font-family:var(--mono);font-size:12px;color:var(--faint)}
 .crumbs a{color:var(--muted);text-decoration:none}
 .crumbs a:hover{color:var(--text)}
 

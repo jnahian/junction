@@ -63,7 +63,13 @@ const schema = [
     </nav>
 
     <main class="content">
-      <nav class="crumbs" aria-label="Breadcrumb"><a href="/use-cases">Use cases</a> /</nav>
+      <div class="uc-head">
+        <nav class="crumbs" aria-label="Breadcrumb"><a href="/use-cases">Use cases</a> /</nav>
+        <div class="uc-md">
+          <button class="copy-btn" data-copy-md={`/use-cases/${page.id}.md`}>Copy Markdown</button>
+          <a class="copy-btn" href={`/use-cases/${page.id}.md`}>.md</a>
+        </div>
+      </div>
       <article class="doc">
         <Content />
       </article>
@@ -78,4 +84,5 @@ const schema = [
 <script>
   import "../../scripts/code-copy.js";
   import "../../scripts/docs-nav.js";
+  import "../../scripts/copy-markdown.js";
 </script>

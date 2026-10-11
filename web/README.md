@@ -162,8 +162,10 @@ plain `<a href="/…">`; external ones get `target="_blank"` automatically
 
 ## Use-case pages
 
-Each `docs/use-cases/<slug>.md` publishes to `/use-cases/<slug>`. The index,
-`sitemap.xml`, and `llms.txt` list a new file on their own; nothing else needs an edit.
+Each `docs/use-cases/<slug>.md` publishes to `/use-cases/<slug>`, and its source to
+`/use-cases/<slug>.md` (screenshot paths swapped for the built images), which the page's
+**Copy Markdown** button copies and `llms.txt` links to. The index, `sitemap.xml`, and
+`llms.txt` list a new file on their own; nothing else needs an edit.
 
 ```md
 ---

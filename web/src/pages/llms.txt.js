@@ -9,7 +9,7 @@ export async function GET() {
   const { count, apps } = rewriters();
   const useCases = (await getCollection("useCases"))
     .sort((a, b) => a.data.order - b.data.order)
-    .map((page) => `- [${page.data.title}](/use-cases/${page.id}): ${page.data.summary}`)
+    .map((page) => `- [${page.data.title}](/use-cases/${page.id}.md): ${page.data.summary}`)
     .join("\n");
   const names = apps.map((a) => a.name).join(", ");
 

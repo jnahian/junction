@@ -1,4 +1,4 @@
-document.querySelectorAll(".copy-btn").forEach((btn) => {
+document.querySelectorAll(".code .copy-btn").forEach((btn) => {
   btn.addEventListener("click", () => {
     if (!navigator.clipboard) return;
     const text = btn.closest(".code").querySelector("code").innerText;

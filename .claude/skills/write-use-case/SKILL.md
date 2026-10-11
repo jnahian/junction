@@ -147,7 +147,9 @@ the same scale as a Settings window.
 - Link **in**: edit at least one existing page so it links to the new one.
   The index doesn't count.
 
-The index, sitemap, and `llms.txt` pick the page up by themselves — don't edit them.
+The index, sitemap, `llms.txt`, and the `/use-cases/<slug>.md` source copy pick
+the page up by themselves — don't edit them. That `.md` copy is the file as you
+wrote it, so keep the Markdown readable on its own.
 
 ## 7. Verify
 
