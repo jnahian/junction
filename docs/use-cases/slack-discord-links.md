@@ -1,6 +1,6 @@
 ---
 title: Open Slack Links in the Slack App on Mac
-order: 5
+order: 7
 summary: Make Slack message links jump to the message in the Slack app, and Discord and Telegram links open in theirs. Junction converts chat links into app links.
 related: [deeplinks, config, rules]
 ---

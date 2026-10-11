@@ -1,6 +1,6 @@
 ---
 title: Open Zoom and Teams Links in the App on Mac
-order: 4
+order: 6
 summary: Join Zoom and Microsoft Teams meetings straight in their desktop apps, with no leftover browser tab. Junction turns meeting links into native app links.
 related: [deeplinks, actions, rules]
 ---
@@ -60,7 +60,7 @@ Junction ships built-in deep links for Zoom, Teams, Slack, Discord, Figma, Notio
 
 ## Can I add an app that isn't built in?
 
-Yes. **Deep Links → Add App…** takes the app's name, its URL scheme, a regex for the web link, and a template for the app link, with a test field to check it before saving.
+Yes. **Deep Links → Add App…** takes the app's name, its URL scheme, a regex for the web link, and a template for the app link, with a test field to check it before saving. Step by step: [open any website's links in its Mac app](custom-app-deep-links.md).
 
 ## Get Junction
 

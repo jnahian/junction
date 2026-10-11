@@ -1,6 +1,6 @@
 ---
 title: Open Figma, Notion & Linear Links in Their Apps
-order: 7
+order: 8
 summary: Open Figma files, Notion pages, and Linear issues in their desktop apps instead of in browser tabs. Junction turns each web link into a native app link.
 related: [deeplinks, actions, rules]
 ---

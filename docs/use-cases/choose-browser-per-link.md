@@ -1,6 +1,6 @@
 ---
 title: Choose Which Browser Opens Each Link on Mac
-order: 9
+order: 12
 summary: Pick a browser or profile each time you click a link, for every link or only some. Junction's picker asks at click time, and holding Option skips your rules.
 related: [actions, config, quickstart]
 ---

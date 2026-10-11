@@ -1,6 +1,6 @@
 ---
 title: Open Links From Slack in a Different Browser
-order: 3
+order: 5
 summary: Route links by the app you click them in. Send Slack links to your work browser, terminal links to your dev browser, and Mail links to the clipboard.
 related: [rules, cli, actions]
 ---

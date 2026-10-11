@@ -1,6 +1,6 @@
 ---
 title: Open Spotify Links in the Spotify App on Mac
-order: 8
+order: 9
 summary: Play Spotify and Apple Music links in their apps, open App Store links in the App Store, and keep YouTube in its own browser. Junction routes them all.
 related: [deeplinks, actions, rules]
 ---

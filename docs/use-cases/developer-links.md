@@ -1,6 +1,6 @@
 ---
 title: Open localhost Links in a Separate Browser
-order: 6
+order: 11
 summary: Send localhost, preview deployments, and terminal links to your dev browser, and open repos in GitHub Desktop and VS Code. Junction routes dev links by rule.
 related: [rules, cli, deeplinks]
 ---
@@ -92,7 +92,7 @@ Run `junction test` with the link. It prints the winning rule and the action wit
 | `junction config path` | Prints the config file's path |
 | `junction config validate` | Checks the config file |
 
-The config is a plain JSON file at `~/.config/junction/config.json`, so you can keep it in your dotfiles.
+The config is a plain JSON file at `~/.config/junction/config.json`, so you can keep it in your dotfiles — see [syncing rules across Macs](sync-rules-across-macs.md). When a link goes somewhere unexpected, start with [why links open in the wrong browser](links-open-wrong-browser.md).
 
 ## Get Junction
 
