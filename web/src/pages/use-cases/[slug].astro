@@ -14,6 +14,8 @@ export async function getStaticPaths() {
 }
 
 const { page } = Astro.props;
+// the sidebar: every use case, in index order
+const pages = (await getCollection("useCases")).sort((a, b) => a.data.order - b.data.order);
 const { title, summary, related } = page.data;
 const { Content } = await render(page);
 
@@ -43,19 +45,37 @@ const schema = [
 ];
 ---
 
-<Base title={`${title} — ${site.name}`} description={summary} topbar={{ kind: "Use cases" }} schema={schema}>
-  <main class="content uc-page">
-    <nav class="crumbs" aria-label="Breadcrumb"><a href="/use-cases">Use cases</a> /</nav>
-    <article class="doc">
-      <Content />
-    </article>
-    <footer class="uc-foot">
-      <h5>Related docs</h5>
-      <ul>{related.map((id) => <li><a href={`/docs#${id}`}>{docLinks[id]}</a></li>)}</ul>
-    </footer>
-  </main>
+<Base title={`${title} — ${site.name}`} description={summary} topbar={{ kind: "Use cases", menuButton: true }} schema={schema}>
+  <div class="scrim" id="scrim"></div>
+
+  <div class="uc-layout">
+    <!-- the docs sidebar's markup, so docs.css and docs-nav.js give it the same sticky rail and mobile drawer -->
+    <nav class="sidebar" id="sidebar" aria-label="Use cases">
+      <div class="side-group">
+        <h5>Use cases</h5>
+        <a href="/use-cases">All use cases</a>
+        {pages.map((p) => (
+          <a href={`/use-cases/${p.id}`} class={p.id === page.id ? "active" : undefined} aria-current={p.id === page.id ? "page" : undefined}>
+            {p.data.title.replace(/ on Mac$/, "")}
+          </a>
+        ))}
+      </div>
+    </nav>
+
+    <main class="content">
+      <nav class="crumbs" aria-label="Breadcrumb"><a href="/use-cases">Use cases</a> /</nav>
+      <article class="doc">
+        <Content />
+      </article>
+      <footer class="uc-foot">
+        <h5>Related docs</h5>
+        <ul>{related.map((id) => <li><a href={`/docs#${id}`}>{docLinks[id]}</a></li>)}</ul>
+      </footer>
+    </main>
+  </div>
 </Base>
 
 <script>
   import "../../scripts/code-copy.js";
+  import "../../scripts/docs-nav.js";
 </script>

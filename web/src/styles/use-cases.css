@@ -1,6 +1,18 @@
-/* the use-case pages reuse docs.css (.doc typography, .code, .note); this is
-   only what docs.css has no equivalent for */
-.uc-page{max-width:840px;margin:0 auto}
+/* the use-case pages reuse docs.css (.doc typography, .code, .note, the sidebar
+   and its drawer); this is only what docs.css has no equivalent for */
+
+/* the landing page's column: 1120px with 24px gutters */
+.uc-index-page{max-width:1120px;margin:0 auto;padding:56px 24px 120px}
+.uc-layout{max-width:1120px;margin:0 auto;padding:0 24px;display:grid;grid-template-columns:238px minmax(0,1fr)}
+.uc-layout .sidebar{padding-left:0;margin-left:-10px} /* link text, not its hover pill, on the column edge */
+.uc-layout .content{padding-right:0}
+@media (max-width:900px){
+  /* docs.css shows this too, but here it loads before chrome.css, which hides it */
+  .menu-btn{display:inline-flex}
+  .uc-layout{grid-template-columns:minmax(0,1fr);padding:0}
+  .uc-layout .sidebar{padding-left:16px;margin-left:0}
+  .uc-layout .content{padding-right:20px}
+}
 .crumbs{font-family:var(--mono);font-size:12px;color:var(--faint);margin-bottom:14px}
 .crumbs a{color:var(--muted);text-decoration:none}
 .crumbs a:hover{color:var(--text)}
@@ -18,9 +30,10 @@
 .uc-foot a{display:block;font-size:13.5px;color:var(--muted);text-decoration:none;border:1px solid var(--line-strong);border-radius:999px;padding:6px 13px}
 .uc-foot a:hover{color:var(--text);border-color:var(--brand)}
 
-.uc-index{list-style:none;display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:16px;margin-top:30px}
+.uc-index{list-style:none;display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:16px;margin-top:30px}
 .uc-index a{display:block;height:100%;padding:20px;border:1px solid var(--line);border-radius:14px;background:rgba(17,27,43,.45);text-decoration:none;transition:border-color .15s}
 .uc-index a:hover{border-color:var(--brand)}
 .uc-index h2{font-family:var(--display);font-weight:600;font-size:17px;color:var(--text);margin-bottom:6px}
 .uc-index p{font-size:14px;line-height:1.6;color:var(--body-fg)}
-@media (max-width:720px){ .uc-index{grid-template-columns:minmax(0,1fr)} }
+@media (max-width:900px){ .uc-index{grid-template-columns:repeat(2,minmax(0,1fr))} }
+@media (max-width:620px){ .uc-index{grid-template-columns:minmax(0,1fr)} }
