@@ -29,6 +29,10 @@
           "href": "/docs"
         },
         {
+          "label": "Use cases",
+          "href": "/use-cases"
+        },
+        {
           "label": "Rule syntax",
           "href": "/docs#rules"
         },
