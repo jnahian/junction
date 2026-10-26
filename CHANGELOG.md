@@ -10,7 +10,7 @@ shape matters:
 - Every bullet starts with `Added:`, `Changed:`, or `Fixed:` — that marker drives
   the filter pills on the changelog page.
 
-## Unreleased
+## 0.10.0 — 2026-10-26
 
 - Added: Rules can open links in a Chrome web app — one installed with Install page as app, like ClickUp or Google Chat — in its own window. Pick it under Web apps in the rule editor's Browser menu. If a rule pointing at a web app opened it on its home page instead of the link, this is why. A link from a different site than the web app's goes to your fallback browser, because the web app would drop it.
 
