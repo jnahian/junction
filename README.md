@@ -56,6 +56,8 @@ Rules live in `~/.config/junction/config.json` (respects `$XDG_CONFIG_HOME`). Ed
 
 `profile` is a Chromium profile *directory* (`Default`, `Profile 1`) or a Firefox profile *name* (the one `firefox -P` takes, listed in **Settings → Browsers**). Listing profiles needs **Full Disk Access**; without it, a Chromium profile still works if you type its directory into the config file, but a Firefox profile rule falls back to your fallback browser. If a rule names a profile that no longer exists, the link degrades to your fallback browser rather than opening in the wrong one.
 
+`app` can also be a Chrome web app (one installed with **Install page as app**), named by its bundle ID in the config file (the rule editor doesn't list web apps yet) — `osascript -e 'id of app "ClickUp"'` prints it, e.g. `com.google.Chrome.app.edcmabgkbicempmpgmniellhbjopafjh`. The link opens in the web app's own window. Junction looks up which profile the web app is installed in, which needs Full Disk Access like the profile list; without it, set `profile` on the rule. A link from a different site than the web app's goes to your fallback browser, because the web app would drop it and show its home page.
+
 `fallback.app` is a browser bundle ID, or the special value `"picker"` to be asked with the picker on every unmatched link.
 
 `picker` sets how the picker looks, and every field is optional: `"layout"` is `"vertical"` (the default list) or `"horizontal"` (a row that wraps), `"labels"` is `"name"` or `"none"` for icons only, and `"iconSize"` is 16–64 points (default 22). For example, `"picker": { "layout": "horizontal", "labels": "none", "iconSize": 40 }`. **Settings → Browsers → Picker appearance** edits the same values.
@@ -161,7 +163,7 @@ Rewriters are data, not code: [`Sources/JunctionCore/Resources/rewriters.json`](
 
 ## Privacy
 
-Zero telemetry, zero analytics. Junction makes exactly one kind of network request: the Sparkle update check against this repository's release feed. The links you route are never sent anywhere and never logged to disk; the recent-links list is in-memory, capped at 10, and cleared on quit. Full Disk Access is optional and only for browser profiles: Junction uses it to read each browser's list of profile names (Chromium's `Local State`, Firefox's `profiles.ini`) and nothing else.
+Zero telemetry, zero analytics. Junction makes exactly one kind of network request: the Sparkle update check against this repository's release feed. The links you route are never sent anywhere and never logged to disk; the recent-links list is in-memory, capped at 10, and cleared on quit. Full Disk Access is optional and only for browser profiles: Junction uses it to read each browser's list of profile names (Chromium's `Local State`, Firefox's `profiles.ini`), and which profile each Chrome web app is installed in, and nothing else.
 
 Being the default browser is a high-trust position. That's the argument for open source, for CI that builds and tests every commit, and for updates that only install if they carry a valid EdDSA signature from the maintainer's key.
 

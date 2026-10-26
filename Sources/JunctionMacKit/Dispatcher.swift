@@ -40,6 +40,8 @@ public struct Dispatcher {
         var applicationURL: (String) -> URL?
         var family: (String) -> BrowserFamily
         var firefoxProfileExists: (String, String) -> Bool
+        var webApp: (URL) -> ChromiumWebApp?
+        var webAppProfile: (ChromiumWebApp) -> String?
         var openURLs: ([URL], URL, NSWorkspace.OpenConfiguration, (@Sendable (BrowserBatchOutcome) -> Void)?) -> Void
         var openApplication: (URL, NSWorkspace.OpenConfiguration, (@Sendable (BrowserBatchOutcome) -> Void)?) -> Void
         var openDefault: (URL) -> Void
@@ -52,6 +54,8 @@ public struct Dispatcher {
                 firefoxProfileExists: { bundleID, profile in
                     FirefoxProfiles.profiles(for: bundleID).contains { $0.directory == profile }
                 },
+                webApp: { ChromiumWebApp(appURL: $0) },
+                webAppProfile: { ChromiumProfiles.webAppProfile(for: $0.browserBundleID, appID: $0.appID) },
                 openURLs: { urls, appURL, configuration, completion in
                     NSWorkspace.shared.open(urls, withApplicationAt: appURL, configuration: configuration) { _, error in
                         completion?(error.map { .failed($0.localizedDescription) } ?? .opened)
@@ -141,20 +145,11 @@ public struct Dispatcher {
             return .opened
         }
         guard let appURL = environment.applicationURL(bundleID) else {
-            // Never hand the picker sentinel to the system default (possibly Junction).
-            if fallbackApp == Fallback.picker {
-                completion?(.needsPicker)
-                return .needsPicker
-            }
-            if bundleID != fallbackApp, let fallbackURL = environment.applicationURL(fallbackApp) {
-                open(urls: urls, appURL: fallbackURL, bundleID: fallbackApp, profile: nil, completion: completion)
-                return .degradedToFallback(reason: "\(bundleID) is not installed")
-            }
-            // Preserve the legacy last resort when neither named browser exists.
-            for url in urls { environment.openDefault(url) }
-            let outcome = BrowserBatchOutcome.degradedToFallback(reason: "\(bundleID) is not installed")
-            completion?(outcome)
-            return outcome
+            return openInFallback(urls: urls, instead: bundleID, reason: "\(bundleID) is not installed", completion: completion)
+        }
+
+        if let webApp = environment.webApp(appURL) {
+            return openInWebApp(webApp, bundleID: bundleID, profile: profile, urls: urls, completion: completion)
         }
 
         // Resolve a deleted Firefox profile once, so the entire batch goes to one destination.
@@ -171,6 +166,60 @@ public struct Dispatcher {
         }
 
         open(urls: urls, appURL: appURL, bundleID: bundleID, profile: profile, completion: completion)
+        return .opened
+    }
+
+    private func openInFallback(
+        urls: [URL],
+        instead bundleID: String,
+        reason: String,
+        completion: (@Sendable (BrowserBatchOutcome) -> Void)?
+    ) -> BrowserBatchOutcome {
+        // Never hand the picker sentinel to the system default (possibly Junction).
+        if fallbackApp == Fallback.picker {
+            completion?(.needsPicker)
+            return .needsPicker
+        }
+        if bundleID != fallbackApp, let fallbackURL = environment.applicationURL(fallbackApp) {
+            open(urls: urls, appURL: fallbackURL, bundleID: fallbackApp, profile: nil, completion: completion)
+            return .degradedToFallback(reason: reason)
+        }
+        // Preserve the legacy last resort when neither named browser exists.
+        for url in urls { environment.openDefault(url) }
+        let outcome = BrowserBatchOutcome.degradedToFallback(reason: reason)
+        completion?(outcome)
+        return outcome
+    }
+
+    /// `profile` is the rule's; without one, the profile the app is installed in.
+    private func openInWebApp(
+        _ webApp: ChromiumWebApp,
+        bundleID: String,
+        profile: String?,
+        urls: [URL],
+        completion: (@Sendable (BrowserBatchOutcome) -> Void)?
+    ) -> BrowserBatchOutcome {
+        guard let browserURL = environment.applicationURL(webApp.browserBundleID) else {
+            let reason = "\(webApp.browserBundleID) is not installed"
+            return openInFallback(urls: urls, instead: bundleID, reason: reason, completion: completion)
+        }
+        guard let profile = profile ?? environment.webAppProfile(webApp) else {
+            // Also the answer when Full Disk Access blocks reading Local State.
+            let reason = "Can't tell which profile has the \(webApp.name) web app — set one on the rule"
+            return openInFallback(urls: urls, instead: bundleID, reason: reason, completion: completion)
+        }
+        // One outside link sends the whole batch to the fallback, so it lands in one place.
+        if let outside = urls.first(where: { !webApp.contains($0) }) {
+            let reason = "\(outside.host ?? outside.absoluteString) is outside the \(webApp.name) web app"
+            return openInFallback(urls: urls, instead: bundleID, reason: reason, completion: completion)
+        }
+        for (index, url) in urls.enumerated() {
+            let configuration = NSWorkspace.OpenConfiguration()
+            configuration.activates = true
+            configuration.arguments = webApp.launchArguments(profile: profile, url: url)
+            configuration.createsNewApplicationInstance = true
+            environment.openApplication(browserURL, configuration, index == urls.count - 1 ? completion : nil)
+        }
         return .opened
     }
 
