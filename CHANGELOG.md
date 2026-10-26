@@ -12,7 +12,7 @@ shape matters:
 
 ## Unreleased
 
-- Added: Rules can open links in a Chrome web app — one installed with Install page as app, like ClickUp or Google Chat — in its own window. In your config file, set the rule's app to the web app's bundle ID; `osascript -e 'id of app "ClickUp"'` prints it. If a rule pointing at a web app opened it on its home page instead of the link, this is why. A link from a different site than the web app's goes to your fallback browser, because the web app would drop it.
+- Added: Rules can open links in a Chrome web app — one installed with Install page as app, like ClickUp or Google Chat — in its own window. Pick it under Web apps in the rule editor's Browser menu. If a rule pointing at a web app opened it on its home page instead of the link, this is why. A link from a different site than the web app's goes to your fallback browser, because the web app would drop it.
 
 ## 0.9.0 — 2026-09-27
 

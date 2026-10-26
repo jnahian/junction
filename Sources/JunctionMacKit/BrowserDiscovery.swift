@@ -95,6 +95,21 @@ public enum BrowserDiscovery {
         }
     }
 
+    /// Web apps a rule can open links in. Each Chromium browser keeps its app shims in a
+    /// folder of its own under ~/Applications, e.g. "Chrome Apps.localized".
+    public static func installedWebApps() -> [ChromiumWebApp] {
+        let fileManager = FileManager.default
+        let applications = fileManager.homeDirectoryForCurrentUser.appendingPathComponent("Applications")
+        let folders = (try? fileManager.contentsOfDirectory(at: applications, includingPropertiesForKeys: nil)) ?? []
+        return folders
+            .flatMap { (try? fileManager.contentsOfDirectory(at: $0, includingPropertiesForKeys: nil)) ?? [] }
+            .filter { $0.pathExtension == "app" }
+            .compactMap { ChromiumWebApp(appURL: $0) }
+            // Browser-internal apps (chrome://password-manager) can't take a web link.
+            .filter { ["http", "https"].contains($0.startURL.scheme) }
+            .sorted { $0.name.localizedCaseInsensitiveCompare($1.name) == .orderedAscending }
+    }
+
     public static func appURL(forBundleID bundleID: String) -> URL? {
         NSWorkspace.shared.urlForApplication(withBundleIdentifier: bundleID)
     }
@@ -195,7 +210,10 @@ public enum ChromiumProfiles {
 /// A Chromium web app (PWA), read from its app shim in ~/Applications/Chrome Apps. Opening a
 /// URL with the shim launches the app at its start page and drops the URL, so the owning
 /// browser has to launch it instead — one URL per launch.
-public struct ChromiumWebApp: Sendable {
+public struct ChromiumWebApp: Identifiable, Sendable {
+    public var id: String { bundleID }
+    /// The shim's own bundle ID — what a rule's `app` holds.
+    public let bundleID: String
     public let appID: String
     public let name: String
     /// The browser that owns the app, e.g. com.google.Chrome.
@@ -204,11 +222,13 @@ public struct ChromiumWebApp: Sendable {
 
     public init?(appURL: URL) {
         guard let info = NSDictionary(contentsOf: appURL.appendingPathComponent("Contents/Info.plist")),
+              let bundleID = info["CFBundleIdentifier"] as? String,
               let appID = info["CrAppModeShortcutID"] as? String,
               let browserBundleID = info["CrBundleIdentifier"] as? String,
               let startURL = (info["CrAppModeShortcutURL"] as? String).flatMap(URL.init(string:)) else {
             return nil
         }
+        self.bundleID = bundleID
         self.appID = appID
         self.name = info["CrAppModeShortcutName"] as? String ?? appURL.deletingPathExtension().lastPathComponent
         self.browserBundleID = browserBundleID

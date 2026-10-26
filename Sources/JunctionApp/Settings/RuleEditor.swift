@@ -115,6 +115,10 @@ struct RuleEditor: View {
         state.browsers.first { $0.bundleID == actionApp }
     }
 
+    private var selectedWebApp: ChromiumWebApp? {
+        state.webApps.first { $0.bundleID == actionApp }
+    }
+
     var body: some View {
         VStack(spacing: 0) {
             Form {
@@ -149,6 +153,24 @@ struct RuleEditor: View {
                         Picker("Browser", selection: $actionApp) {
                             Text("Choose…").tag("")
                             ForEach(state.browsers) { b in Text(b.name).tag(b.bundleID) }
+                            if !state.webApps.isEmpty {
+                                Section("Web apps") {
+                                    ForEach(state.webApps) { app in Text(app.name).tag(app.bundleID) }
+                                }
+                            }
+                        }
+                        // A web app opens in the profile it's installed in. A profile left over
+                        // from a browser would be used instead, and may not have the app.
+                        .onChange(of: actionApp) { app in
+                            if state.webApps.contains(where: { $0.bundleID == app }) { actionProfile = "" }
+                        }
+                        if let webApp = selectedWebApp {
+                            Text("Opens links from \(webApp.startURL.host ?? "its site") in the web app's window. Links from other sites go to your fallback browser.")
+                                .font(.caption).foregroundStyle(.secondary)
+                            // A profile written into the config skips the Local State lookup.
+                            if actionProfile.isEmpty, state.profileAccessBlocked {
+                                FullDiskAccessNotice(state: state)
+                            }
                         }
                         if let browser = selectedBrowser, browser.family != .other,
                            browser.profiles.isEmpty, state.profileAccessBlocked {

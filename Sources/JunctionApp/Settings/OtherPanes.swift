@@ -18,7 +18,7 @@ struct FullDiskAccessNotice: View {
         VStack(alignment: .leading, spacing: 8) {
             Label("Browser profiles need Full Disk Access", systemImage: "lock.shield")
                 .font(.headline)
-            Text("macOS blocks Junction from reading your browsers' profile lists. Turn on Junction under Full Disk Access, then check again. Junction only reads each browser's list of profile names.")
+            Text("macOS blocks Junction from reading your browsers' profile lists. Turn on Junction under Full Disk Access, then check again. Junction only reads each browser's list of profile names, and which profile each web app is installed in.")
                 .font(.caption)
                 .foregroundStyle(.secondary)
                 .fixedSize(horizontal: false, vertical: true)

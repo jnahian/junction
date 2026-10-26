@@ -100,7 +100,7 @@
   "actions": [
     {
       "action": "{ \"app\": \"com.google.Chrome\" }",
-      "body": "Open in a browser or app, named by its <b>bundle ID</b>. A Chrome web app (installed with <b>Install page as app</b>) works too, set in the config file — <code>osascript -e 'id of app \"ClickUp\"'</code> prints its bundle ID, and the link opens in the web app's own window. A link from a different site than the web app's goes to your fallback browser, because the web app would drop it."
+      "body": "Open in a browser or app, named by its <b>bundle ID</b>. A Chrome web app (installed with <b>Install page as app</b>) works too: pick it under <b>Web apps</b> in the rule editor, or <code>osascript -e 'id of app \"ClickUp\"'</code> prints its bundle ID. The link opens in the web app's own window. A link from a different site than the web app's goes to your fallback browser, because the web app would drop it."
     },
     {
       "action": "{ \"app\": \"com.google.Chrome\", \"profile\": \"Profile 1\" }",

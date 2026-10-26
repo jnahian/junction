@@ -141,6 +141,7 @@ final class DispatcherBatchTests: XCTestCase {
         let contents = shim.appendingPathComponent("Contents")
         try FileManager.default.createDirectory(at: contents, withIntermediateDirectories: true)
         let info: NSDictionary = [
+            "CFBundleIdentifier": "pwa",
             "CrAppModeShortcutID": "abcdefghijklmnop",
             "CrAppModeShortcutName": "Mail",
             "CrAppModeShortcutURL": "https://example.com/",
