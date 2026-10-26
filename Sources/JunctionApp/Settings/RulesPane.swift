@@ -132,7 +132,8 @@ struct RulesPane: View {
     private func actionLabel(_ action: Action) -> String {
         switch action {
         case .open(let app, let profile):
-            let name = state.browsers.first(where: { $0.bundleID == app })?.name ?? app
+            let name = state.browsers.first(where: { $0.bundleID == app })?.name
+                ?? state.webApps.first(where: { $0.bundleID == app })?.name ?? app
             return profile.map { "\(name) · \($0)" } ?? name
         case .deepLink(let id):
             return "Deep link: \(state.rewriters.rewriter(id: id)?.name ?? id)"

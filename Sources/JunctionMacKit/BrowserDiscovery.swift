@@ -95,6 +95,21 @@ public enum BrowserDiscovery {
         }
     }
 
+    /// Web apps a rule can open links in. Each Chromium browser keeps its app shims in a
+    /// folder of its own under ~/Applications, e.g. "Chrome Apps.localized".
+    public static func installedWebApps() -> [ChromiumWebApp] {
+        let fileManager = FileManager.default
+        let applications = fileManager.homeDirectoryForCurrentUser.appendingPathComponent("Applications")
+        let folders = (try? fileManager.contentsOfDirectory(at: applications, includingPropertiesForKeys: nil)) ?? []
+        return folders
+            .flatMap { (try? fileManager.contentsOfDirectory(at: $0, includingPropertiesForKeys: nil)) ?? [] }
+            .filter { $0.pathExtension == "app" }
+            .compactMap { ChromiumWebApp(appURL: $0) }
+            // Browser-internal apps (chrome://password-manager) can't take a web link.
+            .filter { ["http", "https"].contains($0.startURL.scheme) }
+            .sorted { $0.name.localizedCaseInsensitiveCompare($1.name) == .orderedAscending }
+    }
+
     public static func appURL(forBundleID bundleID: String) -> URL? {
         NSWorkspace.shared.urlForApplication(withBundleIdentifier: bundleID)
     }
@@ -175,6 +190,60 @@ public enum ChromiumProfiles {
             if r.directory == "Default" { return false }
             return l.directory.localizedStandardCompare(r.directory) == .orderedAscending
         }
+    }
+
+    /// The profile a web app is installed in, preferring the one it last ran in.
+    public static func webAppProfile(for bundleID: String, appID: String) -> String? {
+        guard let localState = localStateFile(for: bundleID),
+              let data = try? Data(contentsOf: localState),
+              let json = try? JSONSerialization.jsonObject(with: data) as? [String: Any],
+              let shims = json["app_shims"] as? [String: Any],
+              let shim = shims[appID] as? [String: Any],
+              let installed = shim["installed_profiles"] as? [String] else {
+            return nil
+        }
+        let lastActive = shim["last_active_profiles"] as? [String] ?? []
+        return installed.first { lastActive.contains($0) } ?? installed.first
+    }
+}
+
+/// A Chromium web app (PWA), read from its app shim in ~/Applications/Chrome Apps. Opening a
+/// URL with the shim launches the app at its start page and drops the URL, so the owning
+/// browser has to launch it instead — one URL per launch.
+public struct ChromiumWebApp: Identifiable, Sendable {
+    public var id: String { bundleID }
+    /// The shim's own bundle ID — what a rule's `app` holds.
+    public let bundleID: String
+    public let appID: String
+    public let name: String
+    /// The browser that owns the app, e.g. com.google.Chrome.
+    public let browserBundleID: String
+    public let startURL: URL
+
+    public init?(appURL: URL) {
+        guard let info = NSDictionary(contentsOf: appURL.appendingPathComponent("Contents/Info.plist")),
+              let bundleID = info["CFBundleIdentifier"] as? String,
+              let appID = info["CrAppModeShortcutID"] as? String,
+              let browserBundleID = info["CrBundleIdentifier"] as? String,
+              let startURL = (info["CrAppModeShortcutURL"] as? String).flatMap(URL.init(string:)) else {
+            return nil
+        }
+        self.bundleID = bundleID
+        self.appID = appID
+        self.name = info["CrAppModeShortcutName"] as? String ?? appURL.deletingPathExtension().lastPathComponent
+        self.browserBundleID = browserBundleID
+        self.startURL = startURL
+    }
+
+    /// Chromium drops a launch URL outside the app's scope and shows the start page instead.
+    /// The scope isn't on disk anywhere readable, so the start URL's origin stands in for it.
+    public func contains(_ url: URL) -> Bool {
+        url.scheme == startURL.scheme && url.host == startURL.host && url.port == startURL.port
+    }
+
+    func launchArguments(profile: String, url: URL) -> [String] {
+        ["--profile-directory=\(profile)", "--app-id=\(appID)",
+         "--app-launch-url-for-shortcuts-menu-item=\(url.absoluteString)"]
     }
 }
 #endif

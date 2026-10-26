@@ -16,6 +16,8 @@ final class DispatcherBatchTests: XCTestCase {
             applicationURL: { _ in self.appURL },
             family: { _ in .other },
             firefoxProfileExists: { _, _ in true },
+            webApp: { _ in nil },
+            webAppProfile: { _ in nil },
             openURLs: { _, _, _, _ in XCTFail("Unexpected native URL request") },
             openApplication: { _, _, _ in XCTFail("Unexpected process launch") },
             openDefault: { _ in XCTFail("Unexpected default-browser fallback") }
@@ -129,6 +131,69 @@ final class DispatcherBatchTests: XCTestCase {
         if case .needsPicker(let retry) = immediate { XCTAssertEqual(retry, url) }
         else { XCTFail("Expected immediate single-URL retry") }
         wait(for: [completed], timeout: 1)
+    }
+
+    /// A Chrome app shim on disk, as Chrome writes it, for the real Info.plist reader.
+    private func webAppShim() throws -> URL {
+        let shim = FileManager.default.temporaryDirectory
+            .appendingPathComponent(UUID().uuidString)
+            .appendingPathComponent("Mail.app")
+        let contents = shim.appendingPathComponent("Contents")
+        try FileManager.default.createDirectory(at: contents, withIntermediateDirectories: true)
+        let info: NSDictionary = [
+            "CFBundleIdentifier": "pwa",
+            "CrAppModeShortcutID": "abcdefghijklmnop",
+            "CrAppModeShortcutName": "Mail",
+            "CrAppModeShortcutURL": "https://example.com/",
+            "CrBundleIdentifier": "chrome",
+        ]
+        try info.write(to: contents.appendingPathComponent("Info.plist"))
+        addTeardownBlock { try? FileManager.default.removeItem(at: shim.deletingLastPathComponent()) }
+        return shim
+    }
+
+    func testWebAppLaunchesItsBrowserOncePerURL() throws {
+        let shim = try webAppShim()
+        for (ruleProfile, expected) in [(nil, "Profile 1"), ("Work", "Work")] {
+            var environment = environment()
+            environment.applicationURL = { $0 == "pwa" ? shim : self.appURL }
+            environment.webApp = { ChromiumWebApp(appURL: $0) }
+            environment.webAppProfile = { _ in "Profile 1" }
+            var launches: [[String]] = []
+            environment.openApplication = { target, configuration, _ in
+                XCTAssertEqual(target, self.appURL)
+                XCTAssertTrue(configuration.createsNewApplicationInstance)
+                launches.append(configuration.arguments)
+            }
+            let outcome = Dispatcher(fallbackApp: "fallback", environment: environment)
+                .openInBrowser(bundleID: "pwa", profile: ruleProfile, urls: urls)
+            XCTAssertEqual(launches, urls.map {
+                ["--profile-directory=\(expected)", "--app-id=abcdefghijklmnop",
+                 "--app-launch-url-for-shortcuts-menu-item=\($0.absoluteString)"]
+            })
+            if case .opened = outcome {} else { XCTFail("Expected opened") }
+        }
+    }
+
+    func testWebAppSendsWholeBatchToFallbackWhenItCannotOpenIt() throws {
+        let shim = try webAppShim()
+        let fallbackURL = URL(fileURLWithPath: "/Applications/Fallback.app")
+        let outside = urls + [URL(string: "https://other.com/")!]
+        for (batch, profile) in [(outside, "Profile 1"), (urls, nil)] {
+            var environment = environment()
+            environment.applicationURL = { $0 == "pwa" ? shim : $0 == "fallback" ? fallbackURL : self.appURL }
+            environment.webApp = { ChromiumWebApp(appURL: $0) }
+            environment.webAppProfile = { _ in profile }
+            var requests: [[URL]] = []
+            environment.openURLs = { urls, target, _, _ in
+                XCTAssertEqual(target, fallbackURL)
+                requests.append(urls)
+            }
+            let outcome = Dispatcher(fallbackApp: "fallback", environment: environment)
+                .openInBrowser(bundleID: "pwa", profile: nil, urls: batch)
+            XCTAssertEqual(requests, [batch])
+            if case .degradedToFallback = outcome {} else { XCTFail("Expected degraded result") }
+        }
     }
 }
 #endif

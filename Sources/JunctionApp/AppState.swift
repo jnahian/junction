@@ -22,6 +22,9 @@ final class AppState: ObservableObject {
     @Published private(set) var configError: ConfigError?
     @Published var routingPaused = false
     @Published private(set) var browsers: [Browser] = []
+    /// Rule targets only: a web app can't open links from other sites, so the picker and
+    /// fallback stay browser-only.
+    @Published private(set) var webApps: [ChromiumWebApp] = []
     /// macOS refused to let Junction read a browser's profile list (needs Full Disk Access).
     @Published private(set) var profileAccessBlocked = false
     @Published private(set) var isDefaultBrowser = false
@@ -147,7 +150,8 @@ final class AppState: ObservableObject {
     private func describe(_ trace: RoutingTrace) -> String {
         switch trace.decision {
         case .open(let app, let profile, _):
-            let name = browsers.first(where: { $0.bundleID == app })?.name ?? app
+            let name = browsers.first(where: { $0.bundleID == app })?.name
+                ?? webApps.first(where: { $0.bundleID == app })?.name ?? app
             return profile.map { "\(name) (\($0))" } ?? name
         case .deepLink(_, let id, _):
             return rewriters.rewriter(id: id)?.name ?? id
@@ -224,6 +228,7 @@ final class AppState: ObservableObject {
 
     func refreshBrowsers() {
         browsers = BrowserDiscovery.installedBrowsers()
+        webApps = BrowserDiscovery.installedWebApps()
         profileAccessBlocked = BrowserDiscovery.isProfileAccessBlocked(browsers)
     }
 
