@@ -8,7 +8,7 @@ import { highlightJson } from "../../lib/highlight.js";
 
 <section id="config">
   <h2>The config file</h2>
-  <p>Rules live in <code>{site.configPath}</code> (honors <code>$XDG_CONFIG_HOME</code>). Edit them in the GUI or in your editor — it's plain text you own, so commit it to your dotfiles, sync it, or share it with your team.</p>
+  <p>Rules live in <code>{site.configPath}</code> (honors <code>$XDG_CONFIG_HOME</code>). Edit them in the GUI or in your editor — it's plain text you own, so commit it to your dotfiles, sync it across your Macs with iCloud (turn it on in <b>Settings → General</b>), or share it with your team.</p>
   <CodeBlock title={site.configPath}>
     <Fragment set:html={highlightJson(docs.samples.config)} />
   </CodeBlock>

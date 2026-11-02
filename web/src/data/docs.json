@@ -104,7 +104,7 @@
     },
     {
       "action": "{ \"app\": \"com.google.Chrome\", \"profile\": \"Profile 1\" }",
-      "body": "Open in a specific browser profile — a Chromium profile <i>directory</i> (<code>Default</code>, <code>Profile 1</code>) or a Firefox profile <i>name</i> (what <code>firefox -P</code> takes, listed in <b>Settings → Browsers</b>). Listing profiles needs <b>Full Disk Access</b>; without it, a Chromium profile still works if you type its directory into the config file, but a Firefox profile rule falls back to your fallback browser."
+      "body": "Open in a specific browser profile, by the <i>name</i> listed in <b>Settings → Browsers</b> (for Firefox, what <code>firefox -P</code> takes). Chromium browsers also accept the profile <i>directory</i> (<code>Default</code>, <code>Profile 1</code>), but a directory can mean a different profile on another Mac, so the rule editor saves the name. Listing profiles needs <b>Full Disk Access</b>; without it, a Chromium profile still works if you type its directory into the config file, but a rule that uses a profile name, like any Firefox profile rule, falls back to your fallback browser."
     },
     {
       "action": "{ \"deepLink\": \"zoom\" }",
@@ -130,7 +130,7 @@
     },
     {
       "label": "Settings",
-      "body": "fallback (a browser, or the ask-every-time picker), rules, browsers and profiles — including which appear in the picker and how it looks (a vertical list or a horizontal row, with or without names, any icon size) — deep links, updates."
+      "body": "fallback (a browser, or the ask-every-time picker), rules, browsers and profiles — including which appear in the picker and how it looks (a vertical list or a horizontal row, with or without names, any icon size) — deep links, iCloud sync, updates."
     },
     {
       "label": "Updates",
@@ -178,7 +178,11 @@
     },
     {
       "title": "A rule opens the fallback instead of its app",
-      "body": "Junction degrades to the fallback rather than opening the wrong thing — a deleted browser profile, an app that isn't installed, an unknown rewriter, or a link from outside a web app's site all land there. The menu-bar icon flags an invalid config, and the last-good rules stay live until you fix it."
+      "body": "Junction degrades to the fallback rather than opening the wrong thing — a browser profile that isn't on this Mac, an app that isn't installed, an unknown rewriter, or a link from outside a web app's site all land there. The menu-bar icon flags an invalid config, and the last-good rules stay live until you fix it."
+    },
+    {
+      "title": "iCloud sync shows a problem",
+      "body": "Sync never touches routing: each Mac keeps using its own rules until the problem is fixed, and <b>Settings → General</b> says what's wrong. If iCloud Drive is off, turn it on in <b>System Settings → Apple Account → iCloud</b>. If Junction can't read it, allow access under <b>System Settings → Privacy &amp; Security → Files and Folders</b>. If the file in iCloud Drive was deleted, turn sync off and on to upload this Mac's rules again."
     },
     {
       "title": "Slack deep links open the browser",

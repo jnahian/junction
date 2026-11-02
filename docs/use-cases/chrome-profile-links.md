@@ -15,7 +15,7 @@ Junction is a free, open-source macOS app that becomes your default browser and 
 Write a rule that matches the link and opens it in Chrome with a `profile`. Junction launches Chrome with that profile no matter where you clicked.
 
 - **Match** the sites with wildcard patterns: `*.atlassian.net/*` covers every Jira subdomain and the apex domain.
-- **Open** with `{ "app": "com.google.Chrome", "profile": "Profile 1" }`. The profile is Chrome's profile *directory*, not its display name.
+- **Open** with `{ "app": "com.google.Chrome", "profile": "Profile 1" }`. The profile can be Chrome's profile *directory* or its name, which is what the rule editor saves.
 - **Order** matters: rules run top to bottom and the first match wins, so put specific rules above broad ones.
 
 ```json rule
@@ -38,7 +38,7 @@ url:         https://acme.atlassian.net/browse/ENG-42
 
 ## How do I find a Chrome profile's directory name?
 
-**Settings → Browsers** in Junction lists every Chrome profile with its directory name. Listing them needs **Full Disk Access**, which Junction uses only to read Chrome's list of profiles.
+**Settings → Browsers** in Junction lists every Chrome profile with its name and directory. Listing them needs **Full Disk Access**, which Junction uses only to read Chrome's list of profiles.
 
 | Profile | Directory |
 | --- | --- |
@@ -46,6 +46,8 @@ url:         https://acme.atlassian.net/browse/ENG-42
 | Each one added after it | `Profile 1`, `Profile 2`, … |
 
 Without Full Disk Access, a Chrome profile rule still works if you type the directory into the config file yourself. Chrome also shows it: open `chrome://version` in that profile and read the last part of **Profile Path**.
+
+If you use Junction on more than one Mac, use the name: the same directory can be a different profile on another Mac. See [syncing rules across Macs](sync-rules-across-macs.md#can-a-team-share-one-rules-file).
 
 ## Can a second Google account open in its own profile?
 
@@ -63,7 +65,7 @@ Put this rule *above* any broad Google rule, or the broad one wins first.
 
 ## Does this work with Edge and Brave profiles?
 
-Yes. Edge and Brave are built on Chromium, and Junction opens their profiles the same way: name the browser by its bundle ID and the profile by its directory.
+Yes. Edge and Brave are built on Chromium, and Junction opens their profiles the same way: name the browser by its bundle ID and the profile by its name or directory.
 
 | Browser | Bundle ID |
 | --- | --- |

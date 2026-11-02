@@ -40,7 +40,7 @@
       {
         "tag": "Profiles",
         "title": "Down to the browser profile",
-        "body": "Chromium profile directories (<code>Default</code>, <code>Profile 1</code>) and Firefox profile names. Work links land in the work profile, not just the work browser."
+        "body": "Chromium and Firefox profiles, by name. Work links land in the work profile, not just the work browser."
       },
       {
         "tag": "Deep links",
@@ -55,7 +55,7 @@
       {
         "tag": "Yours",
         "title": "A config file you own",
-        "body": "Rules live in JSON at <code>~/.config/junction/config.json</code> (honors <code>$XDG_CONFIG_HOME</code>). Edit in the GUI or your editor; it hot-reloads, and an invalid edit keeps the last-good rules."
+        "body": "Rules live in JSON at <code>~/.config/junction/config.json</code> (honors <code>$XDG_CONFIG_HOME</code>). Edit in the GUI or your editor; it hot-reloads, and an invalid edit keeps the last-good rules. Turn on iCloud sync and your Macs share it."
       }
     ]
   },

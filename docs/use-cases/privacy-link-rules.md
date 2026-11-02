@@ -39,6 +39,7 @@ No. Junction has zero telemetry and zero analytics, and the links you route are 
 | --- | --- |
 | Links you click | Nowhere — routed on your Mac |
 | Recent links list | Memory only, last 10, cleared on quit |
+| Your rules | On your Mac, plus your own iCloud Drive if you [turn on sync](sync-rules-across-macs.md#can-junction-sync-my-rules-with-icloud) |
 | Network requests | Only the update check against Junction's GitHub release feed |
 
 ## How do I keep banking sites in one browser?

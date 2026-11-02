@@ -39,7 +39,7 @@ Use the profile name exactly as `firefox -P` lists it. Junction also lists Firef
 | Browser family | What `profile` takes | Example |
 | --- | --- | --- |
 | Firefox | The profile **name** | `Acme` |
-| Chrome, Edge, Brave | The profile **directory** | `Profile 1` |
+| Chrome, Edge, Brave | The profile **name** or **directory** | `Work`, `Profile 1` |
 
 Listing profiles needs **Full Disk Access**, which Junction uses only to read Firefox's `profiles.ini`. Unlike Chrome, a Firefox profile rule *needs* that access: without it, the link opens in your fallback browser instead.
 
