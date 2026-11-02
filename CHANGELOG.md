@@ -10,7 +10,7 @@ shape matters:
 - Every bullet starts with `Added:`, `Changed:`, or `Fixed:` — that marker drives
   the filter pills on the changelog page.
 
-## Unreleased
+## 0.11.0 — 2026-11-02
 
 - Added: Sync your rules across Macs with iCloud. Turn it on under Settings → General on each Mac, and Junction keeps a copy of your config in the Junction folder in iCloud Drive. Each Mac still routes from its own file, so links keep working offline. If two Macs change the rules at once, the newest change wins and the other is saved as `config.backup.json`.
 - Changed: The rule editor now saves a Chrome, Edge, or Brave profile by its name instead of its folder (`Work`, not `Profile 1`), because the same folder can be a different person's profile on another Mac. Rules that name a folder keep working.
