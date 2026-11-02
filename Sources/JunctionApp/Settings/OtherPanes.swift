@@ -522,6 +522,17 @@ struct GeneralPane: View {
                     Text(error.description).font(.caption).foregroundStyle(.red)
                 }
             }
+            Section("iCloud") {
+                Toggle("Sync rules across your Macs", isOn: Binding(
+                    get: { state.iCloudSyncOn },
+                    set: { $0 ? state.turnOnICloudSync() : state.turnOffICloudSync() }
+                ))
+                Text("Keeps a copy of your config in the Junction folder in iCloud Drive. Each Mac routes from its own file, so links keep working offline. If two Macs change the rules at once, the newest change wins and the other is saved as config.backup.json.")
+                    .font(.caption).foregroundStyle(.secondary)
+                if let problem = state.iCloudSyncProblem {
+                    Text(problem).font(.caption).foregroundStyle(.red)
+                }
+            }
             Section("Onboarding") {
                 Button("Show Welcome Tour…") {
                     UserDefaults.standard.set(false, forKey: "onboardingComplete")
@@ -549,6 +560,22 @@ struct GeneralPane: View {
         }
         .formStyle(.grouped)
         .onAppear { state.refreshDefaultBrowserStatus() }
+        .alert(
+            "Sync rules with iCloud?",
+            isPresented: Binding(
+                get: { state.iCloudSyncChoice != nil },
+                set: { if !$0 { state.iCloudSyncChoice = nil } }
+            ),
+            presenting: state.iCloudSyncChoice
+        ) { choice in
+            if choice.canUseICloud {
+                Button("Use iCloud's Rules") { state.finishTurningOnICloudSync(keeping: .iCloud) }
+            }
+            Button(choice.keepThisMacLabel) { state.finishTurningOnICloudSync(keeping: .thisMac) }
+            Button("Cancel", role: .cancel) {}
+        } message: { choice in
+            Text(choice.message)
+        }
     }
 }
 

@@ -45,8 +45,16 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         if !UserDefaults.standard.bool(forKey: "onboardingComplete") {
             state.onboardingPresenter?()
         }
-        state.configStore.bootstrapIfMissing()
+        // With sync on, a missing file gets restored from iCloud. Bootstrapping would make the
+        // defaults look like a local edit and push them to every Mac.
+        if !state.configMirror.isEnabled { state.configStore.bootstrapIfMissing() }
         state.configStore.startWatching()
+        if state.configMirror.isEnabled { state.configMirror.startWatching() }
+        // Another Mac's edit often lands while this one sleeps.
+        let mirror = state.configMirror
+        NSWorkspace.shared.notificationCenter.addObserver(
+            forName: NSWorkspace.didWakeNotification, object: nil, queue: nil
+        ) { _ in mirror.reconcile() }
 
         // A copy run from outside /Applications (a dev build, a Downloads copy) may have
         // registered itself as a login item — as a bare executable it launches into Terminal
