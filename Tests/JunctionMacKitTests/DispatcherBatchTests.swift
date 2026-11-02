@@ -1,5 +1,6 @@
 #if canImport(AppKit)
 import AppKit
+import JunctionCore
 import XCTest
 @testable import JunctionMacKit
 
@@ -16,6 +17,7 @@ final class DispatcherBatchTests: XCTestCase {
             applicationURL: { _ in self.appURL },
             family: { _ in .other },
             firefoxProfileExists: { _, _ in true },
+            chromiumProfiles: { _ in [BrowserProfile(directory: "Work", displayName: "Work")] },
             webApp: { _ in nil },
             webAppProfile: { _ in nil },
             openURLs: { _, _, _, _ in XCTFail("Unexpected native URL request") },
@@ -86,6 +88,92 @@ final class DispatcherBatchTests: XCTestCase {
             .openInBrowser(bundleID: "firefox", profile: "deleted", urls: urls)
         XCTAssertEqual(requests, [urls])
         if case .degradedToFallback = outcome {} else { XCTFail("Expected degraded result") }
+    }
+
+    /// `Profile 2` is Work on the Mac that wrote the rule; here Work is `Profile 5`, and
+    /// `Profile 2` is someone else.
+    func testChromiumProfileResolvesByNameAcrossMacs() {
+        var environment = environment()
+        environment.family = { _ in .chromium }
+        environment.chromiumProfiles = { _ in [
+            BrowserProfile(directory: "Profile 2", displayName: "Personal"),
+            BrowserProfile(directory: "Profile 5", displayName: "Work"),
+        ] }
+        var launches: [[String]] = []
+        environment.openApplication = { _, configuration, _ in launches.append(configuration.arguments) }
+        Dispatcher(fallbackApp: "picker", environment: environment)
+            .openInBrowser(bundleID: "test.browser", profile: "Work", urls: urls)
+        XCTAssertEqual(launches, [["--profile-directory=Profile 5"] + urls.map(\.absoluteString)])
+    }
+
+    func testChromiumDirectoryValueStillWorks() {
+        var environment = environment()
+        environment.family = { _ in .chromium }
+        environment.chromiumProfiles = { _ in [BrowserProfile(directory: "Profile 2", displayName: "Personal")] }
+        var launches: [[String]] = []
+        environment.openApplication = { _, configuration, _ in launches.append(configuration.arguments) }
+        Dispatcher(fallbackApp: "picker", environment: environment)
+            .openInBrowser(bundleID: "test.browser", profile: "Profile 2", urls: urls)
+        XCTAssertEqual(launches, [["--profile-directory=Profile 2"] + urls.map(\.absoluteString)])
+    }
+
+    func testMissingChromiumProfileFallsBackOnceForEntireBatch() {
+        var environment = environment()
+        let fallbackURL = URL(fileURLWithPath: "/Applications/Fallback.app")
+        environment.applicationURL = { $0 == "fallback" ? fallbackURL : self.appURL }
+        environment.family = { $0 == "fallback" ? .other : .chromium }
+        environment.chromiumProfiles = { _ in [BrowserProfile(directory: "Default", displayName: "Personal")] }
+        var requests: [[URL]] = []
+        environment.openURLs = { urls, target, configuration, _ in
+            requests.append(urls)
+            XCTAssertEqual(target, fallbackURL)
+            XCTAssertTrue(configuration.arguments.isEmpty)
+        }
+        let outcome = Dispatcher(fallbackApp: "fallback", environment: environment)
+            .openInBrowser(bundleID: "chrome", profile: "Work", urls: urls)
+        XCTAssertEqual(requests, [urls])
+        if case .degradedToFallback = outcome {} else { XCTFail("Expected degraded result") }
+    }
+
+    /// With no browser to fall back to, opening Chrome anyway would land in its last-used profile.
+    func testMissingProfileAsksWhenThePickerIsTheFallback() {
+        var environment = environment()
+        environment.family = { _ in .chromium }
+        environment.chromiumProfiles = { _ in [BrowserProfile(directory: "Default", displayName: "Personal")] }
+        let outcome = Dispatcher(fallbackApp: Fallback.picker, environment: environment)
+            .openInBrowser(bundleID: "chrome", profile: "Work", urls: urls)
+        if case .needsPicker = outcome {} else { XCTFail("Expected the picker") }
+    }
+
+    /// When Chrome is the fallback, Junction can't go through the system default: that's Junction.
+    func testMissingProfileInTheFallbackBrowserOpensItWithoutAProfile() {
+        var environment = environment()
+        environment.family = { _ in .chromium }
+        environment.chromiumProfiles = { _ in [BrowserProfile(directory: "Default", displayName: "Personal")] }
+        var requests: [[URL]] = []
+        environment.openURLs = { urls, _, _, _ in requests.append(urls) }
+        let outcome = Dispatcher(fallbackApp: "chrome", environment: environment)
+            .openInBrowser(bundleID: "chrome", profile: "Work", urls: urls)
+        XCTAssertEqual(requests, [urls])
+        if case .degradedToFallback = outcome {} else { XCTFail("Expected degraded result") }
+    }
+
+    /// Without Full Disk Access the list comes back empty: rules written as directories keep
+    /// working, and a synced name can't be mistaken for one.
+    func testUnreadableChromiumProfileList() {
+        XCTAssertEqual([BrowserProfile]().launchDirectory(for: "Profile 2"), "Profile 2")
+        XCTAssertEqual([BrowserProfile]().launchDirectory(for: "Default"), "Default")
+        XCTAssertNil([BrowserProfile]().launchDirectory(for: "Work"))
+    }
+
+    func testRuleValuePrefersTheNameUnlessItIsAmbiguous() {
+        let work = BrowserProfile(directory: "Profile 1", displayName: "Work")
+        let twin = BrowserProfile(directory: "Profile 2", displayName: "Twin")
+        let otherTwin = BrowserProfile(directory: "Profile 3", displayName: "Twin")
+        let profiles = [work, twin, otherTwin]
+        XCTAssertEqual(profiles.ruleValue(for: work), "Work")
+        XCTAssertEqual(profiles.ruleValue(for: otherTwin), "Profile 3")
+        XCTAssertEqual(profiles.matching("Profile 3"), otherTwin)
     }
 
     func testNativeFailureReachesCompletionAfterInitiation() {
