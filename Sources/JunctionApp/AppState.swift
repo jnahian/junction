@@ -14,9 +14,20 @@ struct RecentLink: Identifiable {
     let outcome: String
 }
 
+/// What turning on iCloud sync needs the user to decide.
+struct ICloudSyncChoice {
+    let message: String
+    let keepThisMacLabel: String
+    let canUseICloud: Bool
+}
+
 @MainActor
 final class AppState: ObservableObject {
     let configStore: ConfigStore
+    let configMirror: ConfigMirror
+    @Published private(set) var iCloudSyncOn: Bool
+    @Published private(set) var iCloudSyncProblem: String?
+    @Published var iCloudSyncChoice: ICloudSyncChoice?
     @Published private(set) var engine: RoutingEngine
     @Published private(set) var recentLinks: [RecentLink] = []
     @Published private(set) var configError: ConfigError?
@@ -38,8 +49,10 @@ final class AppState: ObservableObject {
     var rewriters: RewriterStore { engine.rewriters }
     private let maxRecent = 10
 
-    init(configStore: ConfigStore = ConfigStore()) {
+    init(configStore: ConfigStore = ConfigStore(), configMirror: ConfigMirror? = nil) {
         self.configStore = configStore
+        self.configMirror = configMirror ?? ConfigMirror(localURL: configStore.fileURL)
+        self.iCloudSyncOn = self.configMirror.isEnabled
         self.engine = RoutingEngine(
             config: configStore.config,
             isSchemeHandled: { BrowserDiscovery.isSchemeHandled($0) }
@@ -47,9 +60,13 @@ final class AppState: ObservableObject {
         configStore.onChange = { [weak self] config in
             self?.rebuildEngine(with: config)
             self?.configError = nil
+            self?.configMirror.reconcile()
         }
         configStore.onError = { [weak self] error in
             self?.configError = error
+        }
+        self.configMirror.onProblem = { [weak self] problem in
+            self?.iCloudSyncProblem = problem
         }
         self.configError = configStore.lastError
         refreshBrowsers()
@@ -77,6 +94,70 @@ final class AppState: ObservableObject {
         }
     }
 
+    // MARK: iCloud sync
+
+    func turnOnICloudSync() {
+        iCloudSyncProblem = nil
+        configMirror.checkRemote { [weak self] remote in
+            guard let self else { return }
+            switch remote {
+            case .matches:
+                self.finishTurningOnICloudSync(keeping: .thisMac)
+            case .missing:
+                self.iCloudSyncChoice = ICloudSyncChoice(
+                    message: "iCloud Drive has no Junction rules yet. If another Mac already syncs, wait for iCloud to catch up and try again, or this Mac's rules will replace them.",
+                    keepThisMacLabel: "Upload This Mac's Rules",
+                    canUseICloud: false
+                )
+            case .differs:
+                self.iCloudSyncChoice = ICloudSyncChoice(
+                    message: "iCloud Drive already has different rules. The set you don't keep is saved as config.backup.json next to your config file.",
+                    keepThisMacLabel: "Replace with This Mac's Rules",
+                    canUseICloud: true
+                )
+            case .invalid(let problem):
+                self.iCloudSyncChoice = ICloudSyncChoice(
+                    message: "The copy in iCloud Drive can't be used. \(problem)",
+                    keepThisMacLabel: "Replace with This Mac's Rules",
+                    canUseICloud: false
+                )
+            case .unreadable(let problem):
+                self.iCloudSyncProblem = problem
+            }
+        }
+    }
+
+    func finishTurningOnICloudSync(keeping source: ConfigMirror.Source) {
+        if source == .thisMac { nameRuleProfiles() }
+        configMirror.enable(from: source) { [weak self] failure in
+            guard let self else { return }
+            self.iCloudSyncProblem = failure
+            self.iCloudSyncOn = failure == nil
+            if failure == nil { self.configMirror.startWatching() }
+        }
+    }
+
+    func turnOffICloudSync() {
+        configMirror.disable()
+        iCloudSyncOn = false
+        iCloudSyncProblem = nil
+    }
+
+    /// Directories mean different profiles on different Macs, so what other Macs receive has
+    /// to use names. Only the Mac that wrote a directory can tell which profile it meant.
+    private func nameRuleProfiles() {
+        var named = config
+        for index in named.rules.indices {
+            guard case .open(let app, let profile?) = named.rules[index].action else { continue }
+            let browser = webApps.first { $0.bundleID == app }?.browserBundleID ?? app
+            let profiles = ChromiumProfiles.profiles(for: browser)
+            if let match = profiles.first(where: { $0.directory == profile }) {
+                named.rules[index].action = .open(app: app, profile: profiles.ruleValue(for: match))
+            }
+        }
+        if named != config { updateConfig { $0 = named } }
+    }
+
     // MARK: Routing
 
     func handle(_ event: LinkEvent) {
@@ -97,7 +178,11 @@ final class AppState: ObservableObject {
             // the user the rule is broken (one-time), like the browser-fallback path.
             switch trace.decision {
             case .open(let app, _, _):
-                notifyBrokenRule(reason: "\(app) is not installed", rule: trace.matchedRule)
+                let installed = NSWorkspace.shared.urlForApplication(withBundleIdentifier: app) != nil
+                notifyBrokenRule(
+                    reason: installed ? "\(app) couldn't open this link" : "\(app) is not installed",
+                    rule: trace.matchedRule
+                )
             case .deepLink(let deepURL, _, _):
                 notifyBrokenRule(reason: "No app installed for \(deepURL.scheme ?? "?")://", rule: trace.matchedRule)
             default:

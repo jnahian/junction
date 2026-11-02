@@ -24,11 +24,33 @@ public struct Browser: Identifiable, Hashable, Sendable {
 
 public struct BrowserProfile: Identifiable, Hashable, Sendable {
     /// The token the browser's launch flag takes: a Chromium profile directory ("Profile 1")
-    /// or a Firefox profile name ("default-release"). This is what a rule's `profile` field holds.
+    /// or a Firefox profile name ("default-release").
     public let directory: String
     /// Human-readable name, e.g. "Work". Equals `directory` for Firefox, which has no separate label.
     public let displayName: String
     public var id: String { directory }
+}
+
+extension Array where Element == BrowserProfile {
+    /// What a rule's `profile` holds: the display name, which carries across Macs where a
+    /// directory doesn't. Two profiles sharing a name can only be told apart by directory.
+    public func ruleValue(for profile: BrowserProfile) -> String {
+        filter { $0.displayName == profile.displayName }.count == 1 ? profile.displayName : profile.directory
+    }
+
+    /// The profile a rule's `profile` value means on this Mac.
+    public func matching(_ value: String) -> BrowserProfile? {
+        let named = filter { $0.displayName == value }
+        return named.count == 1 ? named[0] : first { $0.directory == value }
+    }
+
+    /// The directory to launch for a rule's `profile`, or nil if this Mac has no such profile.
+    /// An empty list means the browser's list couldn't be read (Full Disk Access): a directory
+    /// still works as written, but a name is nothing Chromium's launch flag understands.
+    func launchDirectory(for value: String) -> String? {
+        if let match = matching(value) { return match.directory }
+        return isEmpty && (value == "Default" || value.hasPrefix("Profile ")) ? value : nil
+    }
 }
 
 /// Finds installed browsers and their Chromium profiles.

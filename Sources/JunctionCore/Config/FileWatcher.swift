@@ -35,12 +35,12 @@ public final class FileWatcher {
         queue.async { [weak self] in self?.disarm() }
     }
 
-    private func arm() {
+    private func arm(retrying: Bool = false) {
         disarm()
         fd = open(url.path, O_EVTONLY)
         guard fd >= 0 else {
             // File may not exist yet — retry shortly.
-            queue.asyncAfter(deadline: .now() + 1.0) { [weak self] in self?.arm() }
+            queue.asyncAfter(deadline: .now() + 1.0) { [weak self] in self?.arm(retrying: true) }
             return
         }
         let src = DispatchSource.makeFileSystemObjectSource(
@@ -62,6 +62,8 @@ public final class FileWatcher {
         }
         source = src
         src.resume()
+        // It appeared while nothing was watching, so no event will ever report it.
+        if retrying { fire() }
     }
 
     private func disarm() {

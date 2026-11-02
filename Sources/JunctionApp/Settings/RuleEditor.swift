@@ -177,10 +177,17 @@ struct RuleEditor: View {
                             FullDiskAccessNotice(state: state)
                         }
                         if let browser = selectedBrowser, !browser.profiles.isEmpty {
-                            Picker("Profile", selection: $actionProfile) {
+                            // An older rule may still hold a directory, so map it for display.
+                            Picker("Profile", selection: Binding(
+                                get: {
+                                    browser.profiles.matching(actionProfile).map(browser.profiles.ruleValue(for:))
+                                        ?? actionProfile
+                                },
+                                set: { actionProfile = $0 }
+                            )) {
                                 Text("Default window").tag("")
                                 ForEach(browser.profiles) { p in
-                                    Text(p.displayName).tag(p.directory)
+                                    Text(p.displayName).tag(browser.profiles.ruleValue(for: p))
                                 }
                             }
                         }

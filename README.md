@@ -54,7 +54,9 @@ Rules live in `~/.config/junction/config.json` (respects `$XDG_CONFIG_HOME`). Ed
 }
 ```
 
-`profile` is a Chromium profile *directory* (`Default`, `Profile 1`) or a Firefox profile *name* (the one `firefox -P` takes, listed in **Settings → Browsers**). Listing profiles needs **Full Disk Access**; without it, a Chromium profile still works if you type its directory into the config file, but a Firefox profile rule falls back to your fallback browser. If a rule names a profile that no longer exists, the link degrades to your fallback browser rather than opening in the wrong one.
+`profile` is a profile's *name*, as listed in **Settings → Browsers** (for Firefox, the one `firefox -P` takes). Chromium browsers also accept the profile *directory* (`Default`, `Profile 1`), but a directory can mean a different profile on another Mac, so the rule editor saves the name. Listing profiles needs **Full Disk Access**; without it, a Chromium profile still works if you type its directory into the config file, but a rule that uses a profile name, like any Firefox profile rule, falls back to your fallback browser. If a rule names a profile that doesn't exist on this Mac, the link degrades to your fallback browser rather than opening in the wrong one.
+
+To sync across Macs, turn on **Sync rules across your Macs** under **Settings → General** on each one. Junction keeps a copy of `config.json` in the Junction folder in iCloud Drive. Each Mac still routes from its own file, so links keep working offline and the CLI is unchanged. If two Macs change the rules at once, the newest change wins and the other is saved as `config.backup.json`.
 
 `app` can also be a Chrome web app (one installed with **Install page as app**), named by its bundle ID. The rule editor lists them under **Web apps**, or `osascript -e 'id of app "ClickUp"'` prints the ID, e.g. `com.google.Chrome.app.edcmabgkbicempmpgmniellhbjopafjh`. The link opens in the web app's own window. Junction looks up which profile the web app is installed in, which needs Full Disk Access like the profile list; without it, set `profile` on the rule in the config file. A link from a different site than the web app's goes to your fallback browser, because the web app would drop it and show its home page.
 
@@ -163,7 +165,7 @@ Rewriters are data, not code: [`Sources/JunctionCore/Resources/rewriters.json`](
 
 ## Privacy
 
-Zero telemetry, zero analytics. Junction makes exactly one kind of network request: the Sparkle update check against this repository's release feed. The links you route are never sent anywhere and never logged to disk; the recent-links list is in-memory, capped at 10, and cleared on quit. Full Disk Access is optional and only for browser profiles: Junction uses it to read each browser's list of profile names (Chromium's `Local State`, Firefox's `profiles.ini`), and which profile each Chrome web app is installed in, and nothing else.
+Zero telemetry, zero analytics. Junction makes exactly one kind of network request: the Sparkle update check against this repository's release feed. The links you route are never sent anywhere and never logged to disk; the recent-links list is in-memory, capped at 10, and cleared on quit. If you turn on iCloud sync, your config file (rules and settings, never links) is copied to your own iCloud Drive and macOS does the syncing. Full Disk Access is optional and only for browser profiles: Junction uses it to read each browser's list of profile names (Chromium's `Local State`, Firefox's `profiles.ini`), and which profile each Chrome web app is installed in, and nothing else.
 
 Being the default browser is a high-trust position. That's the argument for open source, for CI that builds and tests every commit, and for updates that only install if they carry a valid EdDSA signature from the maintainer's key.
 

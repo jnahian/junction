@@ -1,14 +1,14 @@
 ---
 title: Sync Browser Routing Rules Across Macs
 order: 16
-summary: Keep your link rules in one plain JSON file you can commit to dotfiles, sync between Macs, and share with a team. Junction reloads and checks it on every edit.
+summary: Sync your Junction link rules across Macs with iCloud Drive, or keep them in one plain JSON file in your dotfiles. Junction checks the file on every edit.
 related: [config, cli, rules]
 icons: [refresh-cw]
 ---
 
 # Sync your link rules across Macs with one config file
 
-Junction is a free, open-source macOS app that becomes your default browser and routes each link by your rules. Those rules live in one plain-text JSON file you own, so you can version it, sync it to another Mac, or share it with your team.
+Junction is a free, open-source macOS app that becomes your default browser and routes each link by your rules. Those rules live in one plain-text JSON file you own, so you can version it, sync it to your other Macs with iCloud, or share it with your team.
 
 ## Where is Junction's config file?
 
@@ -17,6 +17,37 @@ At `~/.config/junction/config.json`. If you set `$XDG_CONFIG_HOME`, Junction use
 ```text Terminal
 $ junction config path
 ```
+
+## Can Junction sync my rules with iCloud?
+
+Yes. Turn on **Sync rules across your Macs** under **Settings → General** on each Mac. Junction keeps a copy of your config in the Junction folder in iCloud Drive, under your own Apple account. There's no Junction account and no Junction server.
+
+![The iCloud section of Junction's General settings, with Sync rules across your Macs turned on](../assets/screenshots/sync-rules-across-macs/01-icloud-setting.png)
+
+Each Mac still routes from its own `config.json`, so links keep working offline and `junction test` reads the same file as always. iCloud Drive has to be on, and macOS may ask once for permission to access it.
+
+| When you turn it on | What happens |
+| --- | --- |
+| iCloud Drive has no rules yet | Junction confirms, then uploads this Mac's rules |
+| iCloud Drive has the same rules | Sync starts without asking |
+| iCloud Drive has different rules | You pick **Use iCloud's Rules** or **Replace with This Mac's Rules** |
+| The iCloud copy has errors | You can only replace it with this Mac's rules |
+
+The rules you don't keep are saved as `config.backup.json` next to your config file.
+
+## What happens when two Macs change the rules?
+
+The newest change wins, and the rules it replaced are saved as `config.backup.json` next to your config file. That file holds one set of rules, so the next replacement overwrites it.
+
+| Situation | What Junction does |
+| --- | --- |
+| One Mac changes the rules | The other Macs pick up the change and reload |
+| Two Macs change them before syncing | The newest change wins, and the other goes to the backup |
+| The iCloud copy has an error | This Mac keeps its rules, and Settings shows the problem |
+| You save an invalid edit on this Mac | It stays on this Mac and isn't uploaded |
+| The iCloud copy gets deleted | Junction doesn't recreate it. Turn sync off and on to upload again |
+
+Turning sync off stops this Mac from syncing and leaves the iCloud copy in place for your other Macs.
 
 ## Can I keep my Junction rules in git?
 
@@ -48,14 +79,17 @@ Run `junction config validate`. It runs the same validation the app and the file
 
 ## Can a team share one rules file?
 
-Yes, with one caveat: rules name browsers by bundle ID, which is the same on every Mac, but browser **profile** directories (`Profile 1`, `Profile 2`) depend on the order each person created their profiles. Check profile rules on each Mac with **Settings → Browsers**.
+Yes, with one caveat: rules name browsers by bundle ID, which is the same on every Mac, but a browser **profile** has to exist on each Mac. The rule editor saves a profile by its name, because directories (`Profile 1`, `Profile 2`) depend on the order each person created their profiles. If a Mac has no profile with that name, the link opens in your fallback browser rather than the wrong profile. Check profile rules on each Mac with **Settings → Browsers**.
 
 | Part of a rule | Same on every Mac? |
 | --- | --- |
 | Patterns, regex, source apps | Yes |
 | Browser bundle IDs | Yes |
-| Chrome / Edge profile directories | No — check each Mac |
+| Chrome / Edge profile names | Only if everyone uses the same names |
+| Chrome / Edge profile directories | No, the same directory can be a different profile |
 | Firefox profile names | Only if everyone uses the same names |
+
+Turning on iCloud sync with this Mac's rules swaps any directories in them for profile names, since only this Mac knows which profile a directory meant.
 
 ## Does the config file contain my browsing history?
 

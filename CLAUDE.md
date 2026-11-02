@@ -103,6 +103,14 @@ config is — the GUI, the CLI (`junction config validate`), and the file watche
 
 `Rule.id` is a GUI-only UUID: not persisted, and excluded from `Rule`'s `==`.
 
+iCloud sync (`ConfigMirror`, off by default, per Mac) is a mirror, not a relocation: the local file stays the
+only thing routing and the CLI read, so a stalled iCloud can only make rules stale. It compares bytes against
+the last synced contents (kept in UserDefaults) on its own queue, because reading an evicted file blocks on a
+download. Nothing iCloud-related may run on the main thread or the click path. No iCloud entitlement is
+involved: the app isn't sandboxed and reads `~/Library/Mobile Documents` directly, which needs no Developer ID.
+While sync is on, `bootstrapIfMissing` must stay skipped, or fresh defaults look like a local edit and get
+pushed to every Mac.
+
 ## Deep-link rewriters are data, not code
 
 `Sources/JunctionCore/Resources/rewriters.json` — regex patterns plus a `$1`-style template and the
@@ -127,6 +135,10 @@ always works regardless.
   Both require `createsNewApplicationInstance = true`, because NSWorkspace only honors `arguments` for
   a new process. Never infer the family from whether profiles were found — derive it from the bundle ID
   (`BrowserDiscovery.family`).
+- A rule's `profile` is a display name or a Chromium directory, resolved per Mac in `Dispatcher`. A directory
+  can silently be someone else's profile on another Mac, and a miss must degrade to the fallback rather than
+  launch: an unknown `--profile-directory` doesn't fail. An empty profile list means Local State was unreadable
+  (Full Disk Access), so directories pass through and only names fall back.
 - `CFBundleVersion` is stamped at build time from `date +%Y%m%d%H%M` by `bundle-app.sh`. Only
   `CFBundleShortVersionString` in `App/Info.plist` is hand-bumped.
 - Zero telemetry, zero logging of routed links — the recent-links list is in-memory, capped at 10, and

@@ -131,6 +131,70 @@ final class ConfigStoreTests: XCTestCase {
         XCTAssertEqual(first, try Data(contentsOf: configURL))
     }
 
+    func testSaveWritesThroughSymlink() throws {
+        let dotfile = tmpDir.appendingPathComponent("dotfiles/config.json")
+        try FileManager.default.createDirectory(at: dotfile.deletingLastPathComponent(), withIntermediateDirectories: true)
+        try Data("{}".utf8).write(to: dotfile)
+        try FileManager.default.createSymbolicLink(at: configURL, withDestinationURL: dotfile)
+
+        var config = Config()
+        config.fallback = Fallback(app: "com.google.Chrome")
+        try ConfigStore(fileURL: configURL).save(config)
+
+        XCTAssertNotNil(try? FileManager.default.destinationOfSymbolicLink(atPath: configURL.path), "link survives")
+        XCTAssertEqual(try ConfigStore.load(from: dotfile), config, "the linked file gets the change")
+    }
+
+    /// GNU Stow writes relative links.
+    func testSaveWritesThroughRelativeSymlink() throws {
+        let dotfile = tmpDir.appendingPathComponent("dotfiles/config.json")
+        try FileManager.default.createDirectory(at: dotfile.deletingLastPathComponent(), withIntermediateDirectories: true)
+        try Data("{}".utf8).write(to: dotfile)
+        try FileManager.default.createSymbolicLink(atPath: configURL.path, withDestinationPath: "dotfiles/config.json")
+
+        var config = Config()
+        config.fallback = Fallback(app: "com.google.Chrome")
+        try ConfigStore(fileURL: configURL).save(config)
+
+        XCTAssertEqual(
+            try FileManager.default.destinationOfSymbolicLink(atPath: configURL.path),
+            "dotfiles/config.json"
+        )
+        XCTAssertEqual(try ConfigStore.load(from: dotfile), config)
+    }
+
+    func testDanglingSymlinkIsReportedAndLeftAlone() throws {
+        let target = tmpDir.appendingPathComponent("elsewhere/config.json")
+        try FileManager.default.createSymbolicLink(at: configURL, withDestinationURL: target)
+
+        let store = ConfigStore(fileURL: configURL)
+        XCTAssertNotNil(store.lastError, "a link to nowhere must not look like a first launch")
+
+        store.bootstrapIfMissing()
+        XCTAssertThrowsError(try store.save(Config()))
+        XCTAssertNotNil(try? FileManager.default.destinationOfSymbolicLink(atPath: configURL.path), "link survives")
+        XCTAssertFalse(FileManager.default.fileExists(atPath: target.path), "defaults aren't written over rules that may be on their way")
+    }
+
+    #if canImport(Darwin)
+    func testWatcherReloadsWhenADanglingLinkRecovers() throws {
+        let target = tmpDir.appendingPathComponent("elsewhere/config.json")
+        try FileManager.default.createDirectory(at: target.deletingLastPathComponent(), withIntermediateDirectories: true)
+        try FileManager.default.createSymbolicLink(at: configURL, withDestinationURL: target)
+
+        let store = ConfigStore(fileURL: configURL)
+        let reloaded = expectation(description: "config reloaded")
+        store.onChange = { _ in reloaded.fulfill() }
+        store.startWatching()
+        defer { store.stopWatching() }
+
+        try Data(#"{"fallback": {"app": "com.google.Chrome"}}"#.utf8).write(to: target)
+        wait(for: [reloaded], timeout: 5)
+        XCTAssertEqual(store.config.fallback.app, "com.google.Chrome")
+        XCTAssertNil(store.lastError)
+    }
+    #endif
+
     /// The GUI's "Add App…" writes custom rewriters; the CLI and the engine read them back.
     func testCustomRewriterSurvivesSaveAndLoad() throws {
         let store = ConfigStore(fileURL: configURL)

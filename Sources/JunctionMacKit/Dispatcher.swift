@@ -40,6 +40,7 @@ public struct Dispatcher {
         var applicationURL: (String) -> URL?
         var family: (String) -> BrowserFamily
         var firefoxProfileExists: (String, String) -> Bool
+        var chromiumProfiles: (String) -> [BrowserProfile]
         var webApp: (URL) -> ChromiumWebApp?
         var webAppProfile: (ChromiumWebApp) -> String?
         var openURLs: ([URL], URL, NSWorkspace.OpenConfiguration, (@Sendable (BrowserBatchOutcome) -> Void)?) -> Void
@@ -54,6 +55,7 @@ public struct Dispatcher {
                 firefoxProfileExists: { bundleID, profile in
                     FirefoxProfiles.profiles(for: bundleID).contains { $0.directory == profile }
                 },
+                chromiumProfiles: { ChromiumProfiles.profiles(for: $0) },
                 webApp: { ChromiumWebApp(appURL: $0) },
                 webAppProfile: { ChromiumProfiles.webAppProfile(for: $0.browserBundleID, appID: $0.appID) },
                 openURLs: { urls, appURL, configuration, completion in
@@ -152,20 +154,37 @@ public struct Dispatcher {
             return openInWebApp(webApp, bundleID: bundleID, profile: profile, urls: urls, completion: completion)
         }
 
-        // Resolve a deleted Firefox profile once, so the entire batch goes to one destination.
-        if let profile,
-           environment.family(bundleID) == .firefox,
-           !environment.firefoxProfileExists(bundleID, profile) {
-            let reason = "Firefox profile \"\(profile)\" no longer exists"
+        // Resolve a missing profile once, so the entire batch goes to one destination.
+        var launchProfile = profile
+        var missingProfile: String?
+        if let profile {
+            switch environment.family(bundleID) {
+            case .firefox where !environment.firefoxProfileExists(bundleID, profile):
+                missingProfile = "Firefox profile \"\(profile)\" no longer exists"
+            case .chromium:
+                launchProfile = environment.chromiumProfiles(bundleID).launchDirectory(for: profile)
+                if launchProfile == nil {
+                    // Launching anyway could open someone else's profile, or a blank new one.
+                    missingProfile = "\(bundleID) has no profile \"\(profile)\" on this Mac"
+                }
+            default:
+                break
+            }
+        }
+        if let missingProfile {
+            if fallbackApp == Fallback.picker {
+                completion?(.needsPicker)
+                return .needsPicker
+            }
             if bundleID != fallbackApp, let fallbackURL = environment.applicationURL(fallbackApp) {
                 open(urls: urls, appURL: fallbackURL, bundleID: fallbackApp, profile: nil, completion: completion)
             } else {
                 open(urls: urls, appURL: appURL, bundleID: bundleID, profile: nil, completion: completion)
             }
-            return .degradedToFallback(reason: reason)
+            return .degradedToFallback(reason: missingProfile)
         }
 
-        open(urls: urls, appURL: appURL, bundleID: bundleID, profile: profile, completion: completion)
+        open(urls: urls, appURL: appURL, bundleID: bundleID, profile: launchProfile, completion: completion)
         return .opened
     }
 
@@ -191,7 +210,7 @@ public struct Dispatcher {
         return outcome
     }
 
-    /// `profile` is the rule's; without one, the profile the app is installed in.
+    /// `profile` is the rule's; without one that exists here, the profile the app is installed in.
     private func openInWebApp(
         _ webApp: ChromiumWebApp,
         bundleID: String,
@@ -203,7 +222,8 @@ public struct Dispatcher {
             let reason = "\(webApp.browserBundleID) is not installed"
             return openInFallback(urls: urls, instead: bundleID, reason: reason, completion: completion)
         }
-        guard let profile = profile ?? environment.webAppProfile(webApp) else {
+        let profiles = environment.chromiumProfiles(webApp.browserBundleID)
+        guard let profile = profile.flatMap(profiles.launchDirectory(for:)) ?? environment.webAppProfile(webApp) else {
             // Also the answer when Full Disk Access blocks reading Local State.
             let reason = "Can't tell which profile has the \(webApp.name) web app — set one on the rule"
             return openInFallback(urls: urls, instead: bundleID, reason: reason, completion: completion)

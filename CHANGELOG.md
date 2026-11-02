@@ -10,6 +10,14 @@ shape matters:
 - Every bullet starts with `Added:`, `Changed:`, or `Fixed:` — that marker drives
   the filter pills on the changelog page.
 
+## Unreleased
+
+- Added: Sync your rules across Macs with iCloud. Turn it on under Settings → General on each Mac, and Junction keeps a copy of your config in the Junction folder in iCloud Drive. Each Mac still routes from its own file, so links keep working offline. If two Macs change the rules at once, the newest change wins and the other is saved as `config.backup.json`.
+- Changed: The rule editor now saves a Chrome, Edge, or Brave profile by its name instead of its folder (`Work`, not `Profile 1`), because the same folder can be a different person's profile on another Mac. Rules that name a folder keep working.
+- Fixed: A rule naming a Chrome, Edge, or Brave profile that doesn't exist on this Mac now opens the link in your fallback browser and tells you, instead of launching the browser with a profile it doesn't have.
+- Fixed: Saving in Settings no longer breaks a symlinked config. If your `config.json` was a link into a dotfiles folder, the first change replaced the link with a plain file and your dotfiles copy silently stopped updating.
+- Fixed: A config symlink pointing at a missing file now shows the menu-bar warning and leaves the link alone, instead of quietly running on default rules.
+
 ## 0.10.0 — 2026-10-26
 
 - Added: Rules can open links in a Chrome web app — one installed with Install page as app, like ClickUp or Google Chat — in its own window. Pick it under Web apps in the rule editor's Browser menu. If a rule pointing at a web app opened it on its home page instead of the link, this is why. A link from a different site than the web app's goes to your fallback browser, because the web app would drop it.

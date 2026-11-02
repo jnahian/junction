@@ -34,7 +34,7 @@ url:         https://contoso.sharepoint.com/sites/finance
 
 ## How do I open them in my work Edge profile?
 
-Add a `profile` with the profile's *directory* name. Edge stores profiles the way Chrome does: `Default` for the first, then `Profile 1`, `Profile 2`, and so on. **Settings → Browsers** lists each Edge profile with its directory, once Junction has **Full Disk Access**.
+Add a `profile` with the profile's name or *directory*. Edge stores profiles the way Chrome does: `Default` for the first, then `Profile 1`, `Profile 2`, and so on. **Settings → Browsers** lists each Edge profile with its directory, once Junction has **Full Disk Access**.
 
 ```json rule
 {

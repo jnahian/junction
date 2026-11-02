@@ -14,6 +14,10 @@ public enum ConfigError: Error, CustomStringConvertible {
     }
 }
 
+extension ConfigError: LocalizedError {
+    public var errorDescription: String? { description }
+}
+
 /// Loads, validates, persists, and watches `config.json`.
 /// Reading tolerates JSONC (comments, trailing commas); writing emits strict,
 /// pretty-printed JSON with sorted keys so git diffs stay clean.
@@ -55,6 +59,8 @@ public final class ConfigStore {
             } catch {
                 self.lastError = .unreadable(String(describing: error))
             }
+        } else {
+            self.lastError = Self.danglingLinkError(fileURL)
         }
     }
 
@@ -67,6 +73,11 @@ public final class ConfigStore {
         } catch {
             throw ConfigError.unreadable(error.localizedDescription)
         }
+        return try decode(raw)
+    }
+
+    /// Parses and validates a config file's raw contents.
+    public static func decode(_ raw: Data) throws -> Config {
         let strict = JSONC.data(from: raw)
         let config: Config
         do {
@@ -165,17 +176,38 @@ public final class ConfigStore {
         encoder.outputFormatting = [.prettyPrinted, .sortedKeys, .withoutEscapingSlashes]
         let data = try encoder.encode(newConfig)
 
-        try FileManager.default.createDirectory(
-            at: fileURL.deletingLastPathComponent(),
-            withIntermediateDirectories: true
-        )
+        try Self.write(data, to: fileURL)
         // Only suppress when a watcher is armed — otherwise the flag would
         // swallow the user's first real external edit after startWatching().
+        // Set after the write: a refused save must not swallow the next reload, and the
+        // watcher's handler can't run until this returns, because both are on the main thread.
         if watcher != nil { suppressNextReload = true }
-        try data.write(to: fileURL, options: .atomic)
         config = newConfig
         lastError = nil
         onChange?(config)
+    }
+
+    /// An atomic write replaces whatever sits at the path, so aim it at the file behind any
+    /// symlink. Otherwise the first save silently unlinks a dotfiles setup.
+    static func write(_ data: Data, to url: URL) throws {
+        if let dangling = danglingLinkError(url) { throw dangling }
+        let target = url.resolvingSymlinksInPath()
+        try FileManager.default.createDirectory(
+            at: target.deletingLastPathComponent(),
+            withIntermediateDirectories: true
+        )
+        try data.write(to: target, options: .atomic)
+    }
+
+    /// A symlink whose target is gone looks like a missing file, and `resolvingSymlinksInPath`
+    /// leaves it unresolved, so a write would replace the link with a plain file. The rules may
+    /// only be unavailable for now, so report it instead.
+    private static func danglingLinkError(_ url: URL) -> ConfigError? {
+        guard !FileManager.default.fileExists(atPath: url.path),
+              let target = try? FileManager.default.destinationOfSymbolicLink(atPath: url.path) else {
+            return nil
+        }
+        return .unreadable("\(url.path) is a symlink to \(target), which doesn't exist")
     }
 
     /// Writes the current config if the file doesn't exist yet (first launch).
