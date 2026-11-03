@@ -10,7 +10,7 @@ shape matters:
 - Every bullet starts with `Added:`, `Changed:`, or `Fixed:` — that marker drives
   the filter pills on the changelog page.
 
-## Unreleased
+## 0.11.1 — 2026-11-03
 
 - Fixed: Helium profiles now show up in Settings → Browsers, the rule editor, and the picker, and a rule can open links in a specific Helium profile. Before, Helium listed no profiles, and a profile typed into the config was ignored, so links opened in whichever Helium window was last used.
 - Fixed: Full Disk Access no longer stops working when Junction updates. Before, each update quietly cut Junction off from your browser profile lists while System Settings still showed it switched on, so profiles disappeared from Settings and the rule editor kept asking for access. This update needs one last reset: in System Settings → Privacy & Security → Full Disk Access, select Junction, remove it with −, and add it again. Later updates keep it.
