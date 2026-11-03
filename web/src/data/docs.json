@@ -219,6 +219,49 @@
       "body": "Slack permalinks don't carry the team ID the app needs. Add the workspace in <b>Settings → Deep Links</b> — type it or paste a Slack link, and Junction reads the ID from the signed-in Slack app; unmapped workspaces open in the browser rather than on the wrong screen."
     }
   ],
+  "profileBrowsers": [
+    {
+      "browser": "Google Chrome",
+      "page": "chrome-profile-links",
+      "bundleIds": ["com.google.Chrome", "com.google.Chrome.beta", "com.google.Chrome.dev", "com.google.Chrome.canary"],
+      "profile": "A profile name or directory"
+    },
+    {
+      "browser": "Microsoft Edge",
+      "page": "edge-profile-links",
+      "bundleIds": ["com.microsoft.edgemac", "com.microsoft.edgemac.Beta"],
+      "profile": "A profile name or directory"
+    },
+    {
+      "browser": "Brave",
+      "page": "brave-profile-links",
+      "bundleIds": ["com.brave.Browser", "com.brave.Browser.beta"],
+      "profile": "A profile name or directory"
+    },
+    {
+      "browser": "Vivaldi",
+      "page": "vivaldi-profile-links",
+      "bundleIds": ["com.vivaldi.Vivaldi"],
+      "profile": "A profile name or directory"
+    },
+    {
+      "browser": "Helium",
+      "page": "helium-profile-links",
+      "bundleIds": ["net.imput.helium"],
+      "profile": "A profile name or directory"
+    },
+    {
+      "browser": "Chromium",
+      "bundleIds": ["org.chromium.Chromium"],
+      "profile": "A profile name or directory"
+    },
+    {
+      "browser": "Firefox",
+      "page": "firefox-profile-links",
+      "bundleIds": ["org.mozilla.firefox"],
+      "profile": "A profile name, the one <code>firefox -P</code> takes"
+    }
+  ],
   "unsupported": [
     "Firefox <b>containers</b> are an extension feature with no launch-flag equivalent — Firefox <i>profiles</i> are supported.",
     "Arc <b>spaces</b> have no public API."

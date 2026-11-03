@@ -1,6 +1,6 @@
 ---
 title: Open Any Website's Links in Its Mac App
-order: 11
+order: 15
 summary: Teach Junction a new app. Add its URL scheme, a pattern for its web links, and a template, and those links open in the Mac app instead of a browser tab.
 related: [deeplinks, actions, troubleshooting]
 icons: [puzzle]

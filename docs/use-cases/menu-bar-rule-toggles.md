@@ -1,6 +1,6 @@
 ---
 title: Turn Link Rules On and Off From the Menu Bar
-order: 16
+order: 20
 summary: Switch a link rule off for the weekend or on for a screen share without opening Settings. Junction lists every rule in its menu bar menu, each one a click away.
 related: [menubar, rules, privacy]
 icons: [toggle-right]

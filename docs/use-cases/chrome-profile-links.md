@@ -65,39 +65,21 @@ Yes — match the `authuser` query parameter with a `regex`. Wildcard patterns i
 
 Put this rule *above* any broad Google rule, or the broad one wins first.
 
-## Does this work with Edge and Brave profiles?
+## Does this work with Edge, Brave, Vivaldi, and Helium?
 
-Yes. Edge and Brave are built on Chromium, and Junction opens their profiles the same way: name the browser by its bundle ID and the profile by its name or directory.
+Yes. They're built on Chromium, and Junction opens their profiles the same way: name the browser by its bundle ID and the profile by its name or directory.
 
-| Browser | Bundle ID |
-| --- | --- |
-| Google Chrome | `com.google.Chrome` |
-| Microsoft Edge | `com.microsoft.edgemac` |
-| Brave | `com.brave.Browser` |
+| Browser | Bundle ID | More |
+| --- | --- | --- |
+| Google Chrome | `com.google.Chrome` | This page |
+| Microsoft Edge | `com.microsoft.edgemac` | [Edge profiles](edge-profile-links.md) |
+| Brave | `com.brave.Browser` | [Brave profiles](brave-profile-links.md) |
+| Vivaldi | `com.vivaldi.Vivaldi` | [Vivaldi profiles](vivaldi-profile-links.md) |
+| Helium | `net.imput.helium` | [Helium profiles](helium-profile-links.md) |
 
-A common setup sends Microsoft 365 to an Edge profile signed in to the company account — see [Microsoft 365 links](microsoft-365-links.md).
+Chrome Beta, Dev, and Canary work too; [the docs](/docs#actions) list every bundle ID. A common setup sends Microsoft 365 to an Edge profile signed in to the company account — see [Microsoft 365 links](microsoft-365-links.md).
 
 Firefox profiles work too, with a different kind of name — see [Firefox profiles](firefox-profile-links.md).
-
-## Can Junction open links in a Helium profile?
-
-Yes. Helium is built on Chromium, so Junction lists its profiles in **Settings → Browsers** and opens them the same way as Chrome's: name the browser by its bundle ID, `net.imput.helium`, and the profile by its name or directory. Listing Helium's profiles needs **Full Disk Access**, as it does for Chrome.
-
-```json rule
-{
-  "name": "Research → Helium",
-  "match": { "patterns": ["*.wikipedia.org/*", "arxiv.org/*"] },
-  "action": { "app": "net.imput.helium", "profile": "Research" }
-}
-```
-
-```text junction test
-$ junction test "https://en.wikipedia.org/wiki/Chromium_(web_browser)"
-input:       https://en.wikipedia.org/wiki/Chromium_(web_browser)
-rule:        [1] Research → Helium
-action:      open in net.imput.helium profile "Research"
-url:         https://en.wikipedia.org/wiki/Chromium_(web_browser)
-```
 
 ## Can every link from Slack open in my work profile?
 

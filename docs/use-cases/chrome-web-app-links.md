@@ -1,6 +1,6 @@
 ---
 title: Open Links in a Chrome Web App on Mac
-order: 12
+order: 16
 summary: Send a site's links to a Chrome web app such as ClickUp, so they open in the web app's own window and profile instead of in a new browser tab on your Mac.
 related: [actions, rules, troubleshooting]
 icons: [chrome, clickup]

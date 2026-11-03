@@ -1,6 +1,6 @@
 ---
 title: Sync Browser Routing Rules Across Macs
-order: 17
+order: 21
 summary: Sync your Junction link rules across Macs with iCloud Drive, or keep them in one plain JSON file in your dotfiles. Junction checks the file on every edit.
 related: [sync, config, cli]
 icons: [refresh-cw]
