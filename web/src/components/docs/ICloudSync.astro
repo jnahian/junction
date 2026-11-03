@@ -1,0 +1,14 @@
+---
+import docs from "../../data/docs.json";
+---
+
+<section id="sync">
+  <h2>iCloud sync</h2>
+  <p>Turn on <b>Sync rules across your Macs</b> under <b>Settings → General → iCloud</b>, on each Mac. Junction keeps a copy of your config in the Junction folder in iCloud Drive, under your own Apple account; there's no Junction server. iCloud Drive has to be on (<b>System Settings → Apple Account → iCloud</b>), and macOS may ask once for permission to access it.</p>
+  <ul>
+    {docs.sync.map((item) => (
+      <li><b>{item.label}</b> — <Fragment set:html={item.body} /></li>
+    ))}
+  </ul>
+  <p>More on conflicts, sharing rules with a team, and keeping the file in git: <a href="/use-cases/sync-rules-across-macs">Sync your link rules across Macs</a>.</p>
+</section>

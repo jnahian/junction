@@ -1,6 +1,6 @@
 ---
 title: Open Several Links at Once in One Browser
-order: 14
+order: 15
 summary: Click a handful of links, then open them all in one browser with a single choice, or copy them all at once. Junction's picker gathers them into one list.
 related: [actions, rules, config]
 icons: [layers]

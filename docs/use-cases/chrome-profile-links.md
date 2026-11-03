@@ -36,6 +36,8 @@ action:      open in com.google.Chrome profile "Profile 1"
 url:         https://acme.atlassian.net/browse/ENG-42
 ```
 
+To open a site in its own window instead of a tab, send it to a [Chrome web app](chrome-web-app-links.md).
+
 ## How do I find a Chrome profile's directory name?
 
 **Settings → Browsers** in Junction lists every Chrome profile with its name and directory. Listing them needs **Full Disk Access**, which Junction uses only to read Chrome's list of profiles.
@@ -76,6 +78,26 @@ Yes. Edge and Brave are built on Chromium, and Junction opens their profiles the
 A common setup sends Microsoft 365 to an Edge profile signed in to the company account — see [Microsoft 365 links](microsoft-365-links.md).
 
 Firefox profiles work too, with a different kind of name — see [Firefox profiles](firefox-profile-links.md).
+
+## Can Junction open links in a Helium profile?
+
+Yes. Helium is built on Chromium, so Junction lists its profiles in **Settings → Browsers** and opens them the same way as Chrome's: name the browser by its bundle ID, `net.imput.helium`, and the profile by its name or directory. Listing Helium's profiles needs **Full Disk Access**, as it does for Chrome.
+
+```json rule
+{
+  "name": "Research → Helium",
+  "match": { "patterns": ["*.wikipedia.org/*", "arxiv.org/*"] },
+  "action": { "app": "net.imput.helium", "profile": "Research" }
+}
+```
+
+```text junction test
+$ junction test "https://en.wikipedia.org/wiki/Chromium_(web_browser)"
+input:       https://en.wikipedia.org/wiki/Chromium_(web_browser)
+rule:        [1] Research → Helium
+action:      open in net.imput.helium profile "Research"
+url:         https://en.wikipedia.org/wiki/Chromium_(web_browser)
+```
 
 ## Can every link from Slack open in my work profile?
 
