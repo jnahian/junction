@@ -19,6 +19,19 @@ APP="dist/Junction.app"
 DMG="dist/Junction.dmg"
 [ -d "$APP" ] || { echo "No $APP — run Scripts/bundle-app.sh first."; exit 1; }
 
+# Every release must be signed with the same certificate. macOS ties each user's Full Disk
+# Access grant to it: an ad-hoc build, or one signed with any other certificate, silently
+# revokes that grant on every Mac that installs the update.
+SIGNING_CERT_SHA1="a613b6fd8adf45a493011a17449cca022d8affcb"
+REQUIREMENT="$(codesign -d -r- "$APP" 2>&1)"
+if ! codesign --verify --deep --strict "$APP" \
+   || [[ "$REQUIREMENT" != *"certificate leaf = H\"${SIGNING_CERT_SHA1}\""* ]]; then
+  echo "$APP isn't signed with the Junction Code Signing certificate (${SIGNING_CERT_SHA1})."
+  echo "Restore it to your login keychain from its .p12 backup — never make a new one —"
+  echo "then rerun Scripts/bundle-app.sh."
+  exit 1
+fi
+
 VERSION="$(/usr/libexec/PlistBuddy -c 'Print :CFBundleShortVersionString' "$APP/Contents/Info.plist")"
 TAG="v${VERSION}"
 

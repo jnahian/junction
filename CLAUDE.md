@@ -139,6 +139,10 @@ always works regardless.
   can silently be someone else's profile on another Mac, and a miss must degrade to the fallback rather than
   launch: an unknown `--profile-directory` doesn't fail. An empty profile list means Local State was unreadable
   (Full Disk Access), so directories pass through and only names fall back.
+- Releases are signed with the self-signed **Junction Code Signing** certificate, never ad-hoc. macOS ties
+  Full Disk Access to the signature's designated requirement; ad-hoc, that's the build's hash, so every update
+  silently revoked the grant while System Settings still showed it on. The certificate must never change
+  (`release.sh` pins its SHA-1), and there's no Hardened Runtime: without a Team ID, library validation blocks Sparkle.
 - `CFBundleVersion` is stamped at build time from `date +%Y%m%d%H%M` by `bundle-app.sh`. Only
   `CFBundleShortVersionString` in `App/Info.plist` is hand-bumped.
 - Zero telemetry, zero logging of routed links — the recent-links list is in-memory, capped at 10, and

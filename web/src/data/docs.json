@@ -174,7 +174,7 @@
     },
     {
       "title": "No browser profiles to choose from",
-      "body": "macOS may block Junction from reading your browsers' profile lists, and it never asks first. Turn on Junction under <b>System Settings → Privacy &amp; Security → Full Disk Access</b>, then click <b>Check Again</b> or <b>Refresh</b> in <b>Settings → Browsers</b>. Junction only reads each browser's list of profile names."
+      "body": "macOS may block Junction from reading your browsers' profile lists, and it never asks first. Turn on Junction under <b>System Settings → Privacy &amp; Security → Full Disk Access</b>, then click <b>Check Again</b> or <b>Refresh</b> in <b>Settings → Browsers</b>. If Junction is already on there, select it, remove it with <b>−</b>, and add it again — the switch can stay on after macOS stops honoring it. Junction only reads each browser's list of profile names."
     },
     {
       "title": "A rule opens the fallback instead of its app",
