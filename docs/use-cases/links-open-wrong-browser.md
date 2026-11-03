@@ -74,7 +74,7 @@ Because Junction couldn't carry the rule out, and it opens the fallback rather t
 
 ## Why can't I choose a browser profile?
 
-macOS is blocking Junction from reading your browsers' profile lists, and it never asks first. Turn on Junction under **System Settings → Privacy & Security → Full Disk Access**, then click **Check Again** or **Refresh** in **Settings → Browsers**. Junction only reads each browser's list of profile names.
+macOS is blocking Junction from reading your browsers' profile lists, and it never asks first. Turn on Junction under **System Settings → Privacy & Security → Full Disk Access**, then click **Check Again** or **Refresh** in **Settings → Browsers**. If Junction is already on there, select it, remove it with **−**, and add it again — the switch can stay on after macOS stops honoring it. Junction only reads each browser's list of profile names.
 
 ## Why do Slack links open in the browser?
 

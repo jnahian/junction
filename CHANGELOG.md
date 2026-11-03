@@ -10,6 +10,10 @@ shape matters:
 - Every bullet starts with `Added:`, `Changed:`, or `Fixed:` — that marker drives
   the filter pills on the changelog page.
 
+## Unreleased
+
+- Fixed: Full Disk Access no longer stops working when Junction updates. Before, each update quietly cut Junction off from your browser profile lists while System Settings still showed it switched on, so profiles disappeared from Settings and the rule editor kept asking for access. This update needs one last reset: in System Settings → Privacy & Security → Full Disk Access, select Junction, remove it with −, and add it again. Later updates keep it.
+
 ## 0.11.0 — 2026-11-02
 
 - Added: Sync your rules across Macs with iCloud. Turn it on under Settings → General on each Mac, and Junction keeps a copy of your config in the Junction folder in iCloud Drive. Each Mac still routes from its own file, so links keep working offline. If two Macs change the rules at once, the newest change wins and the other is saved as `config.backup.json`.

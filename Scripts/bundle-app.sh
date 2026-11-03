@@ -61,9 +61,21 @@ if [ -n "${CODESIGN_IDENTITY:-}" ]; then
     --deep --sign "$CODESIGN_IDENTITY" "$APP"
   codesign --verify --strict "$APP"
 else
-  echo "▸ skipping codesign (set CODESIGN_IDENTITY to sign)"
-  # Ad-hoc sign so the app runs locally.
-  codesign --force --deep --sign - "$APP"
+  # The maintainer's self-signed release identity, when this keychain has it. macOS ties
+  # Full Disk Access to the signature's designated requirement: ad-hoc, that's this build's
+  # hash, so every update silently revokes the grant; self-signed, it's the certificate,
+  # which never changes. No Hardened Runtime: a self-signed certificate has no Team ID, and
+  # library validation would refuse to load Sparkle. Not `find-identity -v`: a self-signed
+  # certificate is never "valid" (trusted), only present.
+  SIGN_ID="$(security find-identity -p codesigning 2>/dev/null | awk '/"Junction Code Signing"/ { print $2; exit }' || true)"
+  if [ -n "$SIGN_ID" ]; then
+    echo "▸ codesigning (Junction Code Signing)"
+    codesign --force --deep --sign "$SIGN_ID" "$APP"
+  else
+    echo "▸ skipping codesign (set CODESIGN_IDENTITY to sign)"
+    # Ad-hoc sign so the app runs locally.
+    codesign --force --deep --sign - "$APP"
+  fi
 fi
 
 echo "✓ $APP"
