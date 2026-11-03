@@ -10,6 +10,10 @@ shape matters:
 - Every bullet starts with `Added:`, `Changed:`, or `Fixed:` — that marker drives
   the filter pills on the changelog page.
 
+## Unreleased
+
+- Fixed: Helium profiles now show up in Settings → Browsers, the rule editor, and the picker, and a rule can open links in a specific Helium profile. Before, Helium listed no profiles, and a profile typed into the config was ignored, so links opened in whichever Helium window was last used.
+
 ## 0.11.0 — 2026-11-02
 
 - Added: Sync your rules across Macs with iCloud. Turn it on under Settings → General on each Mac, and Junction keeps a copy of your config in the Junction folder in iCloud Drive. Each Mac still routes from its own file, so links keep working offline. If two Macs change the rules at once, the newest change wins and the other is saved as `config.backup.json`.
