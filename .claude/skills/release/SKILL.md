@@ -12,7 +12,10 @@ numbered step.**
 
 Releases are cut **locally**, not by CI. The Sparkle EdDSA private key lives in
 the maintainer's login keychain under the `junction` account; nothing signs
-updates without it. There is deliberately no release workflow — a CI-built artifact
+updates without it. Next to it sits the self-signed **Junction Code Signing**
+certificate: `bundle-app.sh` signs the app with it, and `release.sh` refuses a
+build that isn't. On a new Mac, import its `.p12` backup. A new certificate, even
+one with the same name, revokes every user's Full Disk Access. There is deliberately no release workflow — a CI-built artifact
 would not match the bytes `release.sh` signed, and every update would fail its
 signature check.
 
