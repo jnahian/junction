@@ -182,6 +182,7 @@ public enum ChromiumProfiles {
         "com.microsoft.edgemac": "Microsoft Edge",
         "com.microsoft.edgemac.Beta": "Microsoft Edge Beta",
         "com.vivaldi.Vivaldi": "Vivaldi",
+        "net.imput.helium": "net.imput.helium",
         "org.chromium.Chromium": "Chromium",
     ]
 
