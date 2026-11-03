@@ -176,7 +176,8 @@ Restore onto a new machine with `generate_keys --account junction -f <file>`.
 
 ## Not yet notarized
 
-`Scripts/bundle-app.sh` ad-hoc signs. The `CODESIGN_IDENTITY` path exists but
+`Scripts/bundle-app.sh` signs with the self-signed Junction Code Signing certificate
+(ad-hoc without it), which Gatekeeper doesn't trust. The `CODESIGN_IDENTITY` path exists but
 `--deep` does not properly sign Sparkle's nested XPC services, so it will fail
 notarization. Before adding a Developer ID cert, sign Sparkle's nested code
 inside-out first (see the `ponytail:` note in `bundle-app.sh`).
