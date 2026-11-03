@@ -1,6 +1,6 @@
 ---
 title: Open Any Website's Links in Its Mac App
-order: 11
+order: 15
 summary: Teach Junction a new app. Add its URL scheme, a pattern for its web links, and a template, and those links open in the Mac app instead of a browser tab.
 related: [deeplinks, actions, troubleshooting]
 icons: [puzzle]
@@ -70,6 +70,10 @@ Naming yours after a built-in replaces that built-in.
 ## What if the link doesn't match my pattern?
 
 It opens in your fallback browser. Junction never drops a link or opens the wrong screen: an app that isn't installed, a pattern that doesn't match, or an unknown deep link all degrade to the fallback. If a rule keeps landing there, see [why links open in the wrong browser](links-open-wrong-browser.md).
+
+## What if the site has no Mac app?
+
+Install the site as a Chrome web app and send its links there. They open in the web app's own window instead of a browser tab — see [Chrome web app links](chrome-web-app-links.md).
 
 ## Can I add my app for everyone?
 

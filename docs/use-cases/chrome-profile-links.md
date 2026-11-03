@@ -36,6 +36,8 @@ action:      open in com.google.Chrome profile "Profile 1"
 url:         https://acme.atlassian.net/browse/ENG-42
 ```
 
+To open a site in its own window instead of a tab, send it to a [Chrome web app](chrome-web-app-links.md).
+
 ## How do I find a Chrome profile's directory name?
 
 **Settings → Browsers** in Junction lists every Chrome profile with its name and directory. Listing them needs **Full Disk Access**, which Junction uses only to read Chrome's list of profiles.
@@ -63,17 +65,19 @@ Yes — match the `authuser` query parameter with a `regex`. Wildcard patterns i
 
 Put this rule *above* any broad Google rule, or the broad one wins first.
 
-## Does this work with Edge and Brave profiles?
+## Does this work with Edge, Brave, Vivaldi, and Helium?
 
-Yes. Edge and Brave are built on Chromium, and Junction opens their profiles the same way: name the browser by its bundle ID and the profile by its name or directory.
+Yes. They're built on Chromium, and Junction opens their profiles the same way: name the browser by its bundle ID and the profile by its name or directory.
 
-| Browser | Bundle ID |
-| --- | --- |
-| Google Chrome | `com.google.Chrome` |
-| Microsoft Edge | `com.microsoft.edgemac` |
-| Brave | `com.brave.Browser` |
+| Browser | Bundle ID | More |
+| --- | --- | --- |
+| Google Chrome | `com.google.Chrome` | This page |
+| Microsoft Edge | `com.microsoft.edgemac` | [Edge profiles](edge-profile-links.md) |
+| Brave | `com.brave.Browser` | [Brave profiles](brave-profile-links.md) |
+| Vivaldi | `com.vivaldi.Vivaldi` | [Vivaldi profiles](vivaldi-profile-links.md) |
+| Helium | `net.imput.helium` | [Helium profiles](helium-profile-links.md) |
 
-A common setup sends Microsoft 365 to an Edge profile signed in to the company account — see [Microsoft 365 links](microsoft-365-links.md).
+Chrome Beta, Dev, and Canary work too; [the docs](/docs#actions) list every bundle ID. A common setup sends Microsoft 365 to an Edge profile signed in to the company account — see [Microsoft 365 links](microsoft-365-links.md).
 
 Firefox profiles work too, with a different kind of name — see [Firefox profiles](firefox-profile-links.md).
 

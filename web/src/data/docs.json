@@ -25,6 +25,10 @@
           "href": "#config"
         },
         {
+          "label": "iCloud sync",
+          "href": "#sync"
+        },
+        {
           "label": "Rule syntax",
           "href": "#rules"
         },
@@ -100,7 +104,7 @@
   "actions": [
     {
       "action": "{ \"app\": \"com.google.Chrome\" }",
-      "body": "Open in a browser or app, named by its <b>bundle ID</b>. A Chrome web app (installed with <b>Install page as app</b>) works too: pick it under <b>Web apps</b> in the rule editor, or <code>osascript -e 'id of app \"ClickUp\"'</code> prints its bundle ID. The link opens in the web app's own window. A link from a different site than the web app's goes to your fallback browser, because the web app would drop it."
+      "body": "Open in a browser or app, named by its <b>bundle ID</b>. A Chrome web app (installed with <b>Install page as app</b>) works too: pick it under <b>Web apps</b> in the rule editor, or <code>osascript -e 'id of app \"ClickUp\"'</code> prints its bundle ID. The link opens in the web app's own window, in the profile the web app is installed in, or in the rule's <code>profile</code> if this Mac has it. Finding the installed profile needs <b>Full Disk Access</b>; without it, set the profile's <i>directory</i> (<code>Profile 1</code>) on the rule in the config file, or the link goes to your fallback browser. A link from a different site than the web app's goes to your fallback browser, because the web app would drop it."
     },
     {
       "action": "{ \"app\": \"com.google.Chrome\", \"profile\": \"Profile 1\" }",
@@ -117,6 +121,32 @@
     {
       "action": "{ \"clipboard\": true }",
       "body": "Copy the link instead of opening it."
+    }
+  ],
+  "sync": [
+    {
+      "label": "First Mac",
+      "body": "the dialog says iCloud Drive has no Junction rules yet. Choose <b>Upload This Mac's Rules</b>."
+    },
+    {
+      "label": "Each other Mac",
+      "body": "wait until the copy has downloaded to the Junction folder in iCloud Drive, then choose <b>Use iCloud's Rules</b>. If the dialog says there are no rules yet, cancel and try again later, or this Mac's rules replace the ones you synced. If the rules already match, sync starts without asking."
+    },
+    {
+      "label": "Routing",
+      "body": "each Mac still routes from its own <code>config.json</code>, so links work offline and <code>junction test</code> reads the same file as always."
+    },
+    {
+      "label": "Conflicts",
+      "body": "the newest change wins. The rules it replaced, like the set you didn't keep when turning sync on, are saved as <code>config.backup.json</code> next to your config file. An invalid edit stays on this Mac and isn't uploaded."
+    },
+    {
+      "label": "Browser profiles",
+      "body": "starting sync with this Mac's rules swaps Chromium profile directories (<code>Profile 1</code>) in your rules for profile names, because a directory can be a different profile on another Mac. Reading the names needs <b>Full Disk Access</b>; without it, directories stay as they are."
+    },
+    {
+      "label": "Turning it off",
+      "body": "stops this Mac from syncing and leaves the iCloud copy in place for your other Macs."
     }
   ],
   "menubarActions": [
@@ -187,6 +217,49 @@
     {
       "title": "Slack deep links open the browser",
       "body": "Slack permalinks don't carry the team ID the app needs. Add the workspace in <b>Settings → Deep Links</b> — type it or paste a Slack link, and Junction reads the ID from the signed-in Slack app; unmapped workspaces open in the browser rather than on the wrong screen."
+    }
+  ],
+  "profileBrowsers": [
+    {
+      "browser": "Google Chrome",
+      "page": "chrome-profile-links",
+      "bundleIds": ["com.google.Chrome", "com.google.Chrome.beta", "com.google.Chrome.dev", "com.google.Chrome.canary"],
+      "profile": "A profile name or directory"
+    },
+    {
+      "browser": "Microsoft Edge",
+      "page": "edge-profile-links",
+      "bundleIds": ["com.microsoft.edgemac", "com.microsoft.edgemac.Beta"],
+      "profile": "A profile name or directory"
+    },
+    {
+      "browser": "Brave",
+      "page": "brave-profile-links",
+      "bundleIds": ["com.brave.Browser", "com.brave.Browser.beta"],
+      "profile": "A profile name or directory"
+    },
+    {
+      "browser": "Vivaldi",
+      "page": "vivaldi-profile-links",
+      "bundleIds": ["com.vivaldi.Vivaldi"],
+      "profile": "A profile name or directory"
+    },
+    {
+      "browser": "Helium",
+      "page": "helium-profile-links",
+      "bundleIds": ["net.imput.helium"],
+      "profile": "A profile name or directory"
+    },
+    {
+      "browser": "Chromium",
+      "bundleIds": ["org.chromium.Chromium"],
+      "profile": "A profile name or directory"
+    },
+    {
+      "browser": "Firefox",
+      "page": "firefox-profile-links",
+      "bundleIds": ["org.mozilla.firefox"],
+      "profile": "A profile name, the one <code>firefox -P</code> takes"
     }
   ],
   "unsupported": [

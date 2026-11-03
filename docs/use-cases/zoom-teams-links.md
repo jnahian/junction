@@ -1,6 +1,6 @@
 ---
 title: Open Zoom and Teams Links in the App on Mac
-order: 7
+order: 11
 summary: Join Zoom and Microsoft Teams meetings straight in their desktop apps, with no leftover browser tab. Junction turns meeting links into native app links.
 related: [deeplinks, actions, rules]
 icons: [zoom, teams]

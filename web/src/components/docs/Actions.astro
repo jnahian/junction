@@ -23,6 +23,21 @@ import { highlightJson } from "../../lib/highlight.js";
   <Note>
     A <code>profile</code> is the profile's <i>name</i>; Chromium browsers also accept its <i>directory</i>. If a rule names a profile that doesn't exist on this Mac, the link degrades to your fallback browser rather than opening in the wrong one.
   </Note>
+  <p>Profiles work in these browsers. In any other browser, Junction opens the link without switching profiles.</p>
+  <div class="table-wrap">
+    <table class="ref">
+      <thead><tr><th>Browser</th><th>Bundle ID</th><th><code>profile</code> takes</th></tr></thead>
+      <tbody>
+        {docs.profileBrowsers.map((row) => (
+          <tr>
+            <td>{row.page ? <a href={`/use-cases/${row.page}`}>{row.browser}</a> : row.browser}</td>
+            <td>{row.bundleIds.map((id, i) => <>{i > 0 && <br />}<code>{id}</code></>)}</td>
+            <td set:html={row.profile} />
+          </tr>
+        ))}
+      </tbody>
+    </table>
+  </div>
   <p><b>Not supported:</b></p>
   <ul>
     {docs.unsupported.map((item) => <li set:html={item} />)}

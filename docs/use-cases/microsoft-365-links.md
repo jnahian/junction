@@ -1,6 +1,6 @@
 ---
 title: Open Microsoft 365 Links in the Right Account
-order: 5
+order: 9
 summary: Send SharePoint, OneDrive, and Outlook links to the Edge profile signed in to your work account, and personal Microsoft links somewhere else, with Junction.
 related: [actions, rules, deeplinks]
 icons: [edge, teams]
@@ -44,7 +44,7 @@ Add a `profile` with the profile's name or *directory*. Edge stores profiles the
 }
 ```
 
-Naming your own tenant (`contoso`) instead of `*.sharepoint.com` keeps other companies' shared links out of your work profile.
+Naming your own tenant (`contoso`) instead of `*.sharepoint.com` keeps other companies' shared links out of your work profile. For Edge profiles beyond Microsoft 365, see [Edge profiles](edge-profile-links.md).
 
 ## Can personal Microsoft links go somewhere else?
 

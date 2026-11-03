@@ -1,6 +1,6 @@
 ---
 title: Remove Tracking Parameters From Links on Mac
-order: 17
+order: 22
 summary: Strip utm_ and other tracking parameters from every link, keep banking in one browser, and copy risky links instead of opening them, all on your Mac.
 related: [privacy, config, actions]
 icons: [shield-check]

@@ -1,6 +1,6 @@
 ---
 title: Why Links Open in the Wrong Browser on Mac
-order: 18
+order: 23
 summary: Find out why a link opened in the wrong browser or profile, and fix it. Junction's junction test command shows which rule caught a link, and why it did.
 related: [troubleshooting, cli, rules]
 icons: [wrench]

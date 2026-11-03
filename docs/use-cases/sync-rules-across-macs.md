@@ -1,8 +1,8 @@
 ---
 title: Sync Browser Routing Rules Across Macs
-order: 16
+order: 21
 summary: Sync your Junction link rules across Macs with iCloud Drive, or keep them in one plain JSON file in your dotfiles. Junction checks the file on every edit.
-related: [config, cli, rules]
+related: [sync, config, cli]
 icons: [refresh-cw]
 ---
 
@@ -34,6 +34,8 @@ Each Mac still routes from its own `config.json`, so links keep working offline 
 | The iCloud copy has errors | You can only replace it with this Mac's rules |
 
 The rules you don't keep are saved as `config.backup.json` next to your config file.
+
+On your second Mac, let iCloud Drive finish downloading the copy before you turn sync on. If it hasn't arrived, Junction sees no rules in iCloud and offers to upload this Mac's, which would replace the ones you synced. Cancel and try again once the Junction folder in iCloud Drive has your config.
 
 ## What happens when two Macs change the rules?
 
