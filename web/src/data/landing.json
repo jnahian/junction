@@ -22,6 +22,13 @@
       "Universal · Apple silicon + Intel"
     ]
   },
+  "demo": {
+    "eyebrow": "See it work",
+    "heading": "Junction, in <span class=\"accent\">under a&nbsp;minute</span>.",
+    "lead": "Rules, the tester, the picker and deep links, recorded from the real app.",
+    "label": "Junction product demo, with narration",
+    "credit": "Music: Sascha Ende, <a href=\"https://ende.app/en\">ende.app</a> (<a href=\"https://creativecommons.org/licenses/by/4.0/\">CC BY 4.0</a>)"
+  },
   "features": {
     "eyebrow": "The routing engine",
     "heading": "Match on more than the domain.",

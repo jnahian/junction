@@ -10,6 +10,11 @@ DerivedData/
 .netrc
 .playwright-mcp/
 
+# /brag video runs: raw screen recordings, the HyperFrames project, renders.
+# Later runs write timestamped siblings (brag-output-YYYY-MM-DD-HHmmss/).
+/brag-output/
+/brag-output-*/
+
 # Sparkle EdDSA private key. This repo is public, and this key authorizes code to
 # run on every user's Mac — it must never be committed, encrypted or not.
 *-key.txt
