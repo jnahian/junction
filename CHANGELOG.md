@@ -10,7 +10,7 @@ shape matters:
 - Every bullet starts with `Added:`, `Changed:`, or `Fixed:` — that marker drives
   the filter pills on the changelog page.
 
-## Unreleased
+## 0.11.2 — 2026-11-10
 
 - Fixed: On macOS 26 and later, Junction has the same look as the rest of your Mac (Liquid Glass) again. Versions 0.9.0 to 0.11.1 were built in a way that marked them as made for macOS 13, so macOS showed them in the older style. If Junction started looking out of place next to your other apps after 0.9.0, this is why.
 
