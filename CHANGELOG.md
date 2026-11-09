@@ -10,6 +10,10 @@ shape matters:
 - Every bullet starts with `Added:`, `Changed:`, or `Fixed:` — that marker drives
   the filter pills on the changelog page.
 
+## Unreleased
+
+- Fixed: On macOS 26 and later, Junction has the same look as the rest of your Mac (Liquid Glass) again. Versions 0.9.0 to 0.11.1 were built in a way that marked them as made for macOS 13, so macOS showed them in the older style. If Junction started looking out of place next to your other apps after 0.9.0, this is why.
+
 ## 0.11.1 — 2026-11-03
 
 - Fixed: Helium profiles now show up in Settings → Browsers, the rule editor, and the picker, and a rule can open links in a specific Helium profile. Before, Helium listed no profiles, and a profile typed into the config was ignored, so links opened in whichever Helium window was last used.

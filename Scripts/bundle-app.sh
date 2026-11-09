@@ -13,12 +13,18 @@ APP="$DIST/Junction.app"
 
 # Universal: a host-arch-only build won't launch at all on the other architecture
 # ("not supported on this Mac"), and Rosetta can't help an arm64 binary on Intel.
+# -isysroot for the link: swiftc links through `clang --sysroot`, and clang reads the SDK
+# version only from -isysroot. Without it the binary records the deployment target (13.0) as
+# its SDK, and macOS 26+ draws the whole app in its pre-Liquid Glass compatibility look.
+BUILD=(swift build -c release --arch arm64 --arch x86_64
+  -Xswiftc -Xclang-linker -Xswiftc -isysroot
+  -Xswiftc -Xclang-linker -Xswiftc "$(xcrun --sdk macosx --show-sdk-path)")
 echo "▸ swift build -c release (universal)"
-swift build -c release --arch arm64 --arch x86_64
+"${BUILD[@]}"
 
 # Ask SwiftPM: the universal output dir moved (.build/apple → .build/out) across toolchains,
 # and a hardcoded path silently packages whatever stale binary is left at the old one.
-BIN="$(swift build -c release --arch arm64 --arch x86_64 --show-bin-path)"
+BIN="$("${BUILD[@]}" --show-bin-path)"
 
 echo "▸ assembling $APP"
 rm -rf "$APP"
@@ -27,6 +33,16 @@ mkdir -p "$APP/Contents/MacOS" "$APP/Contents/Resources" "$APP/Contents/Helpers"
 cp "$BIN/Junction" "$APP/Contents/MacOS/Junction"
 cp "$BIN/junction-cli" "$APP/Contents/Helpers/junction"   # CLI, exposed via Homebrew `binary` stanza
 cp "$ROOT/App/Info.plist" "$APP/Contents/Info.plist"
+
+# A toolchain update broke the SDK stamp once without anyone noticing; fail loudly instead.
+SDK_VERSION="$(xcrun --sdk macosx --show-sdk-version)"
+for bin in "$APP/Contents/MacOS/Junction" "$APP/Contents/Helpers/junction"; do
+  stamps="$(otool -l "$bin" | awk '$1 == "sdk" { print $2 }' | sort -u)"
+  if [ "$stamps" != "$SDK_VERSION" ]; then
+    echo "✗ $bin records SDK '$stamps', expected $SDK_VERSION" >&2
+    exit 1
+  fi
+done
 
 # CFBundleVersion is what Sparkle compares; derive it from the build time so it's
 # always monotonic — no manual bump, no silent "no update" from a stale integer.
