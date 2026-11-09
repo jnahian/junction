@@ -4,87 +4,60 @@ import Foundation
 import JunctionCore
 import SwiftUI
 
-/// Rules pane (F9): ordered list, drag-reorder, enable toggles, editor sheet.
+/// Rules pane (F9): ordered list, drag-reorder, enable switches, editor sheet.
 struct RulesPane: View {
     @ObservedObject var state: AppState
+    @ObservedObject var nav: SettingsNavigation
     @State private var editingRule: Rule?
     @State private var isNewRule = false
     @State private var highlightedIndex: Int?
 
     var body: some View {
-        VStack(spacing: 0) {
-            List {
-                ForEach(Array(state.config.rules.enumerated()), id: \.element.id) { index, rule in
-                    RuleRow(
-                        rule: rule,
-                        highlighted: index == highlightedIndex,
-                        actionLabel: actionLabel(rule.action),
-                        onToggle: { enabled in
-                            state.updateConfig { $0.rules[index].enabled = enabled }
-                        }
-                    )
-                    .contentShape(Rectangle())
-                    .onTapGesture(count: 2) {
-                        isNewRule = false
-                        editingRule = rule
+        List {
+            ForEach(Array(state.config.rules.enumerated()), id: \.element.id) { index, rule in
+                RuleRow(
+                    rule: rule,
+                    highlighted: index == highlightedIndex,
+                    actionLabel: actionLabel(rule.action),
+                    onToggle: { enabled in
+                        state.updateConfig { $0.rules[index].enabled = enabled }
                     }
-                    .contextMenu {
-                        Button("Edit…") { isNewRule = false; editingRule = rule }
-                        Button("Duplicate") {
-                            let copy = Rule(name: rule.name + " copy", notes: rule.notes, enabled: rule.enabled,
-                                            match: rule.match, action: rule.action, rewrite: rule.rewrite)
-                            state.updateConfig { $0.rules.insert(copy, at: index + 1) }
-                        }
-                        Divider()
-                        Button("Delete", role: .destructive) {
-                            state.updateConfig { $0.rules.remove(at: index) }
-                        }
+                )
+                .contentShape(Rectangle())
+                .onTapGesture(count: 2) {
+                    isNewRule = false
+                    editingRule = rule
+                }
+                .contextMenu {
+                    Button("Edit…") { isNewRule = false; editingRule = rule }
+                    Button("Duplicate") {
+                        let copy = Rule(name: rule.name + " copy", notes: rule.notes, enabled: rule.enabled,
+                                        match: rule.match, action: rule.action, rewrite: rule.rewrite)
+                        state.updateConfig { $0.rules.insert(copy, at: index + 1) }
                     }
-                }
-                .onMove { source, destination in
-                    state.updateConfig { $0.rules.move(fromOffsets: source, toOffset: destination) }
-                }
-            }
-            .listStyle(.inset(alternatesRowBackgrounds: true))
-            .overlay {
-                if state.config.rules.isEmpty {
-                    VStack(spacing: Metrics.controlSpacing) {
-                        Image(systemName: "arrow.triangle.branch")
-                            .font(.system(size: 36, weight: .light))
-                            .foregroundStyle(.tertiary)
-                        Text("No Rules").font(.title3.weight(.medium))
-                        Text("Every link goes to your fallback until you add one.")
-                            .font(.callout)
-                            .foregroundStyle(.secondary)
+                    Divider()
+                    Button("Delete", role: .destructive) {
+                        state.updateConfig { $0.rules.remove(at: index) }
                     }
                 }
             }
-
-            Divider()
-            // Standard source-list add/remove bar.
-            HStack(spacing: 0) {
-                Button {
-                    isNewRule = true
-                    editingRule = Rule(name: "New rule", match: Match(), action: .open(app: draftBrowser, profile: nil))
-                } label: {
-                    Image(systemName: "plus")
-                        .frame(width: 24, height: 20)
-                        .contentShape(Rectangle())
-                }
-                .buttonStyle(.borderless)
-                .help("Add a rule")
-
-                Divider().frame(height: 16)
-
-                Spacer()
-                Text("First matching rule wins. Drag to reorder.")
-                    .font(.caption)
-                    .foregroundStyle(.secondary)
-                    .padding(.trailing, Metrics.controlSpacing)
+            .onMove { source, destination in
+                state.updateConfig { $0.rules.move(fromOffsets: source, toOffset: destination) }
             }
-            .padding(.horizontal, Metrics.controlSpacing)
-            .padding(.vertical, 4)
-            .background(.bar)
+        }
+        .listStyle(.inset)
+        .overlay {
+            if state.config.rules.isEmpty {
+                VStack(spacing: Metrics.controlSpacing) {
+                    Image(systemName: "arrow.triangle.branch")
+                        .font(.system(size: 36, weight: .light))
+                        .foregroundStyle(.tertiary)
+                    Text("No Rules").font(.title3.weight(.medium))
+                    Text("Every link goes to your fallback until you add one.")
+                        .font(.callout)
+                        .foregroundStyle(.secondary)
+                }
+            }
         }
         .sheet(item: $editingRule) { rule in
             RuleEditor(
@@ -104,23 +77,27 @@ struct RulesPane: View {
                 editingRule = nil
             }
         }
-        .onReceive(NotificationCenter.default.publisher(for: .junctionPrefillRule)) { note in
-            let url = note.userInfo?["url"] as? URL
-            let sourceApp = note.userInfo?["sourceApp"] as? String
-            var match = Match()
-            if let url, let host = url.host {
-                match.patterns = [host + "/*"]
-            }
-            if let sourceApp {
-                match.sourceApps = [sourceApp]
-            }
-            isNewRule = true
-            editingRule = Rule(
-                name: url?.host.map { "Links on \($0)" } ?? "New rule",
-                match: match,
-                action: .open(app: draftBrowser, profile: nil)
-            )
+        .onAppear(perform: takeNewRuleRequest)
+        .onChange(of: nav.newRule?.id) { _ in takeNewRuleRequest() }
+    }
+
+    /// Opens the editor on a new rule, seeded from the link when there is one.
+    private func takeNewRuleRequest() {
+        guard let request = nav.newRule else { return }
+        nav.newRule = nil
+        var match = Match()
+        if let host = request.url?.host {
+            match.patterns = [host + "/*"]
         }
+        if let sourceApp = request.sourceApp {
+            match.sourceApps = [sourceApp]
+        }
+        isNewRule = true
+        editingRule = Rule(
+            name: request.url?.host.map { "Links on \($0)" } ?? "New rule",
+            match: match,
+            action: .open(app: draftBrowser, profile: nil)
+        )
     }
 
     /// Seed for a new rule's browser: the fallback when it's a real browser; the picker
@@ -153,22 +130,26 @@ private struct RuleRow: View {
         HStack {
             Toggle("", isOn: Binding(get: { rule.enabled }, set: onToggle))
                 .labelsHidden()
-                .toggleStyle(.checkbox)
-            VStack(alignment: .leading, spacing: 2) {
-                Text(rule.name)
-                Text(matchSummary)
+                .toggleStyle(.switch)
+                .controlSize(.small)
+            // Dim what a turned-off rule says, not its switch, which would look disabled.
+            Group {
+                VStack(alignment: .leading, spacing: 2) {
+                    Text(rule.name)
+                    Text(matchSummary)
+                        .font(.caption)
+                        .foregroundStyle(.secondary)
+                        .lineLimit(1)
+                }
+                Spacer()
+                Text(actionLabel)
                     .font(.caption)
                     .foregroundStyle(.secondary)
-                    .lineLimit(1)
             }
-            Spacer()
-            Text(actionLabel)
-                .font(.caption)
-                .foregroundStyle(.secondary)
+            .opacity(rule.enabled ? 1 : 0.5)
         }
         .padding(.vertical, 2)
         .background(highlighted ? Color(nsColor: .selectedContentBackgroundColor).opacity(0.2) : .clear)
-        .opacity(rule.enabled ? 1 : 0.5)
     }
 
     private var matchSummary: String {

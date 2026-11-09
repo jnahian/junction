@@ -120,117 +120,114 @@ struct RuleEditor: View {
     }
 
     var body: some View {
-        VStack(spacing: 0) {
-            Form {
-                Section("Rule") {
-                    TextField("Name", text: $name)
-                    TextField("Notes (optional)", text: $notes)
-                }
-                Section("Match (all groups must match; entries within a group are OR-ed)") {
-                    VStack(alignment: .leading, spacing: 4) {
-                        Text("URL patterns (one per line, e.g. *.atlassian.net/*)")
-                            .font(.caption).foregroundStyle(.secondary)
-                        TextEditor(text: $patternsText)
-                            .font(.body.monospaced())
-                            .frame(height: 60)
-                        if !invalidPatterns.isEmpty {
-                            Label("Invalid: \(invalidPatterns.joined(separator: ", "))", systemImage: "xmark.circle")
-                                .font(.caption).foregroundStyle(.red)
-                        }
-                    }
-                    TextField("Regex over full URL (optional)", text: $regexText)
+        Form {
+            Section("Rule") {
+                TextField("Name", text: $name)
+                TextField("Notes (optional)", text: $notes)
+            }
+            Section("Match (all groups must match; entries within a group are OR-ed)") {
+                VStack(alignment: .leading, spacing: 4) {
+                    Text("URL patterns (one per line, e.g. *.atlassian.net/*)")
+                        .font(.caption).foregroundStyle(.secondary)
+                    TextEditor(text: $patternsText)
                         .font(.body.monospaced())
-                    if !regexValid {
-                        Label("Invalid regex", systemImage: "xmark.circle").font(.caption).foregroundStyle(.red)
+                        .frame(height: 60)
+                        .roundedTextBox()
+                    if !invalidPatterns.isEmpty {
+                        Label("Invalid: \(invalidPatterns.joined(separator: ", "))", systemImage: "xmark.circle")
+                            .font(.caption).foregroundStyle(.red)
                     }
-                    SourceAppsField(sourceApps: $sourceApps)
                 }
-                Section("Action") {
-                    Picker("Do", selection: $actionKind) {
-                        ForEach(ActionKind.allCases) { kind in Text(kind.rawValue).tag(kind) }
+                TextField("Regex over full URL (optional)", text: $regexText)
+                    .font(.body.monospaced())
+                if !regexValid {
+                    Label("Invalid regex", systemImage: "xmark.circle").font(.caption).foregroundStyle(.red)
+                }
+                SourceAppsField(sourceApps: $sourceApps)
+            }
+            Section("Action") {
+                Picker("Do", selection: $actionKind) {
+                    ForEach(ActionKind.allCases) { kind in Text(kind.rawValue).tag(kind) }
+                }
+                if actionKind == .open {
+                    Picker("Browser", selection: $actionApp) {
+                        Text("Choose…").tag("")
+                        ForEach(state.browsers) { b in Text(b.name).tag(b.bundleID) }
+                        if !state.webApps.isEmpty {
+                            Section("Web apps") {
+                                ForEach(state.webApps) { app in Text(app.name).tag(app.bundleID) }
+                            }
+                        }
                     }
-                    if actionKind == .open {
-                        Picker("Browser", selection: $actionApp) {
-                            Text("Choose…").tag("")
-                            ForEach(state.browsers) { b in Text(b.name).tag(b.bundleID) }
-                            if !state.webApps.isEmpty {
-                                Section("Web apps") {
-                                    ForEach(state.webApps) { app in Text(app.name).tag(app.bundleID) }
-                                }
-                            }
-                        }
-                        // A web app opens in the profile it's installed in. A profile left over
-                        // from a browser would be used instead, and may not have the app.
-                        .onChange(of: actionApp) { app in
-                            if state.webApps.contains(where: { $0.bundleID == app }) { actionProfile = "" }
-                        }
-                        if let webApp = selectedWebApp {
-                            Text("Opens links from \(webApp.startURL.host ?? "its site") in the web app's window. Links from other sites go to your fallback browser.")
-                                .font(.caption).foregroundStyle(.secondary)
-                            // A profile written into the config skips the Local State lookup.
-                            if actionProfile.isEmpty, state.profileAccessBlocked {
-                                FullDiskAccessNotice(state: state)
-                            }
-                        }
-                        if let browser = selectedBrowser, browser.family != .other,
-                           browser.profiles.isEmpty, state.profileAccessBlocked {
+                    // A web app opens in the profile it's installed in. A profile left over
+                    // from a browser would be used instead, and may not have the app.
+                    .onChange(of: actionApp) { app in
+                        if state.webApps.contains(where: { $0.bundleID == app }) { actionProfile = "" }
+                    }
+                    if let webApp = selectedWebApp {
+                        Text("Opens links from \(webApp.startURL.host ?? "its site") in the web app's window. Links from other sites go to your fallback browser.")
+                            .font(.caption).foregroundStyle(.secondary)
+                        // A profile written into the config skips the Local State lookup.
+                        if actionProfile.isEmpty, state.profileAccessBlocked {
                             FullDiskAccessNotice(state: state)
                         }
-                        if let browser = selectedBrowser, !browser.profiles.isEmpty {
-                            // An older rule may still hold a directory, so map it for display.
-                            Picker("Profile", selection: Binding(
-                                get: {
-                                    browser.profiles.matching(actionProfile).map(browser.profiles.ruleValue(for:))
-                                        ?? actionProfile
-                                },
-                                set: { actionProfile = $0 }
-                            )) {
-                                Text("Default window").tag("")
-                                ForEach(browser.profiles) { p in
-                                    Text(p.displayName).tag(browser.profiles.ruleValue(for: p))
-                                }
+                    }
+                    if let browser = selectedBrowser, browser.family != .other,
+                       browser.profiles.isEmpty, state.profileAccessBlocked {
+                        FullDiskAccessNotice(state: state)
+                    }
+                    if let browser = selectedBrowser, !browser.profiles.isEmpty {
+                        // An older rule may still hold a directory, so map it for display.
+                        Picker("Profile", selection: Binding(
+                            get: {
+                                browser.profiles.matching(actionProfile).map(browser.profiles.ruleValue(for:))
+                                    ?? actionProfile
+                            },
+                            set: { actionProfile = $0 }
+                        )) {
+                            Text("Default window").tag("")
+                            ForEach(browser.profiles) { p in
+                                Text(p.displayName).tag(browser.profiles.ruleValue(for: p))
                             }
                         }
                     }
-                    if actionKind == .deepLink {
-                        Picker("App", selection: $deepLinkID) {
-                            Text("Choose…").tag("")
-                            ForEach(state.rewriters.rewriters) { r in Text(r.name).tag(r.id) }
-                        }
-                    }
                 }
-                Section("Rewrite (optional, runs before the action)") {
-                    TextField("Find (regex)", text: $rewriteFind).font(.body.monospaced())
-                    TextField("Replace", text: $rewriteReplace).font(.body.monospaced())
-                }
-                Section("Try it") {
-                    TextField("Paste a URL to preview matching", text: $testURL)
-                    if let url = URL(string: testURL), url.host != nil {
-                        let compiled = CompiledPreview(rule: builtRule, url: url)
-                        Label(
-                            compiled.matches ? "This rule matches" : "No match",
-                            systemImage: compiled.matches ? "checkmark.circle.fill" : "circle"
-                        )
-                        .foregroundStyle(compiled.matches ? .green : .secondary)
-                        .font(.caption)
+                if actionKind == .deepLink {
+                    Picker("App", selection: $deepLinkID) {
+                        Text("Choose…").tag("")
+                        ForEach(state.rewriters.rewriters) { r in Text(r.name).tag(r.id) }
                     }
                 }
             }
-            .formStyle(.grouped)
-
-            Divider()
-            HStack {
-                Button("Cancel", action: onCancel).keyboardShortcut(.cancelAction)
-                Spacer()
+            Section("Rewrite (optional, runs before the action)") {
+                TextField("Find (regex)", text: $rewriteFind).font(.body.monospaced())
+                TextField("Replace", text: $rewriteReplace).font(.body.monospaced())
+            }
+            Section("Try it") {
+                TextField("Paste a URL to preview matching", text: $testURL)
+                if let url = URL(string: testURL), url.host != nil {
+                    let compiled = CompiledPreview(rule: builtRule, url: url)
+                    Label(
+                        compiled.matches ? "This rule matches" : "No match",
+                        systemImage: compiled.matches ? "checkmark.circle.fill" : "circle"
+                    )
+                    .foregroundStyle(compiled.matches ? .green : .secondary)
+                    .font(.caption)
+                }
+            }
+        }
+        .formStyle(.grouped)
+        .toolbar {
+            ToolbarItem(placement: .cancellationAction) {
+                Button("Cancel", action: onCancel)
+            }
+            ToolbarItem(placement: .confirmationAction) {
                 Button("Save") { onSave(builtRule) }
-                    .buttonStyle(.borderedProminent)
-                    .keyboardShortcut(.defaultAction)
                     .disabled(!canSave)
             }
-            .padding(Metrics.sectionSpacing)
-            .background(.bar)
         }
         .frame(width: 520, height: 620)
+        .capsuleButtons()
         .onAppear { state.refreshBrowsers() }
     }
 }
