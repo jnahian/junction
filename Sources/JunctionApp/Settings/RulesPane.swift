@@ -10,14 +10,12 @@ struct RulesPane: View {
     @ObservedObject var nav: SettingsNavigation
     @State private var editingRule: Rule?
     @State private var isNewRule = false
-    @State private var highlightedIndex: Int?
 
     var body: some View {
         List {
             ForEach(Array(state.config.rules.enumerated()), id: \.element.id) { index, rule in
                 RuleRow(
                     rule: rule,
-                    highlighted: index == highlightedIndex,
                     actionLabel: actionLabel(rule.action),
                     onToggle: { enabled in
                         state.updateConfig { $0.rules[index].enabled = enabled }
@@ -122,7 +120,6 @@ struct RulesPane: View {
 
 private struct RuleRow: View {
     let rule: Rule
-    let highlighted: Bool
     let actionLabel: String
     let onToggle: (Bool) -> Void
 
@@ -149,7 +146,6 @@ private struct RuleRow: View {
             .opacity(rule.enabled ? 1 : 0.5)
         }
         .padding(.vertical, 2)
-        .background(highlighted ? Color(nsColor: .selectedContentBackgroundColor).opacity(0.2) : .clear)
     }
 
     private var matchSummary: String {
