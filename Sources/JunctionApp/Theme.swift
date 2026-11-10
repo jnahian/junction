@@ -40,6 +40,29 @@ enum Metrics {
     static let rowCornerRadius: CGFloat = 7
 }
 
+extension View {
+    /// Capsule push buttons. `.capsule` needs macOS 14, so 13 keeps the system's rounded rectangle.
+    @ViewBuilder func capsuleButtons() -> some View {
+        if #available(macOS 14, *) {
+            buttonBorderShape(.capsule)
+        } else {
+            self
+        }
+    }
+
+    /// A multi-line text box with a text field's rounded corners. A bare `TextEditor` draws a
+    /// square white box.
+    func roundedTextBox() -> some View {
+        scrollContentBackground(.hidden)
+            .padding(4)
+            .background(Color(nsColor: .textBackgroundColor), in: RoundedRectangle(cornerRadius: 8, style: .continuous))
+            .overlay(
+                RoundedRectangle(cornerRadius: 8, style: .continuous)
+                    .strokeBorder(Color(nsColor: .separatorColor))
+            )
+    }
+}
+
 extension NSMenuItem {
     /// Attach a template SF Symbol, sized like system menu items.
     func withSymbol(_ name: String) -> NSMenuItem {

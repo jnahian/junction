@@ -141,6 +141,7 @@ private struct OnboardingView: View {
         .padding(Metrics.windowPadding)
         .padding(.top, Metrics.controlSpacing) // clear the (transparent) titlebar
         .frame(width: 480, height: 420)
+        .capsuleButtons()
         .background(VisualEffectView(material: .underWindowBackground).ignoresSafeArea())
     }
 
