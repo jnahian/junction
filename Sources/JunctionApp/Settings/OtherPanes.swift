@@ -317,10 +317,12 @@ struct DeepLinksPane: View {
                 }
             }
             // A LabeledContent row, not a bare HStack: a grouped Form makes the first view of an
-            // HStack the row's label, which left the field looking uneditable.
-            LabeledContent("Workspace (acme.slack.com, or paste a link)") {
+            // HStack the row's label, which left the field looking uneditable. The hint is the
+            // placeholder: as part of the label it pushed the field onto a second line once the
+            // sidebar narrowed the pane.
+            LabeledContent("Workspace") {
                 HStack {
-                    TextField("", text: $newSubdomain)
+                    TextField("", text: $newSubdomain, prompt: Text("acme.slack.com, or paste a link"))
                         .frame(width: 220)
                         .onSubmit(addWorkspace)
                     Button("Add", action: addWorkspace).disabled(trimmedSubdomain.isEmpty)
