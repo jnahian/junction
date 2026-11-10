@@ -636,12 +636,7 @@ private struct PickerView: View {
         .padding(Metrics.panelPadding)
         .frame(width: panelWidth)
         .frame(maxHeight: maximumHeight)
-        .background(VisualEffectView(material: .hudWindow))
-        .clipShape(RoundedRectangle(cornerRadius: Metrics.panelCornerRadius, style: .continuous))
-        .overlay(
-            RoundedRectangle(cornerRadius: Metrics.panelCornerRadius, style: .continuous)
-                .strokeBorder(Color(nsColor: .separatorColor), lineWidth: 0.5)
-        )
+        .panelSurface()
         .background(KeyCatcher(
             count: choices.count,
             columns: columns,
@@ -725,6 +720,27 @@ private struct PickerView: View {
             }
         }
         .frame(width: cellWidth, height: cellHeight)
+    }
+}
+
+private extension View {
+    /// The panel is borderless and clear, so this shape is the window. macOS never turns a
+    /// custom background into Liquid Glass, so on 26+ ask for glass, which also follows the
+    /// transparency setting and draws its own edge.
+    @ViewBuilder func panelSurface() -> some View {
+        if #available(macOS 26, *) {
+            // Concentric with the selection tiles, whose corners sit `panelPadding` in.
+            let shape = RoundedRectangle(cornerRadius: Metrics.panelPadding + Metrics.rowCornerRadius, style: .continuous)
+            // Without the clip a faint rectangle fills the window outside the glass, and the
+            // window shadow takes its square outline at the corners.
+            glassEffect(.regular, in: shape)
+                .clipShape(shape)
+        } else {
+            let shape = RoundedRectangle(cornerRadius: Metrics.panelCornerRadius, style: .continuous)
+            background(VisualEffectView(material: .hudWindow))
+                .clipShape(shape)
+                .overlay(shape.strokeBorder(Color(nsColor: .separatorColor), lineWidth: 0.5))
+        }
     }
 }
 
