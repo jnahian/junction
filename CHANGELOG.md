@@ -13,6 +13,7 @@ shape matters:
 ## Unreleased
 
 - Changed: Settings now looks like System Settings, with a sidebar of sections beside the one you're in, in a window you can resize to give your rules more room. Rules are turned on and off with switches, and the + for a new rule is at the top of the window.
+- Changed: On macOS 26 and later, the browser picker is Liquid Glass, like the rest of your Mac, and follows your Mac's transparency setting. Before, it kept the older frosted look, even after 0.11.2 brought Liquid Glass to the rest of Junction.
 - Fixed: If your config file is a link to a file that isn't there yet when Junction starts (dotfiles still syncing at login, for example), Junction now picks up your rules even when the file shows up while Junction is still starting. Before, it could miss that moment and keep the menu-bar warning and the default rules until you next edited the file.
 
 ## 0.11.2 — 2026-11-10
