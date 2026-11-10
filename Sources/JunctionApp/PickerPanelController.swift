@@ -728,13 +728,15 @@ private extension View {
     /// custom background into Liquid Glass, so on 26+ ask for glass, which also follows the
     /// transparency setting and draws its own edge.
     @ViewBuilder func panelSurface() -> some View {
-        let shape = RoundedRectangle(cornerRadius: Metrics.panelCornerRadius, style: .continuous)
         if #available(macOS 26, *) {
+            // Concentric with the selection tiles, whose corners sit `panelPadding` in.
+            let shape = RoundedRectangle(cornerRadius: Metrics.panelPadding + Metrics.rowCornerRadius, style: .continuous)
             // Without the clip a faint rectangle fills the window outside the glass, and the
             // window shadow takes its square outline at the corners.
             glassEffect(.regular, in: shape)
                 .clipShape(shape)
         } else {
+            let shape = RoundedRectangle(cornerRadius: Metrics.panelCornerRadius, style: .continuous)
             background(VisualEffectView(material: .hudWindow))
                 .clipShape(shape)
                 .overlay(shape.strokeBorder(Color(nsColor: .separatorColor), lineWidth: 0.5))
