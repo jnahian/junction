@@ -193,6 +193,27 @@ final class ConfigStoreTests: XCTestCase {
         XCTAssertEqual(store.config.fallback.app, "com.google.Chrome")
         XCTAssertNil(store.lastError)
     }
+
+    /// The app loads the config at launch but starts watching later. A link that recovers in
+    /// between must not leave the warning and the default rules up until the next edit.
+    func testWatcherCatchesUpOnALinkThatRecoveredBeforeWatching() throws {
+        let target = tmpDir.appendingPathComponent("elsewhere/config.json")
+        try FileManager.default.createDirectory(at: target.deletingLastPathComponent(), withIntermediateDirectories: true)
+        try FileManager.default.createSymbolicLink(at: configURL, withDestinationURL: target)
+
+        let store = ConfigStore(fileURL: configURL)
+        XCTAssertNotNil(store.lastError)
+        try Data(#"{"fallback": {"app": "com.google.Chrome"}}"#.utf8).write(to: target)
+
+        let reloaded = expectation(description: "config reloaded")
+        store.onChange = { _ in reloaded.fulfill() }
+        store.startWatching()
+        defer { store.stopWatching() }
+
+        wait(for: [reloaded], timeout: 5)
+        XCTAssertEqual(store.config.fallback.app, "com.google.Chrome")
+        XCTAssertNil(store.lastError)
+    }
     #endif
 
     /// The GUI's "Add App…" writes custom rewriters; the CLI and the engine read them back.
