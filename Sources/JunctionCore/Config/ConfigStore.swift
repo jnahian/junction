@@ -229,7 +229,9 @@ public final class ConfigStore {
             }
             self.reload()
         }
-        watcher?.start()
+        // A broken file fixed since init (a dangling link whose target appeared) may never
+        // send an event, so reload once the watcher is armed.
+        watcher?.start(catchingUp: lastError != nil)
     }
 
     public func stopWatching() {

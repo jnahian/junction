@@ -27,8 +27,10 @@ public final class FileWatcher {
         source?.cancel() // cancel handler closes the fd
     }
 
-    public func start() {
-        queue.async { [weak self] in self?.arm() }
+    /// `catchingUp` reports the file once armed, for a caller whose last read may already be
+    /// stale: a change made before the first arm produces no event.
+    public func start(catchingUp: Bool = false) {
+        queue.async { [weak self] in self?.arm(retrying: catchingUp) }
     }
 
     public func stop() {
@@ -89,7 +91,7 @@ public final class FileWatcher {
 /// No-op stub so JunctionCore compiles on Linux (CI runs the engine tests there).
 public final class FileWatcher {
     public init(url: URL, debounce: TimeInterval = 0.2, handler: @escaping () -> Void) {}
-    public func start() {}
+    public func start(catchingUp: Bool = false) {}
     public func stop() {}
 }
 
