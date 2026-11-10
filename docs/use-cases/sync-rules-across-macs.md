@@ -22,7 +22,7 @@ $ junction config path
 
 Yes. Turn on **Sync rules across your Macs** under **Settings → General** on each Mac. Junction keeps a copy of your config in the Junction folder in iCloud Drive, under your own Apple account. There's no Junction account and no Junction server.
 
-![The iCloud section of Junction's General settings, with Sync rules across your Macs turned on](../assets/screenshots/sync-rules-across-macs/01-icloud-setting.png)
+![The iCloud section of Junction's General settings, with the Sync rules across your Macs switch](../assets/screenshots/sync-rules-across-macs/01-icloud-setting.png)
 
 Each Mac still routes from its own `config.json`, so links keep working offline and `junction test` reads the same file as always. iCloud Drive has to be on, and macOS may ask once for permission to access it.
 
