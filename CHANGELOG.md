@@ -10,7 +10,7 @@ shape matters:
 - Every bullet starts with `Added:`, `Changed:`, or `Fixed:` — that marker drives
   the filter pills on the changelog page.
 
-## Unreleased
+## 0.12.0 — 2026-11-10
 
 - Changed: Settings now looks like System Settings, with a sidebar of sections beside the one you're in, in a window you can resize to give your rules more room. Rules are turned on and off with switches, and the + for a new rule is at the top of the window.
 - Changed: On macOS 26 and later, the browser picker is Liquid Glass, like the rest of your Mac, and follows your Mac's transparency setting. Before, it kept the older frosted look, even after 0.11.2 brought Liquid Glass to the rest of Junction.
