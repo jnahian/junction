@@ -1,85 +1,113 @@
 WEBVTT
 
 1
-00:00:00.550 --> 00:00:03.160
-Your Mac gets exactly one default browser.
+00:00:00.400 --> 00:00:01.480
+You click a work link.
 
 2
-00:00:03.580 --> 00:00:05.140
-Your links don't all belong in it.
+00:00:01.900 --> 00:00:03.800
+And it opens in your personal browser,
 
 3
-00:00:06.500 --> 00:00:08.480
-Junction takes that default spot,
+00:00:04.090 --> 00:00:05.430
+where you're not even signed in.
 
 4
-00:00:08.850 --> 00:00:13.450
-and sends every link you click to the right browser, the right profile, or the right app.
+00:00:05.950 --> 00:00:07.160
+Junction fixes that.
 
 5
-00:00:13.850 --> 00:00:15.010
-You write the rules once.
+00:00:07.650 --> 00:00:09.600
+It becomes your Mac's default browser,
 
 6
-00:00:15.470 --> 00:00:18.660
-Match a domain, a wildcard, even the app you clicked in.
+00:00:09.880 --> 00:00:11.800
+and sends every link where it belongs.
 
 7
-00:00:19.030 --> 00:00:20.080
-First match wins.
+00:00:12.150 --> 00:00:13.910
+A Jira ticket goes to Chrome,
 
 8
-00:00:20.850 --> 00:00:22.190
-Not sure where a link will land?
+00:00:14.070 --> 00:00:15.060
+in your work profile.
 
 9
-00:00:22.500 --> 00:00:23.130
-Paste it in.
+00:00:15.550 --> 00:00:18.610
+A Zoom invite skips the browser, and opens the Zoom app.
 
 10
-00:00:23.650 --> 00:00:27.920
-Junction strips the tracking junk, then shows the exact rule that catches it.
+00:00:19.100 --> 00:00:20.850
+Reddit stays in Firefox.
 
 11
-00:00:28.400 --> 00:00:29.660
-Clicked in Slack instead?
+00:00:21.350 --> 00:00:22.760
+It's all just a list of rules.
 
 12
-00:00:29.970 --> 00:00:31.240
-A different rule takes it.
+00:00:23.170 --> 00:00:26.170
+Match a domain, a wildcard, or the app you clicked in.
 
 13
-00:00:31.850 --> 00:00:32.600
-Want to choose?
+00:00:26.620 --> 00:00:27.750
+First match wins.
 
 14
-00:00:32.980 --> 00:00:36.420
-Hold Option as you click, and Junction asks, right at your cursor.
+00:00:28.250 --> 00:00:29.800
+Wondering where a link will go?
 
 15
-00:00:36.950 --> 00:00:42.390
-Zoom, Slack, Figma and Spotify links can skip the browser, and open straight in their apps.
+00:00:30.140 --> 00:00:31.270
+Paste it into the tester.
 
 16
-00:00:43.250 --> 00:00:45.470
-Flip rules on and off from the menu bar,
+00:00:31.800 --> 00:00:33.660
+Junction strips the tracking junk,
 
 17
-00:00:45.920 --> 00:00:47.940
-keep them in a JSON file you own,
+00:00:33.940 --> 00:00:35.800
+and shows you the rule that catches it.
 
 18
-00:00:48.300 --> 00:00:50.720
-and sync them across your Macs with iCloud.
+00:00:36.200 --> 00:00:36.960
+Can't decide?
 
 19
-00:00:51.200 --> 00:00:51.760
-Junction.
+00:00:37.410 --> 00:00:40.700
+Hold Option when you click, and pick a browser, right at your cursor.
 
 20
-00:00:52.000 --> 00:00:54.130
-Free, open source, zero telemetry.
+00:00:41.150 --> 00:00:43.360
+Nineteen built-in deep links
 
 21
-00:00:54.560 --> 00:00:56.040
+00:00:43.650 --> 00:00:45.400
+open Slack, Figma, Spotify and more,
+
+22
+00:00:45.680 --> 00:00:46.740
+straight in their apps.
+
+23
+00:00:47.150 --> 00:00:49.620
+Your rules live in a JSON file you own,
+
+24
+00:00:49.980 --> 00:00:51.740
+switch on and off from the menu bar,
+
+25
+00:00:52.110 --> 00:00:54.250
+and sync across your Macs with iCloud.
+
+26
+00:00:54.750 --> 00:00:55.310
+Junction.
+
+27
+00:00:55.540 --> 00:00:57.680
+Free, open source, zero telemetry.
+
+28
+00:00:58.110 --> 00:00:59.590
 Every link, in the right place.
