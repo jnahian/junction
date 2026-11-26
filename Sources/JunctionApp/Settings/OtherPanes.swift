@@ -4,7 +4,6 @@ import Foundation
 import JunctionCore
 import JunctionMacKit
 import ServiceManagement
-import Sparkle
 import SwiftUI
 
 // MARK: - Browsers (F9)
@@ -475,6 +474,7 @@ enum AppInfo {
 
 struct GeneralPane: View {
     @ObservedObject var state: AppState
+    @ObservedObject private var updates = updateChecker
     @State private var launchAtLogin = SMAppService.mainApp.status == .enabled
 
     var body: some View {
@@ -545,18 +545,19 @@ struct GeneralPane: View {
             }
             Section("Updates") {
                 LabeledContent("Version", value: AppInfo.versionString)
-                if updaterController != nil {
-                    Button("Check for Updates…") {
-                        NSApp.activate(ignoringOtherApps: true)
-                        updaterController?.checkForUpdates(nil)
+                if let release = updates.available {
+                    Button("Download Junction \(release.version)…") {
+                        NSWorkspace.shared.open(release.htmlURL)
                     }
+                } else if updates.currentVersion != nil {
+                    Button("Check for Updates…") { updates.checkNow() }
                 } else {
-                    // No SUFeedURL under `swift run`; the packaged app always has one.
+                    // No version under `swift run`; the packaged app always has one.
                     Button("View Releases on GitHub…") {
                         NSWorkspace.shared.open(URL(string: "https://github.com/jnahian/junction/releases")!)
                     }
                 }
-                Text("Junction checks GitHub for new versions and makes no other network calls. Zero telemetry: the links you open never leave your Mac or touch disk.")
+                Text("Junction checks GitHub for new versions once a day and makes no other network calls. It doesn't install updates itself: download the new version from its release page, or run brew upgrade. Zero telemetry: the links you open never leave your Mac or touch disk.")
                     .font(.caption).foregroundStyle(.secondary)
             }
         }

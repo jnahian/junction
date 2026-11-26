@@ -119,7 +119,7 @@ Junction is a menu-bar app — no Dock icon, no window. It opens a short setup: 
 
 ### Updates
 
-Junction checks for updates on its own via [Sparkle](https://sparkle-project.org), and you can trigger a check from the menu bar or **Settings → General → Updates**. Updates are EdDSA-signed, so the app only installs builds signed with the maintainer's key. Homebrew users can also `brew upgrade`; each release bumps the cask.
+Junction checks this repository's GitHub releases for a new version at launch and once a day, and you can check yourself from the menu bar or **Settings → General → Updates**. When there's a new version, the menu-bar icon gets a dot and the menu offers **Update to …**, which opens the release page. Junction doesn't install updates itself: download `Junction.dmg`, drag Junction into Applications to replace the old copy, and clear the quarantine flag as on first install. Homebrew users can `brew upgrade --cask junction` instead of downloading (each release bumps the cask), then clear the flag the same way.
 
 ### Uninstall
 
@@ -149,7 +149,7 @@ Scripts/bundle-app.sh   # assemble dist/Junction.app
 Scripts/make-dmg.sh     # build the drag-to-Applications dist/Junction.dmg
 ```
 
-Releases are cut locally, not by CI: `Scripts/release.sh` signs the DMG, generates the Sparkle appcast, publishes the GitHub release, and bumps the Homebrew cask. It needs the maintainer's signing key, so only the maintainer can publish.
+Releases are cut locally, not by CI: `Scripts/release.sh` builds the DMG, publishes the GitHub release with its changelog notes, and bumps the Homebrew cask. It refuses a build that isn't signed with the maintainer's code-signing certificate, so only the maintainer can publish.
 
 The routing engine (`Sources/JunctionCore`) is a pure, UI-free Swift package: matchers, transforms, rewriters, and config I/O are fully unit-tested and have no AppKit dependency.
 
@@ -165,9 +165,9 @@ Rewriters are data, not code: [`Sources/JunctionCore/Resources/rewriters.json`](
 
 ## Privacy
 
-Zero telemetry, zero analytics. Junction makes exactly one kind of network request: the Sparkle update check against this repository's release feed. The links you route are never sent anywhere and never logged to disk; the recent-links list is in-memory, capped at 10, and cleared on quit. If you turn on iCloud sync, your config file (rules and settings, never links) is copied to your own iCloud Drive and macOS does the syncing. Full Disk Access is optional and only for browser profiles: Junction uses it to read each browser's list of profile names (Chromium's `Local State`, Firefox's `profiles.ini`), and which profile each Chrome web app is installed in, and nothing else.
+Zero telemetry, zero analytics. Junction makes exactly one kind of network request: the once-a-day check for the latest release of this repository on GitHub. The links you route are never sent anywhere and never logged to disk; the recent-links list is in-memory, capped at 10, and cleared on quit. If you turn on iCloud sync, your config file (rules and settings, never links) is copied to your own iCloud Drive and macOS does the syncing. Full Disk Access is optional and only for browser profiles: Junction uses it to read each browser's list of profile names (Chromium's `Local State`, Firefox's `profiles.ini`), and which profile each Chrome web app is installed in, and nothing else.
 
-Being the default browser is a high-trust position. That's the argument for open source, for CI that builds and tests every commit, and for updates that only install if they carry a valid EdDSA signature from the maintainer's key.
+Being the default browser is a high-trust position. That's the argument for open source, for CI that builds and tests every commit, and for an app that never downloads or installs code on its own: updates come from this repository's releases, when you choose to install them.
 
 ## Status & roadmap
 

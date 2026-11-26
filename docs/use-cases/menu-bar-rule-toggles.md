@@ -66,7 +66,7 @@ To send *everything* to one place for a while, a catch-all rule like the demo on
 | **Recent Links** | The last 10 links Junction routed. In memory only — never written to disk. |
 | **Rules** | Every rule, checked when it's on. |
 | **Settings…** | Fallback, rules, browsers and profiles, deep links, updates. |
-| **Update to …** | Appears, and the icon gets a dot, when an update is ready. |
+| **Update to …** | Appears, and the icon gets a dot, when a new version is out. Opens its release page on GitHub. |
 
 The icon also warns you when the config file has an error; the last rules that worked stay live until you fix it. More in [syncing rules across Macs](sync-rules-across-macs.md#what-happens-when-the-config-file-changes).
 

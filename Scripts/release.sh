@@ -1,19 +1,17 @@
 #!/usr/bin/env bash
-# Publish a Sparkle auto-update release: build the DMG, sign it, generate
-# appcast.xml, and upload both to GitHub Releases under a v<version> tag, then
-# bump the Homebrew cask.
+# Publish a release: build the DMG and upload it to GitHub Releases under a
+# v<version> tag, with this version's CHANGELOG section as the notes, then bump the
+# Homebrew cask. Installed copies find it on their own: Junction checks the latest
+# GitHub release and sends the user to its page.
 #
 # Run Scripts/bundle-app.sh first (bump CFBundleShortVersionString in App/Info.plist),
 # then Scripts/release.sh.
 #
-# Requires: gh (authenticated) and the Sparkle EdDSA private key in your keychain
-# under the `junction` account (minted with `generate_keys --account junction`).
+# Requires: gh (authenticated).
 set -euo pipefail
 
 cd "$(dirname "$0")/.."
 REPO="jnahian/junction"
-KEY_ACCOUNT="junction"
-GEN="$PWD/.build/artifacts/sparkle/Sparkle/bin/generate_appcast"
 
 APP="dist/Junction.app"
 DMG="dist/Junction.dmg"
@@ -35,9 +33,11 @@ fi
 VERSION="$(/usr/libexec/PlistBuddy -c 'Print :CFBundleShortVersionString' "$APP/Contents/Info.plist")"
 TAG="v${VERSION}"
 
-# Sparkle compares CFBundleVersion, not the display string. If it didn't increase
-# past the published build, every client sees "no update" — the classic silent
-# no-op. Refuse to publish in that case.
+# Copies from 0.12.0 and earlier still check for updates with Sparkle, which reads
+# releases/latest/download/appcast.xml, so every release must carry one or those copies
+# never hear of a new version again. Sparkle compares CFBundleVersion, not the display
+# string: if it didn't increase past the published build, they see "no update".
+# Refuse to publish in that case.
 NEW_BUILD="$(/usr/libexec/PlistBuddy -c 'Print :CFBundleVersion' "$APP/Contents/Info.plist")"
 PUB_BUILD="$(curl -fsSL "https://github.com/${REPO}/releases/latest/download/appcast.xml" 2>/dev/null \
   | sed -n 's/.*<sparkle:version>\([0-9][0-9]*\)<.*/\1/p' | head -1 || true)"
@@ -50,28 +50,37 @@ fi
 # Build the installer only once the version guard has passed.
 Scripts/make-dmg.sh
 
-# generate_appcast signs the DMG (private key pulled from the keychain) and writes
-# appcast.xml. Isolate the DMG so only this build becomes an update entry; the
-# download URL points at where gh will host it under this tag.
-STAGE="$(mktemp -d)"
-cp "$DMG" "$STAGE/"
+# release-notes.sh fails if this version has no CHANGELOG section, so a release with
+# no notes stops here. CI runs the same script, so it stops at the pull request first.
+NOTES_HTML="$(Scripts/release-notes.sh "$VERSION")"
+NOTES_MD="$(Scripts/release-notes.sh "$VERSION" --markdown)"
 
-# Release notes: generate_appcast embeds an HTML fragment named after the archive
-# (Junction.html next to Junction.dmg) as the item's <description>, which is what
-# Sparkle's update dialog renders. release-notes.sh builds it from this version's
-# CHANGELOG section and fails if there isn't one — empty notes are a release bug,
-# not a warning, since nobody finds out until a user opens the dialog. CI runs the
-# same script, so the release stops at the pull request instead.
-"$(dirname "$0")/release-notes.sh" "$VERSION" > "$STAGE/Junction.html"
-
-"$GEN" --account "$KEY_ACCOUNT" \
-  --download-url-prefix "https://github.com/${REPO}/releases/download/${TAG}/" "$STAGE"
-cp "$STAGE/appcast.xml" dist/appcast.xml
+# The appcast is informational: a <link> and no <enclosure>. Sparkle shows the notes and
+# a "Learn More…" button that opens the release page, downloads nothing, and so needs
+# no EdDSA signature.
+cat > dist/appcast.xml <<APPCAST
+<?xml version="1.0" encoding="utf-8"?>
+<rss version="2.0" xmlns:sparkle="http://www.andymatuschak.org/xml-namespaces/sparkle">
+  <channel>
+    <title>Junction</title>
+    <item>
+      <title>Junction ${VERSION}</title>
+      <sparkle:version>${NEW_BUILD}</sparkle:version>
+      <sparkle:shortVersionString>${VERSION}</sparkle:shortVersionString>
+      <link>https://github.com/${REPO}/releases/tag/${TAG}</link>
+      <description><![CDATA[
+${NOTES_HTML}
+      ]]></description>
+    </item>
+  </channel>
+</rss>
+APPCAST
 
 # Create the release (or replace assets if the tag already exists). Must be the
-# newest, non-prerelease release so releases/latest/download/appcast.xml resolves.
+# newest, non-prerelease release: the app asks for releases/latest, and old copies
+# read releases/latest/download/appcast.xml.
 gh release create "$TAG" "$DMG" dist/appcast.xml \
-    --repo "$REPO" --title "$TAG" --generate-notes \
+    --repo "$REPO" --title "$TAG" --notes "$NOTES_MD" \
   || gh release upload "$TAG" "$DMG" dist/appcast.xml --repo "$REPO" --clobber
 
 echo "Released ${TAG}: appcast.xml + Junction.dmg uploaded to ${REPO}."

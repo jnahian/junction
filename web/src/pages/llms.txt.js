@@ -42,7 +42,7 @@ ${useCases}
 - [README](${site.github}#readme): install (Homebrew cask or DMG), config file format, CLI usage
 - [Contributing](${site.contributing}): how to add a deep-link app without writing Swift
 - [rewriters.json](${site.rewritersJson}): the data file behind the built-in deep links
-- [Releases](${site.releases}): signed DMGs and the Sparkle appcast
+- [Releases](${site.releases}): signed DMGs and release notes
 `;
 
   return new Response(text, {

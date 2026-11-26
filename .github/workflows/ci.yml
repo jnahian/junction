@@ -94,9 +94,10 @@ jobs:
         run: npm run build
         working-directory: web
 
-      # The same script release.sh uses for the Sparkle update dialog. A CHANGELOG
-      # format change once blanked those notes silently; this is the guard.
-      - name: Sparkle release notes exist for the shipped version
+      # The same script release.sh uses for the GitHub release notes and the appcast
+      # old copies read. A CHANGELOG format change once blanked those notes silently;
+      # this is the guard.
+      - name: Release notes exist for the shipped version
         run: |
           VERSION=$(sed -n '/CFBundleShortVersionString/{n;s/.*<string>\(.*\)<\/string>.*/\1/p;}' App/Info.plist)
           echo "App/Info.plist version: $VERSION"

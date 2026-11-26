@@ -13,7 +13,6 @@
   "license": "https://github.com/jnahian/junction/blob/main/LICENSE",
   "contributing": "https://github.com/jnahian/junction/blob/main/CONTRIBUTING.md",
   "rewritersJson": "https://github.com/jnahian/junction/blob/main/Sources/JunctionCore/Resources/rewriters.json",
-  "sparkle": "https://sparkle-project.org",
   "author": {
     "handle": "jnahian",
     "github": "https://github.com/jnahian",
@@ -93,5 +92,5 @@
       ]
     }
   ],
-  "changelogNote": "The section matching your installed version is what Junction shows you in the update dialog."
+  "changelogNote": "Each release's notes are also on its GitHub release page, where Junction takes you to update."
 }

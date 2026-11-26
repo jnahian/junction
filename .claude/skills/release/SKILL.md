@@ -1,31 +1,34 @@
 ---
 name: release
-description: Cut a Junction release — bump the version, build the .app, and publish the Sparkle update. Use when the user wants to release, ship a new version, publish an update, or cut a build of Junction.
+description: Cut a Junction release — bump the version, build the .app, and publish it on GitHub Releases. Use when the user wants to release, ship a new version, publish an update, or cut a build of Junction.
 ---
 
 # Release Junction
 
 A release touches the version in `App/Info.plist`, a tag that must point at the
-committed bump, and a signed appcast. Miss any one and the DMG, the appcast, and
-the cask drift apart. Work the checklist top to bottom — **create one todo per
+committed bump, and the appcast that copies from 0.12.0 and earlier read. Miss any
+one and the DMG, the update check, and the cask drift apart. Work the checklist top to bottom — **create one todo per
 numbered step.**
 
-Releases are cut **locally**, not by CI. The Sparkle EdDSA private key lives in
-the maintainer's login keychain under the `junction` account; nothing signs
-updates without it. Next to it sits the self-signed **Junction Code Signing**
-certificate: `bundle-app.sh` signs the app with it, and `release.sh` refuses a
-build that isn't. On a new Mac, import its `.p12` backup. A new certificate, even
-one with the same name, revokes every user's Full Disk Access. There is deliberately no release workflow — a CI-built artifact
-would not match the bytes `release.sh` signed, and every update would fail its
-signature check.
+Releases are cut **locally**, not by CI. The self-signed **Junction Code Signing**
+certificate lives in the maintainer's login keychain: `bundle-app.sh` signs the app
+with it, and `release.sh` refuses a build that isn't. On a new Mac, import its
+`.p12` backup. A new certificate, even one with the same name, revokes every user's
+Full Disk Access. There is deliberately no release workflow: CI doesn't have the
+certificate, and a build signed with anything else would revoke that access too.
+
+Junction doesn't install updates. It asks GitHub's `releases/latest` for the newest
+tag, compares it with its own `CFBundleShortVersionString`, and when the tag is
+newer, its **Update to …** item opens the release page.
 
 ## 1. Decide the version
 
 - **Display version** (`CFBundleShortVersionString`): semver, e.g. `0.2.0`. This
   is the only version you choose.
 - **Build number** (`CFBundleVersion`): derived automatically from the build time
-  (`date +%Y%m%d%H%M`) in `Scripts/bundle-app.sh` — nothing to bump. It's what
-  Sparkle compares, and being time-based it's always monotonic.
+  (`date +%Y%m%d%H%M`) in `Scripts/bundle-app.sh` — nothing to bump. Copies from
+  0.12.0 and earlier still run Sparkle, which compares it against the appcast;
+  being time-based it's always monotonic.
 
 ## 2. Bump the display version in `App/Info.plist`
 
@@ -40,9 +43,10 @@ Leave `CFBundleVersion` alone — it's stamped at build time.
 
 ## 3. Close out the changelog
 
-Users read `CHANGELOG.md` twice: in the Sparkle update dialog (the section whose
-heading matches the version) and on the website's changelog page, which is
-generated from this file. Rename the `## Unreleased` heading to the version and
+Users read `CHANGELOG.md` in three places: as the notes on the GitHub release
+page that **Update to …** opens (the section whose heading matches the version),
+in the update dialog of copies from 0.12.0 and earlier (through the appcast), and
+on the website's changelog page, which is generated from this file. Rename the `## Unreleased` heading to the version and
 today's date:
 
 ```md
@@ -54,18 +58,19 @@ the website parses. If there's no `Unreleased` section, the work shipped
 undocumented: write the entries now, from the commits since the last tag, before
 going further. See the `document-change` skill.
 
-Check it parses, and that Sparkle will actually have notes to show:
+Check it parses, and that the release will actually have notes to show:
 
 ```sh
 cd web && npm test && cd ..
-Scripts/release-notes.sh NEW_DISPLAY     # the fragment the update dialog renders
+Scripts/release-notes.sh NEW_DISPLAY --markdown   # the GitHub release notes
 ```
 
 `npm test` asserts the newest shipped changelog section equals
 `CFBundleShortVersionString`. `release-notes.sh` is the same script `release.sh`
-pipes into the appcast — run it here and you see exactly what users will read.
-It exits non-zero when the section is missing, so a release with no notes stops
-here rather than reaching users as an empty update dialog. CI runs both.
+uses for the release notes and the appcast — run it here and you see exactly what
+users will read. It exits non-zero when the section is missing, so a release with
+no notes stops here rather than reaching users as an empty release page. CI runs
+both.
 
 ## 4. Commit and push the bump — before releasing
 
@@ -98,8 +103,7 @@ The display version must equal `NEW_DISPLAY`; the build number must exceed the
 one in the currently published appcast.
 
 Optional smoke test: `open dist/Junction.app`, then menu bar → **Check for
-Updates…** should say you're up to date (it compares against the *published*
-build, which is older).
+Updates…** should say you're up to date (the newest published release is older).
 
 ## 6. Publish
 
@@ -109,9 +113,11 @@ Scripts/release.sh
 
 `release.sh` re-checks that the time-based `CFBundleVersion` exceeds the
 published build (it always will, short of clock skew) and refuses otherwise. It
-builds the installer (`Scripts/make-dmg.sh`), signs `dist/Junction.dmg` with the
-keychain key, generates `appcast.xml`, and uploads both to the `vNEW_DISPLAY`
-GitHub release. It then rewrites
+builds the installer (`Scripts/make-dmg.sh`), writes `appcast.xml` for copies from
+0.12.0 and earlier, and uploads both to the `vNEW_DISPLAY` GitHub release, with
+this version's changelog section as the notes. The appcast is informational: a
+link to the release page and no download, so there's nothing to sign. It then
+rewrites
 `Casks/junction.rb` with the new version and the uploaded DMG's sha256 and
 commits that (`chore: update Homebrew cask …`), so the `brew install --cask` tap
 tracks the release automatically — nothing to bump by hand.
@@ -122,62 +128,46 @@ tracks the release automatically — nothing to bump by hand.
 gh release view "vNEW_DISPLAY" --repo jnahian/junction
 ```
 
-The release must be the newest non-prerelease (so
-`releases/latest/download/appcast.xml` resolves) and carry both `Junction.dmg`
-and `appcast.xml`. The build is universal, so updates reach both Apple-silicon
-and Intel Macs.
+The release must be the newest non-prerelease (the app asks GitHub for
+`releases/latest`, and old copies read `releases/latest/download/appcast.xml`) and
+carry both `Junction.dmg` and `appcast.xml`. This should print `vNEW_DISPLAY`:
+
+```sh
+curl -fsSL https://api.github.com/repos/jnahian/junction/releases/latest | grep '"tag_name"'
+```
+
+The build is universal, so it runs on both Apple-silicon and Intel Macs.
 
 ## What goes missing if you skip a step
 
 | Skipped | Symptom |
 | --- | --- |
 | Version not bumped in `App/Info.plist` | Release is tagged `vNEW` but the app reports the old version |
-| `CHANGELOG.md` section not renamed from `Unreleased` | Sparkle shows an empty update dialog; the website's changelog has no entry for the release |
+| `CHANGELOG.md` section not renamed from `Unreleased` | `release.sh` stops for want of notes; the website's changelog has no entry for the release |
 | Bump not committed/pushed before release | Tag points at old source; DMG ≠ tag |
-| `appcast.xml` not uploaded | Every client silently sees "no update" |
+| `appcast.xml` not uploaded | Copies from 0.12.0 and earlier never hear of this or any later version |
 | `release.sh` cask commit not pushed | `brew install --cask` serves the previous version |
-| DMG rebuilt after `release.sh` | Bytes no longer match the signature; updates fail to install |
+| DMG re-uploaded after `release.sh` | Its sha256 no longer matches the cask, so `brew install` fails |
 | DMG built before `notarize.sh` staples the app | Installed app has no ticket; Gatekeeper checks online every launch |
 
-## Keys and secrets
+## The old Sparkle key
 
-- Public key (`SUPublicEDKey`) is in `App/Info.plist`. Changing it orphans every
-  installed copy — they reject all future updates. Don't.
-- Private key: login keychain, account `junction`, service
-  `https://sparkle-project.org`. It exists in exactly one place.
+Copies from 0.12.0 and earlier still trust the EdDSA public key that was in their
+`Info.plist` (`SUPublicEDKey`). Its private key is in the login keychain, account
+`junction`, service `https://sparkle-project.org`. Nothing signs with it any more,
+but anyone holding it can still sign a build that those copies install and run on
+their own, so it stays as secret as it ever was. This repo is **public**: never
+commit it, encrypted or not. `.gitignore` covers `*-key.txt`, but the rule is the
+point, not the pattern.
 
-### Never commit the private key
-
-This repo is **public**, and the key is not a read credential — it authorizes
-code to execute on every user's Mac. Junction checks the feed at launch, so
-anyone holding the key can sign a malicious build that users install and run.
-The signature is the only thing protecting them.
-
-Git makes it permanent: committing it puts it in the history, in every clone,
-and in GitHub's API even after a force-push. Rotating away from a leaked key
-means changing `SUPublicEDKey`, which orphans every existing install — so you
-would strand exactly the users you were protecting. There is no undo. `.gitignore`
-covers `*-key.txt`, but the rule is the point, not the pattern.
-
-### Back it up anyway
-
-Lose the key and you can never ship an update to an existing install again —
-users would have to reinstall by hand. Export it and store it somewhere private:
-
-```sh
-.build/artifacts/sparkle/Sparkle/bin/generate_keys --account junction -x ~/Desktop/junction-key.txt
-```
-
-Paste the contents into a password manager as a secure note, then `rm` the file.
-If you want a file backup instead, encrypt it (`gpg -c junction-key.txt`) and put
-the `.gpg` in private cloud storage — still never in this repo.
-
-Restore onto a new machine with `generate_keys --account junction -f <file>`.
+The appcast `release.sh` writes doesn't need the key. Keep it only if you might
+one day want to push a signed update to those old copies; otherwise deleting it
+from the keychain is the safest thing to do with it.
 
 ## Not yet notarized
 
 `Scripts/bundle-app.sh` signs with the self-signed Junction Code Signing certificate
-(ad-hoc without it), which Gatekeeper doesn't trust. The `CODESIGN_IDENTITY` path exists but
-`--deep` does not properly sign Sparkle's nested XPC services, so it will fail
-notarization. Before adding a Developer ID cert, sign Sparkle's nested code
-inside-out first (see the `ponytail:` note in `bundle-app.sh`).
+(ad-hoc without it), which Gatekeeper doesn't trust, so every download is quarantined
+and users clear the flag after each update. The `CODESIGN_IDENTITY` path signs with
+Hardened Runtime for a Developer ID certificate, and `Scripts/notarize.sh` staples
+the result, if there's ever one.

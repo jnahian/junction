@@ -1,7 +1,8 @@
 # Changelog
 
-Notes for each release. The section matching the app's version is shown in the
-Sparkle update dialog, so write it for users, not for contributors.
+Notes for each release. The section matching the app's version becomes the notes
+on its GitHub release page, where Junction sends you to update, so write it for
+users, not for contributors.
 
 The website renders this file directly (`web/src/lib/repo.js` parses it), so the
 shape matters:
@@ -9,6 +10,10 @@ shape matters:
 - A release heading is `## <version> — <YYYY-MM-DD>`.
 - Every bullet starts with `Added:`, `Changed:`, or `Fixed:` — that marker drives
   the filter pills on the changelog page.
+
+## Unreleased
+
+- Changed: Junction no longer installs updates itself. It still checks GitHub for a new version once a day, and when there is one, the menu-bar icon gets a dot and the menu offers Update to …, which opens the release page. Download `Junction.dmg` there, drag Junction into Applications to replace the old copy, and clear the quarantine flag as you did when you first installed it. Homebrew users can run `brew upgrade --cask junction` instead of downloading, then clear the flag the same way.
 
 ## 0.12.0 — 2026-11-10
 

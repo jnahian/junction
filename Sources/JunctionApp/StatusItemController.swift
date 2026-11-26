@@ -3,42 +3,6 @@ import AppKit
 import Combine
 import Foundation
 import JunctionCore
-import Sparkle
-
-// Auto-update via Sparkle. Only starts in the packaged .app (SUFeedURL lives in
-// Info.plist); nil under `swift run` so dev launches don't error on a missing feed.
-// Module-scoped: the menu bar and the General settings pane must share one updater,
-// or each would schedule its own background checks.
-let updaterController: SPUStandardUpdaterController? = {
-    guard Bundle.main.object(forInfoDictionaryKey: "SUFeedURL") != nil else { return nil }
-    return SPUStandardUpdaterController(
-        startingUpdater: true,
-        updaterDelegate: updateMonitor,
-        userDriverDelegate: updateMonitor
-    )
-}()
-
-let updateMonitor = UpdateMonitor()
-
-/// Turns a background check into a badge instead of a window: a menu bar app is never
-/// frontmost, so Sparkle's scheduled update alert would otherwise open behind everything.
-/// The user clicks "Update to X…" when they're ready, which shows the update Sparkle held.
-final class UpdateMonitor: NSObject, ObservableObject, SPUUpdaterDelegate, SPUStandardUserDriverDelegate {
-    @Published var newVersion: String?
-
-    var supportsGentleScheduledUpdateReminders: Bool { true }
-
-    func standardUserDriverShouldHandleShowingScheduledUpdate(
-        _ update: SUAppcastItem,
-        andInImmediateFocus immediateFocus: Bool
-    ) -> Bool { false }
-
-    func updater(_ updater: SPUUpdater, didFindValidUpdate item: SUAppcastItem) {
-        newVersion = item.displayVersionString
-    }
-
-    func updaterDidNotFindUpdate(_ updater: SPUUpdater) { newVersion = nil }
-}
 
 /// Menu bar presence: status, recent links, quick actions (F3 affordance lives here).
 @MainActor
@@ -57,9 +21,9 @@ final class StatusItemController: NSObject, NSMenuDelegate {
         statusItem.menu = menu
         updateIcon()
 
-        // Touch the lazy global here: the menu is only built on open, so without this
-        // background update checks wouldn't start until the user first opened the menu.
-        _ = updaterController
+        // Here, not in the menu: it's only built on open, so checks wouldn't start until
+        // the user first opened it.
+        updateChecker.start()
 
         state.$configError
             .receive(on: DispatchQueue.main)
@@ -69,7 +33,7 @@ final class StatusItemController: NSObject, NSMenuDelegate {
             .receive(on: DispatchQueue.main)
             .sink { [weak self] _ in self?.updateIcon() }
             .store(in: &cancellables)
-        updateMonitor.$newVersion
+        updateChecker.$available
             .receive(on: DispatchQueue.main)
             .sink { [weak self] _ in self?.updateIcon() }
             .store(in: &cancellables)
@@ -112,7 +76,7 @@ final class StatusItemController: NSObject, NSMenuDelegate {
             image = base?.withSymbolConfiguration(.init(pointSize: 15, weight: .medium)) ?? base
             image?.isTemplate = true
         } else {
-            image = updateMonitor.newVersion == nil ? Self.branchIcon : Self.branchIconWithUpdateDot
+            image = updateChecker.available == nil ? Self.branchIcon : Self.branchIconWithUpdateDot
         }
         button.image = image
         // dimmed = gentle "not active" state (PRD §11)
@@ -218,10 +182,10 @@ final class StatusItemController: NSObject, NSMenuDelegate {
             .withSymbol("gearshape")
         settings.target = self
         menu.addItem(settings)
-        if updaterController != nil {
-            let pending = updateMonitor.newVersion
+        if updateChecker.currentVersion != nil {
+            let pending = updateChecker.available
             let update = NSMenuItem(
-                title: pending.map { "Update to \($0)…" } ?? "Check for Updates…",
+                title: pending.map { "Update to \($0.version)…" } ?? "Check for Updates…",
                 action: #selector(checkForUpdates),
                 keyEquivalent: ""
             ).withSymbol(pending == nil ? "arrow.down.circle" : "arrow.down.circle.fill")
@@ -252,10 +216,13 @@ final class StatusItemController: NSObject, NSMenuDelegate {
         NotificationCenter.default.post(name: .junctionShowRules, object: nil)
     }
 
-    /// LSUIElement apps aren't frontmost, so Sparkle's window opens behind everything.
+    /// With an update found, straight to its release page; otherwise check now.
     @objc private func checkForUpdates() {
-        NSApp.activate(ignoringOtherApps: true)
-        updaterController?.checkForUpdates(nil)
+        if let release = updateChecker.available {
+            NSWorkspace.shared.open(release.htmlURL)
+        } else {
+            updateChecker.checkNow()
+        }
     }
     @objc private func setDefault() { state.requestDefaultBrowser() }
     @objc private func openSettings() { state.settingsPresenter?() }

@@ -11,5 +11,5 @@ import site from "../../data/site.json";
       <li><b>{action.label}</b> — <Fragment set:html={action.body} /></li>
     ))}
   </ul>
-  <p>Updates arrive through <a href={site.sparkle}>Sparkle</a>, and you can trigger a check from the menu bar or <b>Settings → General → Updates</b>. They're EdDSA-signed, so the app only installs builds signed with the maintainer's key. Homebrew users can also <code>brew upgrade</code> — each release bumps the cask.</p>
+  <p>Junction checks <a href={site.releases}>GitHub</a> for a new version once a day, and you can check yourself from the menu bar or <b>Settings → General → Updates</b>. It doesn't install updates itself: <b>Update to …</b> opens the release page, where you download <code>Junction.dmg</code>, drag Junction into Applications to replace the old copy, and clear the quarantine flag as on first install. Homebrew users can <code>brew upgrade --cask junction</code> instead of downloading (each release bumps the cask), then clear the flag the same way.</p>
 </section>

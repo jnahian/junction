@@ -18,7 +18,7 @@ swift test --filter RoutingEngineTests/testFirstMatchWins  # one test
 swift build                                   # debug build of app + CLI
 Scripts/bundle-app.sh                         # release build → runnable dist/Junction.app
 Scripts/make-dmg.sh                           # dist/Junction.dmg
-Scripts/release.sh                            # sign, appcast, GitHub release, cask bump (maintainer-only)
+Scripts/release.sh                            # GitHub release, legacy appcast, cask bump (maintainer-only)
 cd web && npm ci && npm test                  # CHANGELOG/version self-checks (see below)
 ```
 
@@ -26,7 +26,7 @@ There is no lint step. CI (`.github/workflows/ci.yml`) runs `swift test` on macO
 bundles the app, smoke-tests the CLI, and validates `rewriters.json` with a Python script.
 
 Releasing has its own skill (`.claude/skills/release/SKILL.md`) — use it; the version bump, the tag,
-and the signed appcast must stay in lockstep or updates break silently.
+and the appcast must stay in lockstep or updates break silently.
 
 ## The website is generated from this repo
 
@@ -142,8 +142,13 @@ always works regardless.
 - Releases are signed with the self-signed **Junction Code Signing** certificate, never ad-hoc. macOS ties
   Full Disk Access to the signature's designated requirement; ad-hoc, that's the build's hash, so every update
   silently revoked the grant while System Settings still showed it on. The certificate must never change
-  (`release.sh` pins its SHA-1), and there's no Hardened Runtime: without a Team ID, library validation blocks Sparkle.
+  (`release.sh` pins its SHA-1).
 - `CFBundleVersion` is stamped at build time from `date +%Y%m%d%H%M` by `bundle-app.sh`. Only
   `CFBundleShortVersionString` in `App/Info.plist` is hand-bumped.
+- Junction doesn't install updates. `UpdateChecker` asks GitHub's `releases/latest` for the newest tag
+  and compares it with `CFBundleShortVersionString`, so a tag must be exactly `v` plus the version in that
+  release's DMG (`release.sh` derives it from the bundle). Copies from 0.12.0 and earlier still run Sparkle against
+  `releases/latest/download/appcast.xml`: `release.sh` uploads an informational appcast (a link, no
+  download, no signature) with every release, and a release without one strands them for good.
 - Zero telemetry, zero logging of routed links — the recent-links list is in-memory, capped at 10, and
   dies with the process. Don't add persistence to it.

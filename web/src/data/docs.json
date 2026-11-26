@@ -164,7 +164,7 @@
     },
     {
       "label": "Updates",
-      "body": "a check runs on its own; the icon gets a dot and the menu offers <b>Update to …</b> when one is ready."
+      "body": "Junction checks GitHub once a day; when a new version is out, the icon gets a dot and <b>Update to …</b> opens its release page to download."
     }
   ],
   "cliCommands": [

@@ -44,15 +44,9 @@ for bin in "$APP/Contents/MacOS/Junction" "$APP/Contents/Helpers/junction"; do
   fi
 done
 
-# CFBundleVersion is what Sparkle compares; derive it from the build time so it's
-# always monotonic — no manual bump, no silent "no update" from a stale integer.
+# CFBundleVersion is what copies from 0.12.0 and earlier compare against the legacy
+# appcast (see release.sh); derive it from the build time so it's always monotonic.
 /usr/libexec/PlistBuddy -c "Set :CFBundleVersion $(date +%Y%m%d%H%M)" "$APP/Contents/Info.plist"
-
-# Sparkle.framework powers auto-update; the binary finds it via an added rpath.
-SPARKLE_FW="$(find "$ROOT/.build/artifacts/sparkle/Sparkle/Sparkle.xcframework" -type d -name Sparkle.framework -path '*macos*' | head -1)"
-mkdir -p "$APP/Contents/Frameworks"
-cp -R "$SPARKLE_FW" "$APP/Contents/Frameworks/"
-install_name_tool -add_rpath "@executable_path/../Frameworks" "$APP/Contents/MacOS/Junction" 2>/dev/null || true
 
 # SPM resource bundles (rewriters.json, tracking-params.json, starter-rules.json).
 # Resources/ only — codesign treats anything in Helpers/ as code and rejects
@@ -68,9 +62,6 @@ fi
 
 if [ -n "${CODESIGN_IDENTITY:-}" ]; then
   echo "▸ codesigning (Hardened Runtime)"
-  # ponytail: --deep does NOT properly sign Sparkle's nested XPC services
-  # (org.sparkle-project.*) or Updater.app, so this bundle will FAIL notarization.
-  # Before adding Developer ID secrets, sign Sparkle's nested code inside-out first.
   codesign --force --options runtime --entitlements "$ROOT/App/Junction.entitlements" \
     --sign "$CODESIGN_IDENTITY" "$APP/Contents/Helpers/junction"
   codesign --force --options runtime --entitlements "$ROOT/App/Junction.entitlements" \
@@ -80,9 +71,8 @@ else
   # The maintainer's self-signed release identity, when this keychain has it. macOS ties
   # Full Disk Access to the signature's designated requirement: ad-hoc, that's this build's
   # hash, so every update silently revokes the grant; self-signed, it's the certificate,
-  # which never changes. No Hardened Runtime: a self-signed certificate has no Team ID, and
-  # library validation would refuse to load Sparkle. Not `find-identity -v`: a self-signed
-  # certificate is never "valid" (trusted), only present.
+  # which never changes. Not `find-identity -v`: a self-signed certificate is never
+  # "valid" (trusted), only present.
   SIGN_ID="$(security find-identity -p codesigning 2>/dev/null | awk '/"Junction Code Signing"/ { print $2; exit }' || true)"
   if [ -n "$SIGN_ID" ]; then
     echo "▸ codesigning (Junction Code Signing)"

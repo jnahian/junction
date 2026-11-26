@@ -5,9 +5,9 @@ description: Record a shipped change in the changelog and the docs — use after
 
 # Document a change
 
-A change that users can see but can't read about is half-shipped: the Sparkle
-update dialog shows them `CHANGELOG.md`, and the website is generated from this
-repo. **Create one todo per numbered step** and work them in order.
+A change that users can see but can't read about is half-shipped: the GitHub
+release page Junction sends them to shows `CHANGELOG.md`, and the website is
+generated from this repo. **Create one todo per numbered step** and work them in order.
 
 First, answer one question — it decides how much of this applies:
 
